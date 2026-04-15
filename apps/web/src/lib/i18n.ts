@@ -8,15 +8,11 @@ import frCommon from "../locales/fr/common.json";
 export const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English", flag: "🇺🇸" },
   { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "es", label: "Español", flag: "🇪🇸" },
-  { code: "zh", label: "中文", flag: "🇨🇳" },
-  { code: "ar", label: "العربية", flag: "🇸🇦" },
-  { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
 ] as const;
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
 
-const RTL_LANGUAGES: LanguageCode[] = ["ar"];
+const RTL_LANGUAGES: LanguageCode[] = [];
 
 export function isRTL(lang: string): boolean {
   return RTL_LANGUAGES.includes(lang as LanguageCode);
@@ -26,18 +22,19 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resourc
+    resources: {
+      en: { common: enCommon },
       fr: { common: frCommon },
     },
     fallbackLng: "en",
     defaultNS: "common",
     load: "languageOnly",
-    supportedLngs: ["en", "fr", "es", "zh", "ar", "hi"],
+    supportedLngs: ["en", "fr"],
     nonExplicitSupportedLngs: true,
     detection: {
       order: ["localStorage", "navigator"],
       caches: ["localStorage"],
-      lookupLocalStorage: "myapp-language",
+      lookupLocalStorage: "finatalk-language",
     },
     interpolation: { escapeValue: true },
   });

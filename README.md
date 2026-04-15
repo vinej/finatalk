@@ -18,6 +18,7 @@ myapp/
 pnpm install
 cp .env.example .env                       # then edit secrets
 docker compose -f infra/docker-compose.yml up -d
+pnpm db:generate
 pnpm db:migrate
 pnpm dev
 ```

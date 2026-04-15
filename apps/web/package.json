@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
+    "build": "tsr generate && tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "gen:routes": "tsr generate",
+    "typecheck": "tsr generate && tsc --noEmit"
   },
   "dependencies": {
     "@finatalk/trpc": "workspace:*",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@tanstack/router-cli": "^1.63.0",
     "@tanstack/router-plugin": "^1.63.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

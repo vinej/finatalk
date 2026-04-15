@@ -47,34 +47,38 @@ function decryptAdapterFields(model: string, row: Record<string, unknown> | null
 }
 
 function withCustomAdapter(adapterFactory: typeof _baseAdapter): typeof _baseAdapter {
+  // better-auth's adapter types are intentionally loose; we cast to `any` inside
+  // the wrapper because TS can't tie our generic encrypt/decrypt passthrough back
+  // to the parameterized `DBAdapter<T>` shape under exactOptionalPropertyTypes.
   return ((betterAuthOptions: Parameters<typeof _baseAdapter>[0]) => {
-    const adapter = adapterFactory(betterAuthOptions) as Record<string, (...args: unknown[]) => unknown> & Record<string, unknown>;
-    const origCreate = (adapter as { create: (p: { model: string; data: Record<string, unknown> }) => Promise<Record<string, unknown>> }).create.bind(adapter);
-    const origUpdate = (adapter as { update?: (p: { model: string; update: Record<string, unknown> }) => Promise<Record<string, unknown>> }).update?.bind(adapter);
-    const origFindOne = (adapter as { findOne: (p: { model: string; where?: unknown[]; join?: Record<string, unknown> }) => Promise<Record<string, unknown> | null> }).findOne.bind(adapter);
-    const origFindMany = (adapter as { findMany: (p: { model: string; where?: unknown[] }) => Promise<Record<string, unknown>[]> }).findMany.bind(adapter);
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const adapter = adapterFactory(betterAuthOptions) as any;
+    const origCreate = adapter.create.bind(adapter);
+    const origUpdate = adapter.update?.bind(adapter);
+    const origFindOne = adapter.findOne.bind(adapter);
+    const origFindMany = adapter.findMany.bind(adapter);
 
     return {
       ...adapter,
-      create: async (params) => {
+      create: async (params: any) => {
         let p = params;
         if (ENCRYPTED_ADAPTER_FIELDS[p.model]) {
           p = { ...p, data: encryptAdapterFields(p.model, p.data) };
         }
         const result = await origCreate(p);
-        return decryptAdapterFields(p.model, result) as Record<string, unknown>;
+        return decryptAdapterFields(p.model, result);
       },
-      update: origUpdate ? async (params) => {
+      update: origUpdate ? async (params: any) => {
         let p = params;
         if (ENCRYPTED_ADAPTER_FIELDS[p.model] && p.update) {
           p = { ...p, update: encryptAdapterFields(p.model, p.update) };
         }
         const result = await origUpdate(p);
-        return decryptAdapterFields(p.model, result) as Record<string, unknown>;
+        return decryptAdapterFields(p.model, result);
       } : undefined,
-      findOne: async (params) => {
+      findOne: async (params: any) => {
         let result = await origFindOne(params);
-        result = decryptAdapterFields(params.model, result) as Record<string, unknown> | null;
+        result = decryptAdapterFields(params.model, result);
         if (!result || !params.join || Object.keys(params.join).length === 0) return result;
         const r = result as Record<string, unknown>;
         for (const joinModel of Object.keys(params.join)) {
@@ -90,19 +94,21 @@ function withCustomAdapter(adapterFactory: typeof _baseAdapter): typeof _baseAda
               model: joinModel,
               where: [{ field: "userId", value: r.id as string }],
             });
-            r[joinModel] = (related ?? []).map((item) => decryptAdapterFields(joinModel, item));
+            r[joinModel] = (related ?? []).map((item: any) => decryptAdapterFields(joinModel, item));
           }
         }
         return result;
       },
-      findMany: async (params) => {
+      findMany: async (params: any) => {
         const results = await origFindMany(params);
         if (!Array.isArray(results) || !ENCRYPTED_ADAPTER_FIELDS[params.model]) return results;
-        return results.map((row) => decryptAdapterFields(params.model, row) as Record<string, unknown>);
+        return results.map((row: any) => decryptAdapterFields(params.model, row));
       },
-    } as ReturnType<typeof adapterFactory>;
+    };
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   }) as typeof _baseAdapter;
 }
+
 
 const appUrl = process.env.APP_URL ?? "";
 const isProduction = process.env.NODE_ENV === "production"
@@ -204,7 +210,7 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: 3600,
     sendVerificationEmail: async ({ user, token }) => {
-      const baseAppUrl = process.env.APP_URL ?? "http://localhost:5173";
+      const baseAppUrl = process.env.APP_URL ?? "http://localhost:51733";
       const verifyUrl = `${baseAppUrl}/verify-email?token=${token}`;
       await sendEmail(
         user.email,
@@ -229,8 +235,8 @@ export const auth = betterAuth({
   ],
   socialProviders: {},
   trustedOrigins: [
-    process.env.APP_URL!,
+    process.env.APP_URL,
+    process.env.BETTER_AUTH_URL,
     ...(process.env.APP_URL ? [process.env.APP_URL.replace("://", "://www.")] : []),
-    ...(!isProduction ? ["http://localhost:5173", "http://localhost:3001"] : []),
-  ].filter(Boolean),
+  ].filter((v): v is string => Boolean(v)),
 });

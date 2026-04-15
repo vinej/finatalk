@@ -21,7 +21,7 @@ if (missing.length > 0) {
 }
 
 const isProduction = process.env.NODE_ENV === "production";
-const PORT = Number(process.env.PORT ?? 3001);
+const PORT = Number(process.env.PORT ?? 3010);
 
 const app = express();
 app.set("trust proxy", "loopback");

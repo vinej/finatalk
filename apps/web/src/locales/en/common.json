@@ -40,6 +40,14 @@
     "saved": "Saved.",
     "saveFailed": "Couldn't save your changes."
   },
+  "authPanel": {
+    "headline": "Talk to your finances.",
+    "subheadline": "A conversational workspace for budgets, insights and cashflow — built to keep your data private.",
+    "feature1": "Conversational insights — ask questions, get answers fast",
+    "feature2": "Secure by design — 2FA, encryption and strict data controls",
+    "feature3": "Your data, your rules — export or delete any time",
+    "footer": "© Finatalk"
+  },
   "language": "Language",
   "theme": { "light": "Light", "dark": "Dark", "system": "System" }
 }

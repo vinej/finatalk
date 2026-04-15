@@ -13,11 +13,11 @@
     "noImplicitOverride": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "sourceMap": true,
     "rootDir": "src",
     "outDir": "dist",
-    "composite": true
+    "composite": false
   }
 }

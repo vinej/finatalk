@@ -40,6 +40,14 @@
     "saved": "Enregistré.",
     "saveFailed": "Échec de l'enregistrement."
   },
+  "authPanel": {
+    "headline": "Dialoguez avec vos finances.",
+    "subheadline": "Un espace conversationnel pour budgets, analyses et flux de trésorerie — conçu pour protéger vos données.",
+    "feature1": "Analyses conversationnelles — posez des questions, obtenez des réponses rapides",
+    "feature2": "Sécurisé dès la conception — 2FA, chiffrement et contrôles stricts",
+    "feature3": "Vos données, vos règles — exportez ou supprimez à tout moment",
+    "footer": "© Finatalk"
+  },
   "language": "Langue",
   "theme": { "light": "Clair", "dark": "Sombre", "system": "Système" }
 }
