@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm add *)",
+      "Bash(ls node_modules/.pnpm/yahoo-finance2@3.14.0/node_modules/yahoo-finance2/dist/)",
+      "Bash(find node_modules/.pnpm/yahoo-finance2@3.14.0/node_modules/yahoo-finance2/dist -name \"chart.d.ts\" -o -name \"historical.d.ts\")",
+      "Bash(pnpm --filter @finatalk/trpc typecheck)",
+      "Bash(pnpm --filter @finatalk/web typecheck)",
+      "Bash(pnpm --filter @finatalk/server typecheck)"
+    ]
+  }
+}

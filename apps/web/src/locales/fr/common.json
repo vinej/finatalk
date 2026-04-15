@@ -23,7 +23,27 @@
   },
   "nav": {
     "home": "Accueil",
+    "markets": "Marchés",
     "settings": "Paramètres"
+  },
+  "markets": {
+    "title": "Analyse technique",
+    "symbol": "Symbole",
+    "range": "Période",
+    "interval": "Intervalle",
+    "load": "Charger",
+    "loading": "Chargement…",
+    "fetchFailed": "Impossible de charger les données.",
+    "latest": "Dernières valeurs",
+    "refreshSymbols": "Actualiser les symboles",
+    "loadingSymbols": "Chargement des symboles…",
+    "symbolsRefreshed": "Symboles actualisés ({{count}}).",
+    "symbolsRefreshFailed": "Échec de l'actualisation des symboles.",
+    "symbolsCount": "{{count}} symboles disponibles",
+    "symbolsFetchedAt": "Récupéré le {{date}}",
+    "showInCad": "Afficher en CAD",
+    "currency": "Devise : {{code}}",
+    "currencyConverted": "Converti de {{from}} vers {{to}} aux taux de change historiques"
   },
   "dashboard": {
     "welcome": "Bienvenue, {{name}} !",

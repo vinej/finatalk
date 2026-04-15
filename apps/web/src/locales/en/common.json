@@ -23,7 +23,27 @@
   },
   "nav": {
     "home": "Home",
+    "markets": "Markets",
     "settings": "Settings"
+  },
+  "markets": {
+    "title": "Technical analysis",
+    "symbol": "Symbol",
+    "range": "Range",
+    "interval": "Interval",
+    "load": "Load",
+    "loading": "Loading…",
+    "fetchFailed": "Couldn't load market data.",
+    "latest": "Latest values",
+    "refreshSymbols": "Refresh symbols",
+    "loadingSymbols": "Loading symbols…",
+    "symbolsRefreshed": "Symbols refreshed ({{count}}).",
+    "symbolsRefreshFailed": "Couldn't refresh symbols.",
+    "symbolsCount": "{{count}} symbols available",
+    "symbolsFetchedAt": "Fetched {{date}}",
+    "showInCad": "Show in CAD",
+    "currency": "Currency: {{code}}",
+    "currencyConverted": "Converted from {{from}} to {{to}} at historical FX rates"
   },
   "dashboard": {
     "welcome": "Welcome, {{name}}!",

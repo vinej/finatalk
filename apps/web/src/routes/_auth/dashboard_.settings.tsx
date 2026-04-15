@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 
-export const Route = createFileRoute("/_auth/dashboard/settings")({
+export const Route = createFileRoute("/_auth/dashboard_/settings")({
   component: SettingsPage,
 });
 

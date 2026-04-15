@@ -17,7 +17,8 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
-import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard.settings'
+import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
+import { Route as AuthDashboardMarketsRouteImport } from './routes/_auth/dashboard_.markets'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -59,9 +60,14 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthDashboardSettingsRoute = AuthDashboardSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthDashboardRoute,
+  id: '/dashboard_/settings',
+  path: '/dashboard/settings',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthDashboardMarketsRoute = AuthDashboardMarketsRouteImport.update({
+  id: '/dashboard_/markets',
+  path: '/dashboard/markets',
+  getParentRoute: () => AuthRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -71,7 +77,8 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/dashboard': typeof AuthDashboardRouteWithChildren
+  '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -81,7 +88,8 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/dashboard': typeof AuthDashboardRouteWithChildren
+  '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
 }
 export interface FileRoutesById {
@@ -93,8 +101,9 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/_auth/dashboard': typeof AuthDashboardRouteWithChildren
-  '/_auth/dashboard/settings': typeof AuthDashboardSettingsRoute
+  '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/dashboard_/markets': typeof AuthDashboardMarketsRoute
+  '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/markets'
     | '/dashboard/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/markets'
     | '/dashboard/settings'
   id:
     | '__root__'
@@ -127,7 +138,8 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/_auth/dashboard'
-    | '/_auth/dashboard/settings'
+    | '/_auth/dashboard_/markets'
+    | '/_auth/dashboard_/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,34 +210,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/dashboard/settings': {
-      id: '/_auth/dashboard/settings'
-      path: '/settings'
+    '/_auth/dashboard_/settings': {
+      id: '/_auth/dashboard_/settings'
+      path: '/dashboard/settings'
       fullPath: '/dashboard/settings'
       preLoaderRoute: typeof AuthDashboardSettingsRouteImport
-      parentRoute: typeof AuthDashboardRoute
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/dashboard_/markets': {
+      id: '/_auth/dashboard_/markets'
+      path: '/dashboard/markets'
+      fullPath: '/dashboard/markets'
+      preLoaderRoute: typeof AuthDashboardMarketsRouteImport
+      parentRoute: typeof AuthRoute
     }
   }
 }
 
-interface AuthDashboardRouteChildren {
+interface AuthRouteChildren {
+  AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthDashboardMarketsRoute: typeof AuthDashboardMarketsRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
 }
 
-const AuthDashboardRouteChildren: AuthDashboardRouteChildren = {
-  AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
-}
-
-const AuthDashboardRouteWithChildren = AuthDashboardRoute._addFileChildren(
-  AuthDashboardRouteChildren,
-)
-
-interface AuthRouteChildren {
-  AuthDashboardRoute: typeof AuthDashboardRouteWithChildren
-}
-
 const AuthRouteChildren: AuthRouteChildren = {
-  AuthDashboardRoute: AuthDashboardRouteWithChildren,
+  AuthDashboardRoute: AuthDashboardRoute,
+  AuthDashboardMarketsRoute: AuthDashboardMarketsRoute,
+  AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
