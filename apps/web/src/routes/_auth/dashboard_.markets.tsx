@@ -233,7 +233,7 @@ function MarketsPage() {
               />
               {t("markets.showInCad")}
             </label>
-            <Button type="submit">{t("markets.load")}</Button>
+            <Button type="submit">{t("markets.loadData")}</Button>
             <Button
               type="button"
               variant="outline"

@@ -32,6 +32,7 @@
     "range": "Période",
     "interval": "Intervalle",
     "load": "Charger",
+    "loadData": "Charger les données",
     "loading": "Chargement…",
     "fetchFailed": "Impossible de charger les données.",
     "latest": "Dernières valeurs",

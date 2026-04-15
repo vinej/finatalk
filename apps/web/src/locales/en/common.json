@@ -32,6 +32,7 @@
     "range": "Range",
     "interval": "Interval",
     "load": "Load",
+    "loadData": "Load data",
     "loading": "Loading…",
     "fetchFailed": "Couldn't load market data.",
     "latest": "Latest values",
