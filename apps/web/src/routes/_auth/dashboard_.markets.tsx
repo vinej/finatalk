@@ -3,31 +3,30 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { MarketChart } from "@/components/market-chart";
+import { IndicatorLibrary } from "@/components/markets/indicator-library";
+import { IndicatorList } from "@/components/markets/indicator-list";
+import { OpenAnalysisAction } from "@/components/markets/open-analysis-action";
+import { OpenSavedChartsAction } from "@/components/markets/open-saved-charts-action";
+import { SaveAnalysisAction } from "@/components/markets/save-analysis-action";
+import { SaveChartAction } from "@/components/markets/save-chart-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import {
+  DEFAULT_SEED,
+  type ActiveIndicator,
+  type IndicatorColor,
+  type IndicatorSpec,
+} from "@/lib/indicator-defaults";
 import { trpc } from "@/lib/trpc";
-import type { RouterInputs, RouterOutputs } from "@finatalk/trpc";
+import type { RouterOutputs } from "@finatalk/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard_/markets")({
   component: MarketsPage,
 });
 
-type AnalyzeInput = RouterInputs["market"]["analyze"];
-type IndicatorSpec = AnalyzeInput["indicators"][number];
 type AnalyzeResult = RouterOutputs["market"]["analyze"]["results"][number];
-
-type Preset = { id: string; label: string; spec: IndicatorSpec };
-
-const PRESETS: Preset[] = [
-  { id: "sma20", label: "SMA 20", spec: { kind: "sma", period: 20 } },
-  { id: "ema50", label: "EMA 50", spec: { kind: "ema", period: 50 } },
-  { id: "rsi14", label: "RSI 14", spec: { kind: "rsi", period: 14 } },
-  { id: "macd", label: "MACD 12/26/9", spec: { kind: "macd", fast: 12, slow: 26, signal: 9 } },
-  { id: "bb20", label: "BBands 20/2", spec: { kind: "bbands", period: 20, stdDev: 2 } },
-];
 
 const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
 const INTERVALS = ["1d", "1wk", "1mo"] as const;
@@ -38,13 +37,29 @@ function MarketsPage() {
   const [submittedSymbol, setSubmittedSymbol] = useState("AAPL");
   const [range, setRange] = useState<(typeof RANGES)[number]>("6mo");
   const [interval, setInterval] = useState<(typeof INTERVALS)[number]>("1d");
-  const [activePresetIds, setActivePresetIds] = useState<string[]>(["sma20", "rsi14", "macd"]);
   const [convertToCad, setConvertToCad] = useState(false);
+  const [activeIndicators, setActiveIndicators] = useState<ActiveIndicator[]>(DEFAULT_SEED);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
+  const [loadedAnalysisId, setLoadedAnalysisId] = useState<string | null>(null);
+  const [loadedAnalysisTitle, setLoadedAnalysisTitle] = useState<string | null>(null);
+  const [loadedAnalysisDescription, setLoadedAnalysisDescription] = useState<string | null>(null);
+  const [loadedChartTitle, setLoadedChartTitle] = useState<string | null>(null);
 
-  const indicators = useMemo(
-    () => PRESETS.filter((p) => activePresetIds.includes(p.id)).map((p) => p.spec),
-    [activePresetIds],
+  const indicators = useMemo(() => activeIndicators.map((a) => a.spec), [activeIndicators]);
+  const colors = useMemo(() => activeIndicators.map((a) => a.color), [activeIndicators]);
+  const visibleColors = useMemo(
+    () => activeIndicators.filter((a) => !hiddenIds.has(a.localId)).map((a) => a.color),
+    [activeIndicators, hiddenIds],
   );
+
+  function toggleHidden(localId: string) {
+    setHiddenIds((curr) => {
+      const next = new Set(curr);
+      if (next.has(localId)) next.delete(localId);
+      else next.add(localId);
+      return next;
+    });
+  }
 
   const query = trpc.market.analyze.useQuery(
     { symbol: submittedSymbol, range, interval, indicators, convertTo: convertToCad ? "CAD" : null },
@@ -90,10 +105,51 @@ function MarketsPage() {
     if (query.error) toast.error(query.error.message ?? t("markets.fetchFailed"));
   }, [query.error, t]);
 
-  function togglePreset(id: string) {
-    setActivePresetIds((curr) =>
-      curr.includes(id) ? curr.filter((x) => x !== id) : [...curr, id],
+  function addIndicator(item: ActiveIndicator) {
+    setActiveIndicators((curr) => [...curr, item]);
+  }
+  function removeIndicator(localId: string) {
+    setActiveIndicators((curr) => curr.filter((x) => x.localId !== localId));
+    setHiddenIds((curr) => {
+      if (!curr.has(localId)) return curr;
+      const next = new Set(curr);
+      next.delete(localId);
+      return next;
+    });
+  }
+  function updateIndicator(localId: string, next: { spec: IndicatorSpec; color: IndicatorColor }) {
+    setActiveIndicators((curr) =>
+      curr.map((x) => (x.localId === localId ? { ...x, spec: next.spec, color: next.color } : x)),
     );
+  }
+
+  function loadAnalysis(items: ActiveIndicator[], id: string, title: string, description: string) {
+    setActiveIndicators(items);
+    setHiddenIds(new Set());
+    setLoadedAnalysisId(id);
+    setLoadedAnalysisTitle(title);
+    setLoadedAnalysisDescription(description);
+  }
+
+  function loadSavedChart(chart: {
+    title: string;
+    symbol: string;
+    range: (typeof RANGES)[number];
+    interval: (typeof INTERVALS)[number];
+    convertTo: "CAD" | null;
+    indicators: ActiveIndicator[];
+  }) {
+    setSymbolInput(chart.symbol);
+    setSubmittedSymbol(chart.symbol);
+    setRange(chart.range);
+    setInterval(chart.interval);
+    setConvertToCad(chart.convertTo === "CAD");
+    setActiveIndicators(chart.indicators);
+    setHiddenIds(new Set());
+    setLoadedAnalysisId(null);
+    setLoadedAnalysisTitle(null);
+    setLoadedAnalysisDescription(null);
+    setLoadedChartTitle(chart.title);
   }
 
   function onSubmit(e: React.FormEvent) {
@@ -103,10 +159,23 @@ function MarketsPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4">
+    <div className="mx-auto flex max-w-7xl flex-col gap-4">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>{t("markets.title")}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <SaveChartAction
+              current={{
+                symbol: submittedSymbol,
+                range,
+                interval,
+                convertTo: convertToCad ? "CAD" : null,
+                indicators: activeIndicators,
+              }}
+              defaultTitle={loadedChartTitle}
+            />
+            <OpenSavedChartsAction onLoad={loadSavedChart} />
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
@@ -190,27 +259,42 @@ function MarketsPage() {
               {t("markets.symbolsCount", { count: symbolsQuery.data.symbols.length })}
             </p>
           )}
+        </CardContent>
+      </Card>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {PRESETS.map((p) => {
-              const active = activePresetIds.includes(p.id);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => togglePreset(p.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
-                      : "border-[var(--color-border)] text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]",
-                  )}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+          <CardTitle className="text-base">{t("markets.indicators")}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <SaveAnalysisAction
+              indicators={activeIndicators}
+              defaultTitle={loadedAnalysisTitle}
+              defaultDescription={loadedAnalysisDescription}
+            />
+            <OpenAnalysisAction
+              indicators={activeIndicators}
+              loadedAnalysisId={loadedAnalysisId}
+              loadedAnalysisTitle={loadedAnalysisTitle}
+              onLoad={loadAnalysis}
+              onLoadedChange={(id) => {
+                setLoadedAnalysisId(id);
+                if (id === null) {
+                  setLoadedAnalysisTitle(null);
+                  setLoadedAnalysisDescription(null);
+                }
+              }}
+            />
           </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <IndicatorLibrary onAdd={addIndicator} />
+          <IndicatorList
+            items={activeIndicators}
+            hiddenIds={hiddenIds}
+            onToggleHidden={toggleHidden}
+            onChange={updateIndicator}
+            onRemove={removeIndicator}
+          />
         </CardContent>
       </Card>
 
@@ -225,7 +309,13 @@ function MarketsPage() {
               {query.error?.message ?? t("markets.fetchFailed")}
             </div>
           ) : (
-            <MarketChart candles={query.data.candles} results={query.data.results} />
+            <MarketChart
+              candles={query.data.candles}
+              results={query.data.results.filter(
+                (_, i) => activeIndicators[i] && !hiddenIds.has(activeIndicators[i].localId),
+              )}
+              colors={visibleColors}
+            />
           )}
         </CardContent>
       </Card>
@@ -244,6 +334,7 @@ function MarketsPage() {
           </CardContent>
         </Card>
       )}
+
     </div>
   );
 }
@@ -251,13 +342,11 @@ function MarketsPage() {
 function LatestCell({ result }: { result: AnalyzeResult }) {
   const last = result.series[result.series.length - 1];
   const label =
-    result.kind === "sma" || result.kind === "ema"
-      ? `${result.kind.toUpperCase()} ${result.spec.period}`
-      : result.kind === "rsi"
-        ? `RSI ${result.spec.period}`
-        : result.kind === "macd"
-          ? `MACD ${result.spec.fast}/${result.spec.slow}/${result.spec.signal}`
-          : `BB ${result.spec.period}/${result.spec.stdDev}`;
+    result.kind === "macd"
+      ? `MACD ${result.spec.fast}/${result.spec.slow}/${result.spec.signal}`
+      : result.kind === "bbands"
+        ? `BB ${result.spec.period}/${result.spec.stdDev}`
+        : `${result.kind.toUpperCase()} ${result.spec.period}`;
 
   return (
     <div className="rounded-md border border-[var(--color-border)] p-3">

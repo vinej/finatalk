@@ -1,37 +1,16 @@
 import { TRPCError } from "@trpc/server";
-import { BollingerBands, EMA, MACD, RSI, SMA } from "trading-signals";
+import { BollingerBands, DEMA, EMA, MACD, MOM, RMA, ROC, RSI, SMA, WMA } from "trading-signals";
 import YahooFinance from "yahoo-finance2";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
+import {
+  IndicatorSpec,
+  IntervalSchema,
+  RangeSchema,
+  SymbolSchema,
+} from "../schemas/indicator";
 
 const yf = new YahooFinance();
-
-const RangeSchema = z.enum(["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"]);
-const IntervalSchema = z.enum(["1d", "1wk", "1mo"]);
-
-const SymbolSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(20)
-  .regex(/^[A-Za-z0-9.\-=^]+$/, "Invalid symbol");
-
-const IndicatorSpec = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("sma"), period: z.number().int().min(2).max(500) }),
-  z.object({ kind: z.literal("ema"), period: z.number().int().min(2).max(500) }),
-  z.object({ kind: z.literal("rsi"), period: z.number().int().min(2).max(500) }),
-  z.object({
-    kind: z.literal("macd"),
-    fast: z.number().int().min(2).max(200),
-    slow: z.number().int().min(2).max(500),
-    signal: z.number().int().min(1).max(200),
-  }),
-  z.object({
-    kind: z.literal("bbands"),
-    period: z.number().int().min(2).max(500),
-    stdDev: z.number().min(0.1).max(10),
-  }),
-]);
 
 type IndicatorSpecT = z.infer<typeof IndicatorSpec>;
 
@@ -151,30 +130,40 @@ type BandsSeries = { time: number; upper: number; middle: number; lower: number 
 type IndicatorResult =
   | { kind: "sma"; spec: Extract<IndicatorSpecT, { kind: "sma" }>; series: LineSeries }
   | { kind: "ema"; spec: Extract<IndicatorSpecT, { kind: "ema" }>; series: LineSeries }
+  | { kind: "rma"; spec: Extract<IndicatorSpecT, { kind: "rma" }>; series: LineSeries }
+  | { kind: "wma"; spec: Extract<IndicatorSpecT, { kind: "wma" }>; series: LineSeries }
+  | { kind: "dema"; spec: Extract<IndicatorSpecT, { kind: "dema" }>; series: LineSeries }
   | { kind: "rsi"; spec: Extract<IndicatorSpecT, { kind: "rsi" }>; series: LineSeries }
+  | { kind: "mom"; spec: Extract<IndicatorSpecT, { kind: "mom" }>; series: LineSeries }
+  | { kind: "roc"; spec: Extract<IndicatorSpecT, { kind: "roc" }>; series: LineSeries }
   | { kind: "macd"; spec: Extract<IndicatorSpecT, { kind: "macd" }>; series: MacdSeries }
   | { kind: "bbands"; spec: Extract<IndicatorSpecT, { kind: "bbands" }>; series: BandsSeries };
 
 function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
   switch (spec.kind) {
     case "sma":
-    case "ema": {
-      const ind = spec.kind === "sma" ? new SMA(spec.period) : new EMA(spec.period);
+    case "ema":
+    case "rma":
+    case "wma":
+    case "dema":
+    case "rsi":
+    case "mom":
+    case "roc": {
+      const ind =
+        spec.kind === "sma" ? new SMA(spec.period)
+        : spec.kind === "ema" ? new EMA(spec.period)
+        : spec.kind === "rma" ? new RMA(spec.period)
+        : spec.kind === "wma" ? new WMA(spec.period)
+        : spec.kind === "dema" ? new DEMA(spec.period)
+        : spec.kind === "rsi" ? new RSI(spec.period)
+        : spec.kind === "mom" ? new MOM(spec.period)
+        : new ROC(spec.period);
       const series: LineSeries = [];
       for (const c of candles) {
         const v = ind.update(c.close, false);
-        if (v != null) series.push({ time: c.time, value: v });
+        if (v != null) series.push({ time: c.time, value: Number(v) });
       }
       return { kind: spec.kind, spec, series } as IndicatorResult;
-    }
-    case "rsi": {
-      const rsi = new RSI(spec.period);
-      const series: LineSeries = [];
-      for (const c of candles) {
-        const v = rsi.update(c.close, false);
-        if (v != null) series.push({ time: c.time, value: v });
-      }
-      return { kind: "rsi", spec, series };
     }
     case "macd": {
       const macd = new MACD(new EMA(spec.fast), new EMA(spec.slow), new EMA(spec.signal));

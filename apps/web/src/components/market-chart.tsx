@@ -10,14 +10,21 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import type { RouterOutputs } from "@finatalk/trpc";
+import { CANDLE_DOWN, CANDLE_UP, type IndicatorColor } from "@/lib/indicator-legend";
 
 type Analyze = RouterOutputs["market"]["analyze"];
 export type Candle = Analyze["candles"][number];
 export type IndicatorResult = Analyze["results"][number];
 
-const OVERLAY_COLORS = ["#2563eb", "#16a34a", "#db2777", "#ca8a04", "#9333ea"];
-
-export function MarketChart({ candles, results }: { candles: Candle[]; results: IndicatorResult[] }) {
+export function MarketChart({
+  candles,
+  results,
+  colors,
+}: {
+  candles: Candle[];
+  results: IndicatorResult[];
+  colors: IndicatorColor[];
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
@@ -56,12 +63,12 @@ export function MarketChart({ candles, results }: { candles: Candle[]; results: 
     seriesRef.current = [];
 
     const candle = chart.addSeries(CandlestickSeries, {
-      upColor: "#16a34a",
-      downColor: "#dc2626",
-      borderUpColor: "#16a34a",
-      borderDownColor: "#dc2626",
-      wickUpColor: "#16a34a",
-      wickDownColor: "#dc2626",
+      upColor: CANDLE_UP,
+      downColor: CANDLE_DOWN,
+      borderUpColor: CANDLE_UP,
+      borderDownColor: CANDLE_DOWN,
+      wickUpColor: CANDLE_UP,
+      wickDownColor: CANDLE_DOWN,
     });
     candle.setData(
       candles.map((c) => ({
@@ -75,33 +82,44 @@ export function MarketChart({ candles, results }: { candles: Candle[]; results: 
     seriesRef.current.push(candle);
 
     let nextPane = 1;
-    let overlayColorIdx = 0;
-    const nextOverlayColor = () => OVERLAY_COLORS[overlayColorIdx++ % OVERLAY_COLORS.length];
 
-    for (const r of results) {
-      if (r.kind === "sma" || r.kind === "ema") {
-        const s = chart.addSeries(LineSeries, { color: nextOverlayColor(), lineWidth: 2 });
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i]!;
+      const c = colors[i] ?? "#2563eb";
+      const lineColor = typeof c === "string" ? c : c.line;
+
+      if (
+        r.kind === "sma" ||
+        r.kind === "ema" ||
+        r.kind === "rma" ||
+        r.kind === "wma" ||
+        r.kind === "dema"
+      ) {
+        const s = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 2 });
         s.setData(r.series.map((p) => ({ time: p.time as Time, value: p.value })));
         seriesRef.current.push(s);
       } else if (r.kind === "bbands") {
-        const color = nextOverlayColor();
-        const upper = chart.addSeries(LineSeries, { color, lineWidth: 1 });
-        const middle = chart.addSeries(LineSeries, { color, lineWidth: 1, lineStyle: 2 });
-        const lower = chart.addSeries(LineSeries, { color, lineWidth: 1 });
+        const upper = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 1 });
+        const middle = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 1, lineStyle: 2 });
+        const lower = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 1 });
         upper.setData(r.series.map((p) => ({ time: p.time as Time, value: p.upper })));
         middle.setData(r.series.map((p) => ({ time: p.time as Time, value: p.middle })));
         lower.setData(r.series.map((p) => ({ time: p.time as Time, value: p.lower })));
         seriesRef.current.push(upper, middle, lower);
-      } else if (r.kind === "rsi") {
+      } else if (r.kind === "rsi" || r.kind === "mom" || r.kind === "roc") {
         const pane = nextPane++;
-        const s = chart.addSeries(LineSeries, { color: "#7c3aed", lineWidth: 2 }, pane);
+        const s = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 2 }, pane);
         s.setData(r.series.map((p) => ({ time: p.time as Time, value: p.value })));
         seriesRef.current.push(s);
       } else if (r.kind === "macd") {
+        const macdC =
+          typeof c === "string"
+            ? { line: c, signal: c, hist: c }
+            : { line: c.line, signal: c.signal, hist: c.hist };
         const pane = nextPane++;
-        const macdLine = chart.addSeries(LineSeries, { color: "#2563eb", lineWidth: 2 }, pane);
-        const signalLine = chart.addSeries(LineSeries, { color: "#dc2626", lineWidth: 2 }, pane);
-        const histo = chart.addSeries(HistogramSeries, { color: "#9ca3af" }, pane);
+        const macdLine = chart.addSeries(LineSeries, { color: macdC.line, lineWidth: 2 }, pane);
+        const signalLine = chart.addSeries(LineSeries, { color: macdC.signal, lineWidth: 2 }, pane);
+        const histo = chart.addSeries(HistogramSeries, { color: macdC.hist }, pane);
         macdLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.macd })));
         signalLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.signal })));
         histo.setData(r.series.map((p) => ({ time: p.time as Time, value: p.histogram })));
@@ -110,7 +128,7 @@ export function MarketChart({ candles, results }: { candles: Candle[]; results: 
     }
 
     chart.timeScale().fitContent();
-  }, [candles, results]);
+  }, [candles, results, colors]);
 
   return <div ref={containerRef} className="h-[560px] w-full" />;
 }

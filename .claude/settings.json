@@ -6,7 +6,11 @@
       "Bash(find node_modules/.pnpm/yahoo-finance2@3.14.0/node_modules/yahoo-finance2/dist -name \"chart.d.ts\" -o -name \"historical.d.ts\")",
       "Bash(pnpm --filter @finatalk/trpc typecheck)",
       "Bash(pnpm --filter @finatalk/web typecheck)",
-      "Bash(pnpm --filter @finatalk/server typecheck)"
+      "Bash(pnpm --filter @finatalk/server typecheck)",
+      "Bash(pnpm --filter @finatalk/db db:generate)",
+      "Bash(pnpm --filter @finatalk/db db:push)",
+      "Bash(node -e \"const ts=require\\('trading-signals'\\);console.log\\(Object.keys\\(ts\\).filter\\(k=>['RMA','WMA','DEMA','MOM','ROC'].includes\\(k\\)\\)\\)\")",
+      "Bash(pnpm -r typecheck)"
     ]
   }
 }
