@@ -1,0 +1,25 @@
+{
+  "name": "finatalk",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "typecheck": "turbo typecheck",
+    "db:generate": "turbo db:generate",
+    "db:migrate": "turbo db:migrate",
+    "db:studio": "pnpm --filter @finatalk/db studio",
+    "build:db": "pnpm --filter @finatalk/db build",
+    "build:trpc": "pnpm --filter @finatalk/trpc build",
+    "build:server": "pnpm --filter @finatalk/server build",
+    "build:web": "pnpm --filter @finatalk/web build"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@9.12.0"
+}

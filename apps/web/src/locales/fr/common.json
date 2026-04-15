@@ -1,0 +1,45 @@
+{
+  "app": { "name": "Finatalk" },
+  "auth": {
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "signOut": "Se déconnecter",
+    "email": "Courriel",
+    "password": "Mot de passe",
+    "name": "Nom",
+    "noAccount": "Pas encore de compte ?",
+    "haveAccount": "Déjà un compte ?",
+    "verifyEmail": "Vérifiez votre courriel",
+    "verifyEmailDesc": "Nous avons envoyé un lien de vérification à votre adresse.",
+    "verifying": "Vérification…",
+    "verified": "Courriel vérifié ! Redirection…",
+    "verifyFailed": "Échec de la vérification.",
+    "twoFactor": "Code à deux facteurs",
+    "twoFactorDesc": "Entrez le code à 6 chiffres envoyé à votre courriel.",
+    "send": "Envoyer le code",
+    "verify": "Vérifier",
+    "submit": "Soumettre",
+    "passwordHint": "Min. 12 caractères, avec maj., min., chiffre et symbole."
+  },
+  "nav": {
+    "home": "Accueil",
+    "settings": "Paramètres"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue, {{name}} !",
+    "subtitle": "Vous êtes connecté à Finatalk.",
+    "verifiedBadge": "Vérifié",
+    "unverifiedBadge": "Courriel non vérifié"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "profile": "Profil",
+    "name": "Nom",
+    "email": "Courriel",
+    "save": "Enregistrer",
+    "saved": "Enregistré.",
+    "saveFailed": "Échec de l'enregistrement."
+  },
+  "language": "Langue",
+  "theme": { "light": "Clair", "dark": "Sombre", "system": "Système" }
+}

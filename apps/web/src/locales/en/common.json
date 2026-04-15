@@ -1,0 +1,45 @@
+{
+  "app": { "name": "Finatalk" },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "verifyEmail": "Verify your email",
+    "verifyEmailDesc": "We sent a verification link to your email.",
+    "verifying": "Verifying…",
+    "verified": "Email verified! Redirecting…",
+    "verifyFailed": "Verification failed.",
+    "twoFactor": "Two-factor code",
+    "twoFactorDesc": "Enter the 6-digit code we sent to your email.",
+    "send": "Send code",
+    "verify": "Verify",
+    "submit": "Submit",
+    "passwordHint": "Min 12 chars, include upper, lower, digit and symbol."
+  },
+  "nav": {
+    "home": "Home",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{name}}!",
+    "subtitle": "You're signed in to Finatalk.",
+    "verifiedBadge": "Verified",
+    "unverifiedBadge": "Email not verified"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "name": "Name",
+    "email": "Email",
+    "save": "Save changes",
+    "saved": "Saved.",
+    "saveFailed": "Couldn't save your changes."
+  },
+  "language": "Language",
+  "theme": { "light": "Light", "dark": "Dark", "system": "System" }
+}
