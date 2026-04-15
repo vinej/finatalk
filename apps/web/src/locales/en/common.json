@@ -24,7 +24,18 @@
   "nav": {
     "home": "Home",
     "markets": "Markets",
+    "learnTa": "Learn TA",
     "settings": "Settings"
+  },
+  "learnTa": {
+    "title": "Learn technical analysis",
+    "intro": "A reference for the indicators on the markets page. Each section explains when an indicator is the right tool, how to configure it, and how to read its signals — with curated links to dig deeper.",
+    "tableOfContents": "Indicators",
+    "whenToUse": "When to use it",
+    "howToUse": "How to use it",
+    "howToAnalyse": "How to analyse it",
+    "furtherReading": "Further reading",
+    "generalResources": "General resources"
   },
   "markets": {
     "title": "Technical analysis",

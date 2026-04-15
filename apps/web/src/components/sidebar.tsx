@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, LineChart, Settings } from "lucide-react";
+import { BookOpen, Home, LineChart, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ export function Sidebar() {
   const items = [
     { to: "/dashboard", label: t("nav.home"), icon: Home },
     { to: "/dashboard/markets", label: t("nav.markets"), icon: LineChart },
+    { to: "/dashboard/learn-ta", label: t("nav.learnTa"), icon: BookOpen },
     { to: "/dashboard/settings", label: t("nav.settings"), icon: Settings },
   ] as const;
 

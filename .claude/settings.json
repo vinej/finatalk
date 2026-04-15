@@ -10,7 +10,8 @@
       "Bash(pnpm --filter @finatalk/db db:generate)",
       "Bash(pnpm --filter @finatalk/db db:push)",
       "Bash(node -e \"const ts=require\\('trading-signals'\\);console.log\\(Object.keys\\(ts\\).filter\\(k=>['RMA','WMA','DEMA','MOM','ROC'].includes\\(k\\)\\)\\)\")",
-      "Bash(pnpm -r typecheck)"
+      "Bash(pnpm -r typecheck)",
+      "WebFetch(domain:chartschool.stockcharts.com)"
     ]
   }
 }

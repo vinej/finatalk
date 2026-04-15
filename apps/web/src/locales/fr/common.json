@@ -24,7 +24,18 @@
   "nav": {
     "home": "Accueil",
     "markets": "Marchés",
+    "learnTa": "Apprendre l'AT",
     "settings": "Paramètres"
+  },
+  "learnTa": {
+    "title": "Apprendre l'analyse technique",
+    "intro": "Un guide de référence pour les indicateurs disponibles sur la page Marchés. Chaque section explique quand un indicateur est l'outil approprié, comment le configurer et comment lire ses signaux — avec des liens choisis pour aller plus loin.",
+    "tableOfContents": "Indicateurs",
+    "whenToUse": "Quand l'utiliser",
+    "howToUse": "Comment l'utiliser",
+    "howToAnalyse": "Comment l'analyser",
+    "furtherReading": "Pour aller plus loin",
+    "generalResources": "Ressources générales"
   },
   "markets": {
     "title": "Analyse technique",

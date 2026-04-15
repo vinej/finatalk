@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
 import { Route as AuthDashboardMarketsRouteImport } from './routes/_auth/dashboard_.markets'
+import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -69,6 +70,11 @@ const AuthDashboardMarketsRoute = AuthDashboardMarketsRouteImport.update({
   path: '/dashboard/markets',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardLearnTaRoute = AuthDashboardLearnTaRouteImport.update({
+  id: '/dashboard_/learn-ta',
+  path: '/dashboard/learn-ta',
+  getParentRoute: () => AuthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
 }
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
 }
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/markets': typeof AuthDashboardMarketsRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
 }
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/learn-ta'
     | '/dashboard/markets'
     | '/dashboard/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/learn-ta'
     | '/dashboard/markets'
     | '/dashboard/settings'
   id:
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/_auth/dashboard'
+    | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/markets'
     | '/_auth/dashboard_/settings'
   fileRoutesById: FileRoutesById
@@ -224,17 +236,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardMarketsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/learn-ta': {
+      id: '/_auth/dashboard_/learn-ta'
+      path: '/dashboard/learn-ta'
+      fullPath: '/dashboard/learn-ta'
+      preLoaderRoute: typeof AuthDashboardLearnTaRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardMarketsRoute: typeof AuthDashboardMarketsRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardMarketsRoute: AuthDashboardMarketsRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
 }
