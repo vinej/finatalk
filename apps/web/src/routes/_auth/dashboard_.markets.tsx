@@ -21,6 +21,7 @@ import {
   type IndicatorColor,
   type IndicatorSpec,
 } from "@/lib/indicator-defaults";
+import { loadMarketsState, saveMarketsState } from "@/lib/markets-persistence";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
@@ -35,17 +36,46 @@ const INTERVALS = ["1d", "1wk", "1mo"] as const;
 
 function MarketsPage() {
   const { t, i18n } = useTranslation();
-  const [symbolInput, setSymbolInput] = useState("AAPL");
-  const [submittedSymbol, setSubmittedSymbol] = useState("AAPL");
-  const [range, setRange] = useState<(typeof RANGES)[number]>("6mo");
-  const [interval, setInterval] = useState<(typeof INTERVALS)[number]>("1d");
-  const [convertToCad, setConvertToCad] = useState(false);
-  const [activeIndicators, setActiveIndicators] = useState<ActiveIndicator[]>(DEFAULT_SEED);
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
-  const [loadedAnalysisId, setLoadedAnalysisId] = useState<string | null>(null);
-  const [loadedAnalysisTitle, setLoadedAnalysisTitle] = useState<string | null>(null);
-  const [loadedAnalysisDescription, setLoadedAnalysisDescription] = useState<string | null>(null);
-  const [loadedChartTitle, setLoadedChartTitle] = useState<string | null>(null);
+  const persisted = useMemo(() => loadMarketsState(), []);
+  const [symbolInput, setSymbolInput] = useState(persisted?.symbolInput ?? "AAPL");
+  const [submittedSymbol, setSubmittedSymbol] = useState(persisted?.submittedSymbol ?? "AAPL");
+  const [range, setRange] = useState<(typeof RANGES)[number]>(persisted?.range ?? "6mo");
+  const [interval, setInterval] = useState<(typeof INTERVALS)[number]>(persisted?.interval ?? "1d");
+  const [convertToCad, setConvertToCad] = useState(persisted?.convertToCad ?? false);
+  const [activeIndicators, setActiveIndicators] = useState<ActiveIndicator[]>(persisted?.activeIndicators ?? DEFAULT_SEED);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set(persisted?.hiddenIds ?? []));
+  const [loadedAnalysisId, setLoadedAnalysisId] = useState<string | null>(persisted?.loadedAnalysisId ?? null);
+  const [loadedAnalysisTitle, setLoadedAnalysisTitle] = useState<string | null>(persisted?.loadedAnalysisTitle ?? null);
+  const [loadedAnalysisDescription, setLoadedAnalysisDescription] = useState<string | null>(persisted?.loadedAnalysisDescription ?? null);
+  const [loadedChartTitle, setLoadedChartTitle] = useState<string | null>(persisted?.loadedChartTitle ?? null);
+
+  useEffect(() => {
+    saveMarketsState({
+      symbolInput,
+      submittedSymbol,
+      range,
+      interval,
+      convertToCad,
+      activeIndicators,
+      hiddenIds: [...hiddenIds],
+      loadedAnalysisId,
+      loadedAnalysisTitle,
+      loadedAnalysisDescription,
+      loadedChartTitle,
+    });
+  }, [
+    symbolInput,
+    submittedSymbol,
+    range,
+    interval,
+    convertToCad,
+    activeIndicators,
+    hiddenIds,
+    loadedAnalysisId,
+    loadedAnalysisTitle,
+    loadedAnalysisDescription,
+    loadedChartTitle,
+  ]);
 
   const indicators = useMemo(() => activeIndicators.map((a) => a.spec), [activeIndicators]);
   const colors = useMemo(() => activeIndicators.map((a) => a.color), [activeIndicators]);
