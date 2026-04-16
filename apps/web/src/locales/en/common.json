@@ -4,6 +4,7 @@
     "signIn": "Sign in",
     "signUp": "Sign up",
     "signOut": "Sign out",
+    "signOutConfirm": "Sign out of FinaTalk?",
     "email": "Email",
     "password": "Password",
     "name": "Name",
@@ -26,6 +27,7 @@
     "markets": "Analysis",
     "portfolios": "Portfolios",
     "learnTa": "Learn TA",
+    "learnInvestment": "Learn Investment",
     "settings": "Settings"
   },
   "learnTa": {
@@ -35,6 +37,18 @@
     "whenToUse": "When to use it",
     "howToUse": "How to use it",
     "howToAnalyse": "How to analyse it",
+    "furtherReading": "Further reading",
+    "generalResources": "General resources"
+  },
+  "learnInvestment": {
+    "title": "Learn investment",
+    "intro": "A practical reference to the main investment types available to Québec/Canadian investors — from a bank savings account to a fund of funds. For each, you'll find characteristics, when and why to buy, and how profits are paid and taxed in Québec.",
+    "disclaimer": "Educational content — not investment, tax, or legal advice. Rates and tax figures reflect the 2025 Québec/Canada framework and may change. Consult a qualified advisor for your personal situation.",
+    "tableOfContents": "Investment types",
+    "characteristics": "Characteristics",
+    "whenToBuy": "When to buy",
+    "whyBuy": "Why buy it",
+    "profitsQuebec": "How profits are paid (Québec / Canada)",
     "furtherReading": "Further reading",
     "generalResources": "General resources"
   },

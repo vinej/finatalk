@@ -12,6 +12,7 @@ export function Header() {
   const navigate = useNavigate();
 
   async function handleSignOut() {
+    if (!window.confirm(t("auth.signOutConfirm"))) return;
     await signOut();
     void navigate({ to: "/login" });
   }

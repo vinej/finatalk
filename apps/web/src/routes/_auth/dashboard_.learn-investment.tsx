@@ -2,47 +2,55 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { KINDS, kindDescription, kindLabel, type IndicatorKind } from "@/lib/indicator-defaults";
+import {
+  INVESTMENT_GENERAL_LINKS,
+  INVESTMENT_GUIDE,
+  INVESTMENT_KINDS,
+  type InvLink,
+  type InvestmentKind,
+} from "@/lib/investment-guide";
 import { pickLang, type Lang } from "@/lib/lang";
-import { TA_GENERAL_LINKS, TA_GUIDE, type TaLink } from "@/lib/ta-guide";
 
-export const Route = createFileRoute("/_auth/dashboard_/learn-ta")({
-  component: LearnTAPage,
+export const Route = createFileRoute("/_auth/dashboard_/learn-investment")({
+  component: LearnInvestmentPage,
 });
 
-function LearnTAPage() {
+function LearnInvestmentPage() {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>{t("learnTa.title")}</CardTitle>
+          <CardTitle>{t("learnInvestment.title")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-[var(--color-muted-fg)]">{t("learnTa.intro")}</p>
+          <p className="text-sm text-[var(--color-muted-fg)]">{t("learnInvestment.intro")}</p>
+          <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/40 p-3 text-xs text-[var(--color-muted-fg)]">
+            {t("learnInvestment.disclaimer")}
+          </p>
           <div>
             <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-              {t("learnTa.generalResources")}
+              {t("learnInvestment.generalResources")}
             </div>
-            <LinkChips links={TA_GENERAL_LINKS[lang]} />
+            <LinkChips links={INVESTMENT_GENERAL_LINKS[lang]} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t("learnTa.tableOfContents")}</CardTitle>
+          <CardTitle className="text-base">{t("learnInvestment.tableOfContents")}</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="flex flex-wrap gap-2">
-            {KINDS.map((kind) => (
+            {INVESTMENT_KINDS.map((kind) => (
               <li key={kind}>
                 <a
                   href={`#${kind}`}
                   className="rounded-md border border-[var(--color-border)] px-2.5 py-1 text-sm hover:bg-[var(--color-accent)]"
                 >
-                  {kindLabel(kind)}
+                  {INVESTMENT_GUIDE[lang][kind].label}
                 </a>
               </li>
             ))}
@@ -50,29 +58,30 @@ function LearnTAPage() {
         </CardContent>
       </Card>
 
-      {KINDS.map((kind) => (
-        <IndicatorSection key={kind} kind={kind} lang={lang} />
+      {INVESTMENT_KINDS.map((kind) => (
+        <InvestmentSection key={kind} kind={kind} lang={lang} />
       ))}
     </div>
   );
 }
 
-function IndicatorSection({ kind, lang }: { kind: IndicatorKind; lang: Lang }) {
+function InvestmentSection({ kind, lang }: { kind: InvestmentKind; lang: Lang }) {
   const { t } = useTranslation();
-  const entry = TA_GUIDE[lang][kind];
+  const entry = INVESTMENT_GUIDE[lang][kind];
   return (
     <Card id={kind} className="scroll-mt-4">
       <CardHeader>
-        <CardTitle>{kindLabel(kind)}</CardTitle>
-        <p className="text-sm text-[var(--color-muted-fg)]">{kindDescription(kind, lang)}</p>
+        <CardTitle>{entry.label}</CardTitle>
+        <p className="text-sm text-[var(--color-muted-fg)]">{entry.summary}</p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <Block label={t("learnTa.whenToUse")} text={entry.when} />
-        <Block label={t("learnTa.howToUse")} text={entry.how} />
-        <Block label={t("learnTa.howToAnalyse")} text={entry.analyse} />
+        <Block label={t("learnInvestment.characteristics")} text={entry.characteristics} />
+        <Block label={t("learnInvestment.whenToBuy")} text={entry.whenToBuy} />
+        <Block label={t("learnInvestment.whyBuy")} text={entry.whyBuy} />
+        <Block label={t("learnInvestment.profitsQuebec")} text={entry.profitsQuebec} />
         <div>
           <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-            {t("learnTa.furtherReading")}
+            {t("learnInvestment.furtherReading")}
           </div>
           <LinkChips links={entry.links} />
         </div>
@@ -87,12 +96,12 @@ function Block({ label, text }: { label: string; text: string }) {
       <div className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
         {label}
       </div>
-      <p className="text-sm leading-relaxed">{text}</p>
+      <p className="whitespace-pre-line text-sm leading-relaxed">{text}</p>
     </div>
   );
 }
 
-function LinkChips({ links }: { links: TaLink[] }) {
+function LinkChips({ links }: { links: InvLink[] }) {
   return (
     <ul className="flex flex-wrap gap-2">
       {links.map((l) => (

@@ -4,6 +4,7 @@
     "signIn": "Se connecter",
     "signUp": "S'inscrire",
     "signOut": "Se déconnecter",
+    "signOutConfirm": "Se déconnecter de FinaTalk ?",
     "email": "Courriel",
     "password": "Mot de passe",
     "name": "Nom",
@@ -26,6 +27,7 @@
     "markets": "Analyse",
     "portfolios": "Portefeuilles",
     "learnTa": "Apprendre l'AT",
+    "learnInvestment": "Apprendre l'investissement",
     "settings": "Paramètres"
   },
   "learnTa": {
@@ -35,6 +37,18 @@
     "whenToUse": "Quand l'utiliser",
     "howToUse": "Comment l'utiliser",
     "howToAnalyse": "Comment l'analyser",
+    "furtherReading": "Pour aller plus loin",
+    "generalResources": "Ressources générales"
+  },
+  "learnInvestment": {
+    "title": "Apprendre l'investissement",
+    "intro": "Un guide pratique des principaux types d'investissement pour les épargnants québécois et canadiens — du compte d'épargne bancaire au fonds de fonds. Chaque section présente les caractéristiques, quand et pourquoi acheter, et comment les profits sont versés et imposés au Québec.",
+    "disclaimer": "Contenu éducatif — ne constitue pas un conseil en placement, fiscal ou juridique. Les taux et paramètres fiscaux reflètent le cadre québécois et canadien 2025 et peuvent changer. Consultez un professionnel qualifié pour votre situation personnelle.",
+    "tableOfContents": "Types d'investissement",
+    "characteristics": "Caractéristiques",
+    "whenToBuy": "Quand l'acheter",
+    "whyBuy": "Pourquoi l'acheter",
+    "profitsQuebec": "Comment les profits sont versés (Québec / Canada)",
     "furtherReading": "Pour aller plus loin",
     "generalResources": "Ressources générales"
   },

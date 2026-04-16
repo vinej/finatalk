@@ -21,6 +21,7 @@ import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashbo
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
 import { Route as AuthDashboardMarketsRouteImport } from './routes/_auth/dashboard_.markets'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
+import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth/dashboard_.learn-investment'
 import { Route as AuthDashboardPortfoliosPortfolioIdRouteImport } from './routes/_auth/dashboard_.portfolios_.$portfolioId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -82,6 +83,12 @@ const AuthDashboardLearnTaRoute = AuthDashboardLearnTaRouteImport.update({
   path: '/dashboard/learn-ta',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardLearnInvestmentRoute =
+  AuthDashboardLearnInvestmentRouteImport.update({
+    id: '/dashboard_/learn-investment',
+    path: '/dashboard/learn-investment',
+    getParentRoute: () => AuthRoute,
+  } as any)
 const AuthDashboardPortfoliosPortfolioIdRoute =
   AuthDashboardPortfoliosPortfolioIdRouteImport.update({
     id: '/dashboard_/portfolios_/$portfolioId',
@@ -97,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
@@ -111,6 +119,7 @@ export interface FileRoutesByTo {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
@@ -127,6 +136,7 @@ export interface FileRoutesById {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/dashboard_/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/markets': typeof AuthDashboardMarketsRoute
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
     | '/dashboard/markets'
     | '/dashboard/portfolios'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
     | '/dashboard/markets'
     | '/dashboard/portfolios'
@@ -172,6 +184,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/_auth/dashboard'
+    | '/_auth/dashboard_/learn-investment'
     | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/markets'
     | '/_auth/dashboard_/portfolios'
@@ -275,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardLearnTaRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/learn-investment': {
+      id: '/_auth/dashboard_/learn-investment'
+      path: '/dashboard/learn-investment'
+      fullPath: '/dashboard/learn-investment'
+      preLoaderRoute: typeof AuthDashboardLearnInvestmentRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/portfolios_/$portfolioId': {
       id: '/_auth/dashboard_/portfolios_/$portfolioId'
       path: '/dashboard/portfolios/$portfolioId'
@@ -287,6 +307,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthDashboardLearnInvestmentRoute: typeof AuthDashboardLearnInvestmentRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardMarketsRoute: typeof AuthDashboardMarketsRoute
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
@@ -296,6 +317,7 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthDashboardLearnInvestmentRoute: AuthDashboardLearnInvestmentRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardMarketsRoute: AuthDashboardMarketsRoute,
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,

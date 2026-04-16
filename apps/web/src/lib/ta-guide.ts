@@ -1,4 +1,5 @@
 import type { IndicatorKind } from "@/lib/indicator-defaults";
+import type { Lang } from "@/lib/lang";
 
 export type TaLink = { title: string; url: string };
 
@@ -9,22 +10,38 @@ export type TaGuideEntry = {
   links: TaLink[];
 };
 
-export const TA_GENERAL_LINKS: TaLink[] = [
-  {
-    title: "Investopedia — Technical Analysis",
-    url: "https://www.investopedia.com/terms/t/technicalanalysis.asp",
-  },
-  {
-    title: "StockCharts — ChartSchool",
-    url: "https://chartschool.stockcharts.com/table-of-contents",
-  },
-  {
-    title: "Wikipedia — Technical Analysis",
-    url: "https://en.wikipedia.org/wiki/Technical_analysis",
-  },
-];
+export const TA_GENERAL_LINKS: Record<Lang, TaLink[]> = {
+  en: [
+    {
+      title: "Investopedia — Technical Analysis",
+      url: "https://www.investopedia.com/terms/t/technicalanalysis.asp",
+    },
+    {
+      title: "StockCharts — ChartSchool",
+      url: "https://chartschool.stockcharts.com/table-of-contents",
+    },
+    {
+      title: "Wikipedia — Technical Analysis",
+      url: "https://en.wikipedia.org/wiki/Technical_analysis",
+    },
+  ],
+  fr: [
+    {
+      title: "Investopedia — Analyse technique",
+      url: "https://www.investopedia.com/terms/t/technicalanalysis.asp",
+    },
+    {
+      title: "StockCharts — ChartSchool (anglais)",
+      url: "https://chartschool.stockcharts.com/table-of-contents",
+    },
+    {
+      title: "Wikipédia — Analyse technique",
+      url: "https://fr.wikipedia.org/wiki/Analyse_technique",
+    },
+  ],
+};
 
-export const TA_GUIDE: Record<IndicatorKind, TaGuideEntry> = {
+const TA_GUIDE_EN: Record<IndicatorKind, TaGuideEntry> = {
   sma: {
     when: "Use a Simple Moving Average to smooth noisy price data and visualize the underlying trend over a fixed window. It's the baseline trend filter most other indicators are compared against.",
     how: "Pick a period that matches your horizon: 20 for swing trading, 50 for medium-term trend, 200 for the long-term institutional trend. Plot it as an overlay on price; the line equally weights every close in the window.",
@@ -198,4 +215,185 @@ export const TA_GUIDE: Record<IndicatorKind, TaGuideEntry> = {
       { title: "StockCharts — MACD (Moving Average Convergence/Divergence)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/moving-average-convergence-divergence-macd" },
     ],
   },
+};
+
+const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
+  sma: {
+    when: "Utilisez la moyenne mobile simple pour lisser le bruit et visualiser la tendance sous-jacente sur une fenêtre fixe. C'est le filtre de tendance de référence auquel la plupart des autres indicateurs sont comparés.",
+    how: "Choisissez une période adaptée à votre horizon : 20 pour le swing trading, 50 pour la tendance moyen terme, 200 pour la tendance institutionnelle long terme. Tracée en surimpression sur le prix, la ligne pondère également chaque clôture de la fenêtre.",
+    analyse: "Prix au-dessus d'une SMA ascendante = tendance haussière, sous une SMA descendante = tendance baissière. Les croisements entre deux SMA (p. ex. 50/200, « golden cross » / « death cross ») sont des signaux classiques de changement de régime. Comme chaque barre a le même poids, la SMA réagit lentement — en retard sur les retournements, mais résistante aux pics d'une seule barre.",
+    links: [
+      { title: "Investopedia — Simple Moving Average (SMA)", url: "https://www.investopedia.com/terms/s/sma.asp" },
+      { title: "Wikipédia — Moyenne mobile", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
+    ],
+  },
+  ema: {
+    when: "Utilisez l'EMA quand vous voulez une moyenne mobile qui réagit plus vite que la SMA aux données récentes — utile pour le suivi de tendance court terme ou comme brique d'oscillateurs (le MACD utilise des EMA).",
+    how: "Choisissez la période comme pour une SMA. L'EMA applique des poids exponentiellement décroissants, la clôture la plus récente pesant le plus. Paires courantes : 12/26 (intraday/swing), 50/200 (tendance longue).",
+    analyse: "Le croisement prix/EMA, ou le croisement entre deux EMA, signale un changement de tendance plus tôt que la SMA équivalente — au prix de plus de faux signaux en marché agité. La pente de l'EMA est en elle-même une lecture de momentum : une EMA plate signale l'essoufflement de la tendance.",
+    links: [
+      { title: "Investopedia — Exponential Moving Average (EMA)", url: "https://www.investopedia.com/terms/e/ema.asp" },
+      { title: "Wikipédia — Moyenne mobile exponentielle", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile#Moyenne_mobile_exponentielle" },
+    ],
+  },
+  rma: {
+    when: "Utilisez la moyenne mobile de Wilder (RMA) quand vous voulez un lissage de type EMA qui réagit encore plus lentement — c'est le lissage intégré au RSI, à l'ATR et à l'ADX. Indiquée pour filtrer le bruit sans subir le retard d'une longue SMA.",
+    how: "La RMA utilise un alpha de 1/N (contre 2/(N+1) pour l'EMA), donc une RMA(14) lisse beaucoup plus qu'une EMA(14). Pour comparer, considérez la période comme équivalente à environ une EMA de 2N périodes.",
+    analyse: "Lisez-la comme une EMA — pente et croisements prix/ligne — mais attendez-vous à moins de signaux et un retard plus long. Surtout utile comme lisseur dans un autre calcul, rarement comme signal autonome.",
+    links: [
+      { title: "Investopedia — Wilder's DMI/ADX (introduit le lissage de Wilder)", url: "https://www.investopedia.com/terms/w/wilders-dmi-adx.asp" },
+      { title: "Wikipédia — Moyenne mobile modifiée", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
+    ],
+  },
+  wma: {
+    when: "Utilisez la moyenne mobile pondérée (WMA) comme compromis entre SMA et EMA : plus rapide que la SMA, plus lisse que l'EMA, avec des poids décroissant linéairement au lieu d'une décroissance exponentielle.",
+    how: "Chaque barre de la fenêtre reçoit un poids égal à sa position (la plus récente = N, la plus ancienne = 1), divisé par la somme des poids. Le choix de la période suit les mêmes règles que les autres moyennes mobiles.",
+    analyse: "Utilisez les croisements prix/ligne et la pente comme pour la SMA ou l'EMA. La WMA suit le prix plus fidèlement que la SMA tout en restant moins hachée que l'EMA, ce qui la rend populaire pour les filtres de tendance courte où le retard est le principal reproche fait à la SMA.",
+    links: [
+      { title: "Investopedia — Weighted Average", url: "https://www.investopedia.com/terms/w/weightedaverage.asp" },
+      { title: "Wikipédia — Moyenne mobile pondérée", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
+    ],
+  },
+  dema: {
+    when: "Utilisez la DEMA quand le retard de l'EMA devient pénalisant — la DEMA colle mieux au prix et tourne plus tôt sur les retournements. Idéale sur les instruments liquides et tendanciels où l'on tolère quelques faux signaux.",
+    how: "DEMA = 2·EMA(N) − EMA(EMA(N)). Le double lissage est mathématiquement conçu pour annuler le retard de l'EMA. Configurez-la avec le même type de période qu'une EMA ; elle réagit sensiblement plus vite.",
+    analyse: "Lisez-la comme une EMA (croisements prix/ligne, croisements de deux DEMA, pente), mais attendez-vous à des entrées et sorties plus précoces. Le prix du retard réduit est une sensibilité accrue au bruit — associez-la à un filtre de tendance en marché agité.",
+    links: [
+      { title: "Investopedia — Double Exponential Moving Average (DEMA)", url: "https://www.investopedia.com/terms/d/double-exponential-moving-average.asp" },
+      { title: "Wikipedia — Double Exponential Moving Average (anglais)", url: "https://en.wikipedia.org/wiki/Double_exponential_moving_average" },
+    ],
+  },
+  rsi: {
+    when: "Utilisez le RSI pour jauger la force d'un mouvement et repérer les excès. C'est l'outil standard pour identifier les conditions de surachat/survente et les divergences haussières/baissières.",
+    how: "Tracé sur une échelle propre 0–100, période par défaut 14. Compare la moyenne des hausses de clôture à la moyenne des baisses sur la fenêtre via le lissage de Wilder.",
+    analyse: "Niveaux classiques : au-dessus de 70 = surachat, sous 30 = survente (utilisez 80/20 en tendance forte). Le signal le plus fiable est la divergence — le prix fait un nouveau sommet sans le RSI (baissière) ou un nouveau creux sans le RSI (haussière). Ne shortez pas un RSI élevé en tendance forte ; il peut rester en surachat plusieurs semaines.",
+    links: [
+      { title: "Investopedia — Relative Strength Index (RSI)", url: "https://www.investopedia.com/terms/r/rsi.asp" },
+      { title: "Wikipédia — Indice de force relative", url: "https://fr.wikipedia.org/wiki/Indice_de_force_relative" },
+    ],
+  },
+  mom: {
+    when: "Utilisez le Momentum pour la lecture la plus simple possible de la force directionnelle : de combien le prix d'aujourd'hui est-il plus haut (ou plus bas) qu'il y a N barres. Pratique comme confirmation dans un système de suivi de tendance.",
+    how: "Calculé comme « clôture − clôture[N] ». Tracé en oscillateur autour d'une ligne zéro ; périodes courantes : 10 et 14. L'échelle absolue dépend du niveau de prix de l'instrument.",
+    analyse: "Les passages par zéro signalent les changements de signe du momentum. La pente et l'amplitude indiquent si la tendance accélère ou s'essouffle. La divergence avec le prix (prix qui monte, momentum qui s'aplatit) précède souvent les retournements.",
+    links: [
+      { title: "Investopedia — Momentum Indicator", url: "https://www.investopedia.com/terms/m/momentum.asp" },
+      { title: "Wikipedia — Momentum (technical analysis) (anglais)", url: "https://en.wikipedia.org/wiki/Momentum_(technical_analysis)" },
+    ],
+  },
+  roc: {
+    when: "Utilisez le Rate of Change (taux de variation) quand vous voulez un Momentum normalisé en pourcentage — directement comparable entre titres à prix différents et entre horizons.",
+    how: "Calculé comme « (clôture / clôture[N] − 1) × 100 ». Tracé en oscillateur centré sur zéro ; périodes courantes 12 et 25. Positif = prix en hausse vs N barres, négatif = en baisse.",
+    analyse: "Passages par zéro, divergence avec le prix et extrêmes de surachat/survente (propres à l'instrument — lisez votre propre historique) sont les signaux standards. Particulièrement utile pour classer et comparer le momentum sur une liste de titres.",
+    links: [
+      { title: "Investopedia — Price Rate of Change (ROC)", url: "https://www.investopedia.com/terms/p/pricerateofchange.asp" },
+      { title: "StockCharts — Rate of Change (ROC) (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/rate-of-change-roc" },
+    ],
+  },
+  macd: {
+    when: "Utilisez le MACD quand vous voulez un seul indicateur combinant direction de tendance, momentum et timing d'entrée. C'est l'oscillateur le plus suivi après le RSI.",
+    how: "Ligne MACD = EMA(rapide) − EMA(lente). Signal = EMA du MACD. Histogramme = MACD − Signal. Valeurs par défaut 12/26/9. Tracé dans son propre panneau sous le prix.",
+    analyse: "Trois signaux classiques : (1) croisements avec la ligne signal — MACD au-dessus du signal = achat, en dessous = vente ; (2) passages par zéro — MACD au-dessus de zéro = tendance haussière, en dessous = baissière ; (3) divergence — le prix fait un nouvel extrême sans le MACD, avertissement de retournement. L'histogramme visualise l'accélération : barres qui grossissent = tendance qui se renforce.",
+    links: [
+      { title: "Investopedia — Moving Average Convergence Divergence (MACD)", url: "https://www.investopedia.com/terms/m/macd.asp" },
+      { title: "Wikipédia — MACD", url: "https://fr.wikipedia.org/wiki/MACD" },
+    ],
+  },
+  bbands: {
+    when: "Utilisez les bandes de Bollinger pour lire la volatilité et repérer quand le prix est statistiquement tendu. Particulièrement utile sur les instruments qui oscillent dans une fourchette.",
+    how: "Bande médiane = SMA(N), bandes haute/basse = médiane ± K·écart-type(N). Valeurs par défaut : période 20, écart-type 2. La largeur des bandes s'adapte automatiquement à la volatilité récente.",
+    analyse: "Un « squeeze » (bandes resserrées, faible volatilité) précède souvent une cassure — direction inconnue, mais un grand mouvement est statistiquement dû. Les touches sur les bandes signalent un excès mais ne sont pas des signaux de retournement isolés ; combinez avec le RSI ou un motif de chandelier. « Marcher la bande » (prix qui longe la bande haute) est une signature de tendance forte, pas un signal de sortie.",
+    links: [
+      { title: "Investopedia — Bollinger Bands", url: "https://www.investopedia.com/terms/b/bollingerbands.asp" },
+      { title: "Wikipédia — Bandes de Bollinger", url: "https://fr.wikipedia.org/wiki/Bandes_de_Bollinger" },
+      { title: "BollingerBands.com — site officiel de John Bollinger", url: "https://www.bollingerbands.com/" },
+    ],
+  },
+  atr: {
+    when: "Utilisez l'Average True Range quand vous devez dimensionner des positions ou placer des stops en respectant la volatilité réelle de l'instrument. L'ATR mesure la volatilité, pas la direction.",
+    how: "ATR = moyenne lissée par Wilder du « true range » (max de : haut−bas, |haut−clôture préc.|, |bas−clôture préc.|) sur N périodes. Défaut 14. Tracé dans un panneau dédié, dans la même unité que le prix.",
+    analyse: "ATR qui monte = volatilité qui s'étend (mouvements plus grands, stops plus larges) ; ATR qui baisse = volatilité qui se contracte (marché plus calme, précédant souvent une cassure). Usage typique : stop = entrée − k·ATR (k souvent entre 1,5 et 3). Ne cherchez pas de signaux d'achat/vente dans l'ATR — c'est un paramètre de dimensionnement du risque.",
+    links: [
+      { title: "Investopedia — Average True Range (ATR)", url: "https://www.investopedia.com/terms/a/atr.asp" },
+      { title: "Wikipédia — Average True Range", url: "https://fr.wikipedia.org/wiki/Average_True_Range" },
+    ],
+  },
+  adx: {
+    when: "Utilisez l'ADX pour mesurer la force d'une tendance, indépendamment de sa direction. C'est le meilleur filtre pour décider si un système de suivi de tendance (croisements, cassures) vaut la peine d'être joué maintenant.",
+    how: "ADX = moyenne lissée du DX, où le DX combine +DI et −DI (mouvements directionnels). Tracé sur 0–100 dans un panneau dédié, avec +DI et −DI. Défaut 14.",
+    analyse: "ADX > 25 = marché tendanciel (jouer les systèmes de tendance) ; ADX < 20 = marché en range (jouer les extrêmes, éviter les cassures). +DI au-dessus de −DI = tendance haussière ; −DI au-dessus de +DI = baissière. L'ADX seul ne dit rien de la direction — uniquement de la force. Un ADX qui monte depuis un niveau bas est souvent le premier signe d'une nouvelle tendance.",
+    links: [
+      { title: "Investopedia — Average Directional Index (ADX)", url: "https://www.investopedia.com/terms/a/adx.asp" },
+      { title: "Wikipédia — Directional Movement Index", url: "https://fr.wikipedia.org/wiki/Directional_Movement_Index" },
+    ],
+  },
+  stoch: {
+    when: "Utilisez l'oscillateur stochastique dans les marchés en range ou cycliques pour chronométrer les entrées sur les extrêmes de surachat/survente. Il complète le RSI — il capte des retournements que le RSI rate sur les courts horizons.",
+    how: "%K = 100·(clôture − plus bas N) / (plus haut N − plus bas N), lissé sur M périodes. %D = SMA(%K, P). Valeurs par défaut 14/3/3. Tracé sur 0–100 dans son panneau.",
+    analyse: "Au-dessus de 80 = surachat, sous 20 = survente. Le signal classique est un croisement %K/%D dans ces zones : %K qui coupe %D en dessous de 20 = achat, %K qui coupe %D au-dessus de 80 = vente. La divergence (prix nouveau sommet, stochastique non) est un avertissement fort de retournement. En tendance forte, le stochastique peut rester collé aux extrêmes — combinez avec l'ADX comme filtre de tendance.",
+    links: [
+      { title: "Investopedia — Stochastic Oscillator", url: "https://www.investopedia.com/terms/s/stochasticoscillator.asp" },
+      { title: "Wikipédia — Oscillateur stochastique", url: "https://fr.wikipedia.org/wiki/Oscillateur_stochastique" },
+    ],
+  },
+  stochRsi: {
+    when: "Utilisez le Stochastic RSI quand le RSI classique est trop lent pour capter les retournements à cycle court. C'est l'amplificateur de sensibilité du RSI — plus rapide, plus bruité.",
+    how: "Applique la formule du stochastique aux valeurs du RSI au lieu du prix : (RSI − plus bas RSI N) / (plus haut RSI N − plus bas RSI N). Période par défaut 14. Sortie sur 0–1 (ou 0–100 selon la bibliothèque).",
+    analyse: "Traitez les extrêmes comme le stochastique — au-dessus de 0,8 surachat, sous 0,2 survente — mais attendez-vous à plus de faux signaux. Surtout utile en range ; en tendance, le StochRSI se colle aux extrêmes et devient peu fiable. Associez-le au RSI pour les divergences ou à l'ADX pour filtrer les tendances.",
+    links: [
+      { title: "Investopedia — Stochastic RSI (StochRSI)", url: "https://www.investopedia.com/terms/s/stochrsi.asp" },
+      { title: "StockCharts — StochRSI (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/stochrsi" },
+    ],
+  },
+  williamsR: {
+    when: "Utilisez le Williams %R comme oscillateur de momentum quand vous voulez une lecture surachat/survente de type stochastique, sans lissage %D. Populaire pour les retournements courts.",
+    how: "%R = −100·(plus haut N − clôture) / (plus haut N − plus bas N). Défaut 14. Tracé sur une échelle inversée −100 à 0 dans un panneau dédié.",
+    analyse: "Au-dessus de −20 = surachat, sous −80 = survente. Les mouvements sont mécaniquement le miroir du %K stochastique. En tendance forte il reste collé aux extrêmes, donc utilisez-le avec un filtre de tendance (ADX ou pente d'une moyenne mobile). La divergence avec le prix précède souvent les retournements, comme le RSI ou le stochastique.",
+    links: [
+      { title: "Investopedia — Williams %R", url: "https://www.investopedia.com/terms/w/williamsr.asp" },
+      { title: "StockCharts — Williams %R (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/williams-r" },
+    ],
+  },
+  obv: {
+    when: "Utilisez le On-Balance Volume pour confirmer les mouvements de prix par le volume. C'est le premier arrêt pour vérifier qu'une cassure ou une tendance est portée par une vraie pression acheteuse/vendeuse.",
+    how: "Cumul glissant : ajoute le volume du jour si la clôture monte, le soustrait si elle baisse, ignore les journées plates. Pas de paramètre de période. Tracé en ligne dans un panneau — le niveau absolu est arbitraire, seule la direction et la pente comptent.",
+    analyse: "OBV qui monte avec le prix = tendance haussière confirmée ; OBV plat ou en baisse alors que le prix monte = divergence baissière (distribution). Les cassures accompagnées d'une accélération franche de l'OBV sont de meilleure qualité que celles sur OBV plat. Traitez l'OBV comme une confirmation pondérée par le volume, pas un signal d'entrée autonome.",
+    links: [
+      { title: "Investopedia — On-Balance Volume (OBV)", url: "https://www.investopedia.com/terms/o/onbalancevolume.asp" },
+      { title: "Wikipédia — On Balance Volume", url: "https://fr.wikipedia.org/wiki/On_Balance_Volume" },
+    ],
+  },
+  psar: {
+    when: "Utilisez le Parabolic SAR sur des instruments clairement tendanciels pour un stop suiveur visuel et une lecture de direction. À éviter en marché en range — il fait trop d'allers-retours.",
+    how: "Points tracés sous le prix en tendance haussière et au-dessus en tendance baissière. L'écart accélère (pas initial 0,02, augmente de 0,02 jusqu'à un max de 0,2) à chaque nouvel extrême, resserrant le stop à mesure que la tendance mûrit.",
+    analyse: "Un basculement du dessous vers le dessus du prix = signal de retournement (et sortie suggérée des positions longues) ; du dessus vers le dessous = inverse. Utilisez le niveau du point comme stop suiveur ferme. En marché haché, attendez-vous à des bascules fréquentes avec petites pertes — combinez avec ADX > 25 pour n'agir sur le PSAR qu'en vraies tendances.",
+    links: [
+      { title: "Investopedia — Parabolic SAR", url: "https://www.investopedia.com/terms/p/parabolicindicator.asp" },
+      { title: "StockCharts — Parabolic SAR (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/parabolic-sar" },
+    ],
+  },
+  maCross: {
+    when: "Utilisez le MA Cross pour visualiser les changements de régime entre une moyenne mobile rapide et une lente sur le graphique. La paire classique SMA 50/200 produit le fameux Golden Cross (haussier) et le Death Cross (baissier) — utile comme filtre de tendance long terme. Des paires courtes (p. ex. EMA 9/21) fournissent des déclencheurs de swing trading.",
+    how: "Choisissez une période rapide et une lente (par défaut 50/200) et le type de MM (SMA pour des signaux plus lisses, EMA pour réagir plus vite). Deux lignes sont tracées sur le panneau de prix. À chaque croisement, un marqueur haussier (↑) ou baissier (↓) est posé sur la bougie correspondante.",
+    analyse: "Des marqueurs haussiers au-dessus d'un prix ascendant suggèrent un changement de régime à la hausse ; des marqueurs baissiers dans une structure descendante confirment la distribution. Les croisements près de MM plates ou enchevêtrées sont de faible qualité — plus l'écart s'élargit après le croisement, plus le signal est fort. Confirmez par un ADX qui monte ou un volume qui augmente avant d'agir sur un croisement isolé.",
+    links: [
+      { title: "Investopedia — Golden Cross", url: "https://www.investopedia.com/terms/g/goldencross.asp" },
+      { title: "Investopedia — Death Cross", url: "https://www.investopedia.com/terms/d/deathcross.asp" },
+      { title: "StockCharts — Moving Average Crossovers (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/moving-averages" },
+    ],
+  },
+  macdCross: {
+    when: "Utilisez le MACD Signal Cross quand vous voulez visualiser explicitement chaque croisement ligne/signal du MACD — chaque croisement reçoit un marqueur daté, ce qui facilite l'évaluation de la réactivité et du taux de faux signaux. À privilégier en marché tendanciel.",
+    how: "Exécute un MACD standard (par défaut 12/26/9) et marque chaque barre où la ligne MACD coupe sa ligne signal : marqueurs haussiers (↑) quand la ligne MACD passe au-dessus, baissiers (↓) quand elle passe en dessous. Les marqueurs sont posés sur les bougies pour visualiser immédiatement le contexte.",
+    analyse: "Les croisements haussiers près ou sous la ligne zéro donnent de meilleures entrées longues que ceux déjà très au-dessus ; l'inverse vaut pour les croisements baissiers. De nombreux croisements rapprochés = bruit, restez à l'écart. Associez à un filtre de tendance (SMA 200, ADX) pour rejeter les signaux à contre-tendance.",
+    links: [
+      { title: "Investopedia — MACD", url: "https://www.investopedia.com/terms/m/macd.asp" },
+      { title: "Wikipédia — MACD", url: "https://fr.wikipedia.org/wiki/MACD" },
+    ],
+  },
+};
+
+export const TA_GUIDE: Record<Lang, Record<IndicatorKind, TaGuideEntry>> = {
+  en: TA_GUIDE_EN,
+  fr: TA_GUIDE_FR,
 };

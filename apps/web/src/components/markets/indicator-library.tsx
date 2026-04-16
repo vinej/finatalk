@@ -8,9 +8,11 @@ import {
   type ActiveIndicator,
   type IndicatorKind,
 } from "@/lib/indicator-defaults";
+import { pickLang } from "@/lib/lang";
 
 export function IndicatorLibrary({ onAdd }: { onAdd: (item: ActiveIndicator) => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = pickLang(i18n.language);
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="text-xs text-[var(--color-muted-fg)]">{t("markets.add")}</span>
@@ -20,7 +22,7 @@ export function IndicatorLibrary({ onAdd }: { onAdd: (item: ActiveIndicator) => 
           type="button"
           size="sm"
           variant="outline"
-          title={kindDescription(kind)}
+          title={kindDescription(kind, lang)}
           onClick={() => onAdd(createActive(kind))}
         >
           + {kindLabel(kind)}
