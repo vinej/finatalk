@@ -172,7 +172,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   database: withCustomAdapter(_baseAdapter),
   session: {
-    expiresIn: 60 * 15,
+    expiresIn: 60 * 60,
     updateAge: 60 * 5,
     cookieCache: { enabled: true, maxAge: 30 },
   },
