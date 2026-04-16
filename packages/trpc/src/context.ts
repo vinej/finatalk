@@ -1,8 +1,40 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { db } from "@finatalk/db";
 import { auth } from "./auth";
+import type { IndicatorSpec, Range, Interval } from "./schemas/indicator";
 
-export async function createTRPCContext(opts: CreateExpressContextOptions) {
+export type SummarizeChartFn = (args: {
+  symbol: string;
+  range: Range;
+  interval: Interval;
+  indicators: IndicatorSpec[];
+  convertTo?: "CAD" | null;
+  language?: string;
+}) => Promise<{ summary: string; provider: string }>;
+
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+
+export type ChatWithAdvisorFn = (args: {
+  messages: ChatMessage[];
+  context: {
+    symbol: string;
+    range: Range;
+    interval: Interval;
+    convertTo?: "CAD" | null;
+    activeIndicators: Array<{ spec: IndicatorSpec; hidden: boolean }>;
+  };
+  language?: string;
+}) => Promise<{ response: string; provider: string }>;
+
+export type TRPCServices = {
+  summarizeChart?: SummarizeChartFn;
+  chatWithAdvisor?: ChatWithAdvisorFn;
+};
+
+export async function createTRPCContext(
+  opts: CreateExpressContextOptions,
+  services: TRPCServices = {},
+) {
   const session = await auth.api.getSession({
     headers: opts.req.headers as unknown as Headers,
   });
@@ -13,6 +45,7 @@ export async function createTRPCContext(opts: CreateExpressContextOptions) {
     user: session?.user ?? null,
     req: opts.req,
     res: opts.res,
+    services,
   };
 }
 

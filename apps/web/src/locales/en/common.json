@@ -1,5 +1,5 @@
 {
-  "app": { "name": "Finatalk" },
+  "app": { "name": "FinaTalk" },
   "auth": {
     "signIn": "Sign in",
     "signUp": "Sign up",
@@ -95,9 +95,29 @@
     "chartTitle": "Title",
     "chartSavePreview": "{{symbol}} · {{range}} / {{interval}} · {{count}} indicators",
     "chartSaved": "Chart saved.",
+    "chartOverwritten": "Chart overwritten.",
+    "chartOverwriteConfirm": "A chart titled \"{{title}}\" already exists. Overwrite it?",
+    "analysisOverwriteConfirm": "An analysis titled \"{{title}}\" already exists. Overwrite it?",
+    "analysisOverwritten": "Analysis overwritten.",
     "chartDeleted": "Chart deleted.",
     "noSavedCharts": "No saved charts yet.",
-    "loadFailed": "Couldn't load."
+    "loadFailed": "Couldn't load.",
+    "summarize": "Summarize",
+    "summarizing": "Summarizing…",
+    "summaryTitle": "AI summary",
+    "summarizeFailed": "Couldn't generate summary.",
+    "chatOpen": "Ask AI",
+    "chatTitle": "Chart advisor",
+    "chatShortcutHint": "Open chart advisor (Ctrl/Cmd+K)",
+    "chatEmpty": "Ask the advisor anything about this chart.",
+    "chatExample": "e.g. \"Given my active indicators, what else would help me analyse this stock?\"",
+    "chatPlaceholder": "Ask about this chart…",
+    "chatSend": "Send",
+    "chatThinking": "Thinking…",
+    "chatFailed": "Couldn't reach the advisor."
+  },
+  "ai": {
+    "disclaimer": "AI-generated educational content, not investment advice."
   },
   "dashboard": {
     "welcome": "Welcome, {{name}}!",

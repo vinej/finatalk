@@ -85,8 +85,29 @@ export const analysisRouter = createTRPCRouter({
       title: TitleSchema,
       description: DescriptionSchema.default(""),
       indicators: IndicatorsSchema,
+      overwrite: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.analysis.findFirst({
+        where: and(eq(analysis.userId, ctx.user.id), eq(analysis.title, input.title)),
+      });
+      if (existing) {
+        if (!input.overwrite) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `An analysis titled "${input.title}" already exists.`,
+          });
+        }
+        await ctx.db
+          .update(analysis)
+          .set({
+            description: input.description,
+            indicators: input.indicators,
+            updatedAt: new Date(),
+          })
+          .where(eq(analysis.id, existing.id));
+        return { id: existing.id, overwritten: true };
+      }
       const id = randomUUID();
       await ctx.db.insert(analysis).values({
         id,
@@ -95,7 +116,7 @@ export const analysisRouter = createTRPCRouter({
         description: input.description,
         indicators: input.indicators,
       });
-      return { id };
+      return { id, overwritten: false };
     }),
 
   updateAnalysis: protectedProcedure
@@ -172,8 +193,32 @@ export const analysisRouter = createTRPCRouter({
       interval: IntervalSchema,
       convertTo: ConvertToSchema.optional(),
       indicators: IndicatorsSchema,
+      overwrite: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.savedChart.findFirst({
+        where: and(eq(savedChart.userId, ctx.user.id), eq(savedChart.title, input.title)),
+      });
+      if (existing) {
+        if (!input.overwrite) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `A chart titled "${input.title}" already exists.`,
+          });
+        }
+        await ctx.db
+          .update(savedChart)
+          .set({
+            symbol: input.symbol.toUpperCase(),
+            range: input.range,
+            interval: input.interval,
+            convertTo: input.convertTo ?? null,
+            indicators: input.indicators,
+            updatedAt: new Date(),
+          })
+          .where(eq(savedChart.id, existing.id));
+        return { id: existing.id, overwritten: true };
+      }
       const id = randomUUID();
       await ctx.db.insert(savedChart).values({
         id,
@@ -185,7 +230,7 @@ export const analysisRouter = createTRPCRouter({
         convertTo: input.convertTo ?? null,
         indicators: input.indicators,
       });
-      return { id };
+      return { id, overwritten: false };
     }),
 
   deleteSavedChart: protectedProcedure

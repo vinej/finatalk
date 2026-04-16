@@ -1,5 +1,5 @@
 {
-  "app": { "name": "Finatalk" },
+  "app": { "name": "FinaTalk" },
   "auth": {
     "signIn": "Se connecter",
     "signUp": "S'inscrire",
@@ -95,9 +95,29 @@
     "chartTitle": "Titre",
     "chartSavePreview": "{{symbol}} · {{range}} / {{interval}} · {{count}} indicateurs",
     "chartSaved": "Graphique enregistré.",
+    "chartOverwritten": "Graphique écrasé.",
+    "chartOverwriteConfirm": "Un graphique intitulé « {{title}} » existe déjà. L'écraser ?",
+    "analysisOverwriteConfirm": "Une analyse intitulée « {{title}} » existe déjà. L'écraser ?",
+    "analysisOverwritten": "Analyse écrasée.",
     "chartDeleted": "Graphique supprimé.",
     "noSavedCharts": "Aucun graphique enregistré.",
-    "loadFailed": "Chargement impossible."
+    "loadFailed": "Chargement impossible.",
+    "summarize": "Résumer",
+    "summarizing": "Génération…",
+    "summaryTitle": "Résumé IA",
+    "summarizeFailed": "Échec de la génération du résumé.",
+    "chatOpen": "Demander à l'IA",
+    "chatTitle": "Conseiller de graphique",
+    "chatShortcutHint": "Ouvrir le conseiller (Ctrl/Cmd+K)",
+    "chatEmpty": "Posez n'importe quelle question au conseiller à propos de ce graphique.",
+    "chatExample": "ex. : « Avec mes indicateurs actifs, que me suggérez-vous d'ajouter pour analyser cette action ? »",
+    "chatPlaceholder": "Posez une question…",
+    "chatSend": "Envoyer",
+    "chatThinking": "Réflexion…",
+    "chatFailed": "Impossible de joindre le conseiller."
+  },
+  "ai": {
+    "disclaimer": "Contenu éducatif généré par IA, ne constitue pas un conseil en investissement."
   },
   "dashboard": {
     "welcome": "Bienvenue, {{name}} !",

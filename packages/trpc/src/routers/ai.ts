@@ -1,0 +1,79 @@
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure } from "../trcp";
+import {
+  IndicatorSpec,
+  IntervalSchema,
+  RangeSchema,
+  SymbolSchema,
+} from "../schemas/indicator";
+
+const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(8000),
+});
+
+export const aiRouter = createTRPCRouter({
+  summarizeChart: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      range: RangeSchema,
+      interval: IntervalSchema,
+      indicators: z.array(IndicatorSpec).max(10),
+      convertTo: z.enum(["CAD"]).nullable().optional(),
+      language: z.string().min(2).max(10).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const fn = ctx.services.summarizeChart;
+      if (!fn) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "AI summary is not configured on this server.",
+        });
+      }
+      return fn({
+        symbol: input.symbol,
+        range: input.range,
+        interval: input.interval,
+        indicators: input.indicators,
+        convertTo: input.convertTo ?? null,
+        ...(input.language ? { language: input.language } : {}),
+      });
+    }),
+
+  chat: protectedProcedure
+    .input(z.object({
+      messages: z.array(ChatMessageSchema).min(1).max(40),
+      context: z.object({
+        symbol: SymbolSchema,
+        range: RangeSchema,
+        interval: IntervalSchema,
+        convertTo: z.enum(["CAD"]).nullable().optional(),
+        activeIndicators: z.array(z.object({
+          spec: IndicatorSpec,
+          hidden: z.boolean(),
+        })).max(20),
+      }),
+      language: z.string().min(2).max(10).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const fn = ctx.services.chatWithAdvisor;
+      if (!fn) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "AI chat is not configured on this server.",
+        });
+      }
+      return fn({
+        messages: input.messages,
+        context: {
+          symbol: input.context.symbol,
+          range: input.context.range,
+          interval: input.context.interval,
+          convertTo: input.context.convertTo ?? null,
+          activeIndicators: input.context.activeIndicators,
+        },
+        ...(input.language ? { language: input.language } : {}),
+      });
+    }),
+});

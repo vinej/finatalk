@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { AiDisclaimer } from "@/components/ai/disclaimer";
+import { ChatDrawer } from "@/components/ai/chat-drawer";
 import { MarketChart } from "@/components/market-chart";
 import { IndicatorLibrary } from "@/components/markets/indicator-library";
 import { IndicatorList } from "@/components/markets/indicator-list";
@@ -32,7 +34,7 @@ const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
 const INTERVALS = ["1d", "1wk", "1mo"] as const;
 
 function MarketsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [symbolInput, setSymbolInput] = useState("AAPL");
   const [submittedSymbol, setSubmittedSymbol] = useState("AAPL");
   const [range, setRange] = useState<(typeof RANGES)[number]>("6mo");
@@ -72,6 +74,37 @@ function MarketsPage() {
     gcTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
+
+  const summarizeMutation = trpc.ai.summarizeChart.useMutation({
+    onError: (err) => toast.error(err.message ?? t("markets.summarizeFailed")),
+  });
+
+  const [chatOpen, setChatOpen] = useState(false);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setChatOpen((v) => !v);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  function onSummarize() {
+    const visibleIndicators = activeIndicators
+      .filter((a) => !hiddenIds.has(a.localId))
+      .map((a) => a.spec);
+    summarizeMutation.mutate({
+      symbol: submittedSymbol,
+      range,
+      interval,
+      indicators: visibleIndicators,
+      convertTo: convertToCad ? "CAD" : null,
+      language: i18n.language,
+    });
+  }
 
   const [refreshingSymbols, setRefreshingSymbols] = useState(false);
   async function refreshSymbols() {
@@ -299,7 +332,28 @@ function MarketsPage() {
       </Card>
 
       <Card>
-        <CardContent className="p-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+          <CardTitle className="text-base">{submittedSymbol}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setChatOpen(true)}
+              title={t("markets.chatShortcutHint")}
+            >
+              {t("markets.chatOpen")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSummarize}
+              disabled={summarizeMutation.isPending || !query.data}
+            >
+              {summarizeMutation.isPending ? t("markets.summarizing") : t("markets.summarize")}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
           {query.isPending ? (
             <div className="flex h-[560px] items-center justify-center text-sm text-[var(--color-muted-fg)]">
               {t("markets.loading")}
@@ -320,6 +374,20 @@ function MarketsPage() {
         </CardContent>
       </Card>
 
+      {summarizeMutation.data && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">{t("markets.summaryTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              {summarizeMutation.data.summary}
+            </p>
+            <AiDisclaimer />
+          </CardContent>
+        </Card>
+      )}
+
       {query.data && query.data.results.length > 0 && (
         <Card>
           <CardHeader>
@@ -335,6 +403,18 @@ function MarketsPage() {
         </Card>
       )}
 
+      <ChatDrawer
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+        context={{
+          symbol: submittedSymbol,
+          range,
+          interval,
+          convertTo: convertToCad ? "CAD" : null,
+          activeIndicators,
+          hiddenIds,
+        }}
+      />
     </div>
   );
 }

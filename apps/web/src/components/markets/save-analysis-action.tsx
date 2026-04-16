@@ -30,14 +30,23 @@ export function SaveAnalysisAction({
   }
 
   const create = trpc.analysis.createAnalysis.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.analysis.listAnalyses.invalidate();
-      toast.success(t("markets.analysisSaved"));
+      toast.success(data.overwritten ? t("markets.analysisOverwritten") : t("markets.analysisSaved"));
       setOpen(false);
       setTitle("");
       setDescription("");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e, variables) => {
+      if (e.data?.code === "CONFLICT") {
+        const confirmed = window.confirm(t("markets.analysisOverwriteConfirm", { title: variables.title }));
+        if (confirmed) {
+          create.mutate({ ...variables, overwrite: true });
+        }
+        return;
+      }
+      toast.error(e.message);
+    },
   });
 
   useEffect(() => {

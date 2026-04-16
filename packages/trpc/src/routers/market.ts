@@ -139,6 +139,31 @@ type IndicatorResult =
   | { kind: "macd"; spec: Extract<IndicatorSpecT, { kind: "macd" }>; series: MacdSeries }
   | { kind: "bbands"; spec: Extract<IndicatorSpecT, { kind: "bbands" }>; series: BandsSeries };
 
+export type RunAnalysisInput = {
+  symbol: string;
+  range: z.infer<typeof RangeSchema>;
+  interval: z.infer<typeof IntervalSchema>;
+  indicators: IndicatorSpecT[];
+  convertTo?: "CAD" | null;
+};
+
+export type RunAnalysisOutput = {
+  symbol: string;
+  candles: Candle[];
+  results: IndicatorResult[];
+  nativeCurrency: string;
+  displayCurrency: string;
+};
+
+export async function runAnalysis(input: RunAnalysisInput): Promise<RunAnalysisOutput> {
+  const symbol = input.symbol.toUpperCase();
+  const { candles, nativeCurrency, displayCurrency } = await fetchCandlesWithCurrency(
+    symbol, input.range, input.interval, input.convertTo ?? null,
+  );
+  const results = input.indicators.map((spec) => compute(spec, candles));
+  return { symbol, candles, results, nativeCurrency, displayCurrency };
+}
+
 function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
   switch (spec.kind) {
     case "sma":
@@ -299,12 +324,11 @@ export const marketRouter = createTRPCRouter({
       indicators: z.array(IndicatorSpec).max(10),
       convertTo: z.enum(["CAD"]).nullable().optional(),
     }))
-    .query(async ({ input }) => {
-      const symbol = input.symbol.toUpperCase();
-      const { candles, nativeCurrency, displayCurrency } = await fetchCandlesWithCurrency(
-        symbol, input.range, input.interval, input.convertTo ?? null,
-      );
-      const results = input.indicators.map((spec) => compute(spec, candles));
-      return { symbol, candles, results, nativeCurrency, displayCurrency };
-    }),
+    .query(({ input }) => runAnalysis({
+      symbol: input.symbol,
+      range: input.range,
+      interval: input.interval,
+      indicators: input.indicators,
+      convertTo: input.convertTo ?? null,
+    })),
 });

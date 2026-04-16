@@ -35,13 +35,22 @@ export function SaveChartAction({
   }
 
   const create = trpc.analysis.createSavedChart.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.analysis.listSavedCharts.invalidate();
-      toast.success(t("markets.chartSaved"));
+      toast.success(data.overwritten ? t("markets.chartOverwritten") : t("markets.chartSaved"));
       setOpen(false);
       setTitle("");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e, variables) => {
+      if (e.data?.code === "CONFLICT") {
+        const confirmed = window.confirm(t("markets.chartOverwriteConfirm", { title: variables.title }));
+        if (confirmed) {
+          create.mutate({ ...variables, overwrite: true });
+        }
+        return;
+      }
+      toast.error(e.message);
+    },
   });
 
   useEffect(() => {
