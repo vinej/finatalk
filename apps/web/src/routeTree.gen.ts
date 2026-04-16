@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
+import { Route as AuthDashboardResearchRouteImport } from './routes/_auth/dashboard_.research'
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
 import { Route as AuthDashboardMarketsRouteImport } from './routes/_auth/dashboard_.markets'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
@@ -68,6 +69,11 @@ const AuthDashboardSettingsRoute = AuthDashboardSettingsRouteImport.update({
   path: '/dashboard/settings',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardResearchRoute = AuthDashboardResearchRouteImport.update({
+  id: '/dashboard_/research',
+  path: '/dashboard/research',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardPortfoliosRoute = AuthDashboardPortfoliosRouteImport.update({
   id: '/dashboard_/portfolios',
   path: '/dashboard/portfolios',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
+  '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
   '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
+  '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
   '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/markets': typeof AuthDashboardMarketsRoute
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
+  '/_auth/dashboard_/research': typeof AuthDashboardResearchRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
   '/_auth/dashboard_/portfolios_/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/dashboard/learn-ta'
     | '/dashboard/markets'
     | '/dashboard/portfolios'
+    | '/dashboard/research'
     | '/dashboard/settings'
     | '/dashboard/portfolios/$portfolioId'
   fileRoutesByTo: FileRoutesByTo
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/dashboard/learn-ta'
     | '/dashboard/markets'
     | '/dashboard/portfolios'
+    | '/dashboard/research'
     | '/dashboard/settings'
     | '/dashboard/portfolios/$portfolioId'
   id:
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/markets'
     | '/_auth/dashboard_/portfolios'
+    | '/_auth/dashboard_/research'
     | '/_auth/dashboard_/settings'
     | '/_auth/dashboard_/portfolios_/$portfolioId'
   fileRoutesById: FileRoutesById
@@ -267,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardSettingsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/research': {
+      id: '/_auth/dashboard_/research'
+      path: '/dashboard/research'
+      fullPath: '/dashboard/research'
+      preLoaderRoute: typeof AuthDashboardResearchRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/portfolios': {
       id: '/_auth/dashboard_/portfolios'
       path: '/dashboard/portfolios'
@@ -311,6 +330,7 @@ interface AuthRouteChildren {
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardMarketsRoute: typeof AuthDashboardMarketsRoute
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
+  AuthDashboardResearchRoute: typeof AuthDashboardResearchRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
   AuthDashboardPortfoliosPortfolioIdRoute: typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -321,6 +341,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardMarketsRoute: AuthDashboardMarketsRoute,
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
+  AuthDashboardResearchRoute: AuthDashboardResearchRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
   AuthDashboardPortfoliosPortfolioIdRoute:
     AuthDashboardPortfoliosPortfolioIdRoute,

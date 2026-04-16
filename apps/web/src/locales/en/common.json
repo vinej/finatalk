@@ -28,6 +28,7 @@
     "portfolios": "Portfolios",
     "learnTa": "Learn TA",
     "learnInvestment": "Learn Investment",
+    "research": "Research",
     "settings": "Settings"
   },
   "learnTa": {
@@ -241,6 +242,25 @@
   },
   "ai": {
     "disclaimer": "AI-generated educational content, not investment advice."
+  },
+  "research": {
+    "title": "AI Research",
+    "chatTitle": "Research advisor",
+    "placeholder": "Ask about SEC filings, financials, risk factors…",
+    "send": "Send",
+    "thinking": "Researching…",
+    "failed": "Couldn't reach the research advisor.",
+    "empty": "Ask the research advisor anything about a US-listed company's SEC filings.",
+    "examplePrompt1": "Summarize the risk factors from Apple's latest 10-K.",
+    "examplePrompt2": "Has Microsoft's long-term debt increased over the last 3 years?",
+    "examplePrompt3": "Compare operating margins: NVDA vs AMD.",
+    "symbol": "Focus symbol",
+    "symbolHint": "Optional — set a ticker to focus questions on one company.",
+    "citations": "Sources",
+    "confidenceHigh": "High confidence",
+    "confidenceMedium": "Medium confidence",
+    "confidenceLow": "Low confidence",
+    "confidenceTooltip": "Qualitative self-assessment by the AI based on source coverage."
   },
   "dashboard": {
     "welcome": "Welcome, {{name}}!",

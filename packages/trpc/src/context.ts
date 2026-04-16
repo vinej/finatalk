@@ -67,12 +67,27 @@ export type GeneratePortfolioFn = (args: {
   provider: string;
 }>;
 
+export type ChatWithResearchFn = (args: {
+  messages: ChatMessage[];
+  context: {
+    symbol?: string | undefined;
+    comparisonSymbols?: string[] | undefined;
+  };
+  language?: string | undefined;
+}) => Promise<{
+  response: string;
+  citations: Array<{ label: string; url: string }>;
+  confidence: "high" | "medium" | "low";
+  provider: string;
+}>;
+
 export type TRPCServices = {
   summarizeChart?: SummarizeChartFn;
   chatWithAdvisor?: ChatWithAdvisorFn;
   chatWithPortfolioAdvisor?: ChatWithPortfolioAdvisorFn;
   generateAnalysis?: GenerateAnalysisFn;
   generatePortfolio?: GeneratePortfolioFn;
+  chatWithResearch?: ChatWithResearchFn;
 };
 
 export async function createTRPCContext(

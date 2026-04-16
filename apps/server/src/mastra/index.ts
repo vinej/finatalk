@@ -7,6 +7,7 @@ import { chartAdvisorAgent } from "./agents/chart-advisor";
 import { portfolioAdvisorAgent } from "./agents/portfolio-advisor";
 import { analysisGeneratorAgent } from "./agents/analysis-generator";
 import { portfolioGeneratorAgent } from "./agents/portfolio-generator";
+import { researchAdvisorAgent } from "./agents/research-advisor";
 
 type IndicatorSpec = RunAnalysisInput["indicators"][number];
 
@@ -17,6 +18,7 @@ export const mastra = new Mastra({
     portfolioAdvisorAgent,
     analysisGeneratorAgent,
     portfolioGeneratorAgent,
+    researchAdvisorAgent,
   },
 });
 
@@ -259,4 +261,74 @@ export async function generatePortfolioFromPrompt(
   const result = await portfolioGeneratorAgent.generate([preamble]);
   const parsed = GeneratedPortfolioSchema.parse(extractJson(result.text));
   return { ...parsed, provider: process.env.AI_PROVIDER ?? "anthropic" };
+}
+
+// ── Research advisor ─────────────────────────────────────────────────────
+
+const ResearchCitationSchema = z.object({
+  citations: z.array(z.object({ label: z.string(), url: z.string() })),
+  confidence: z.enum(["high", "medium", "low"]),
+});
+
+export type ResearchCitation = z.infer<typeof ResearchCitationSchema>;
+
+export type ChatWithResearchAdvisorArgs = {
+  messages: ChatMessage[];
+  context: {
+    symbol?: string | undefined;
+    comparisonSymbols?: string[] | undefined;
+  };
+  language?: string | undefined;
+};
+
+export type ResearchAdvisorResult = {
+  response: string;
+  citations: ResearchCitation["citations"];
+  confidence: ResearchCitation["confidence"];
+  provider: string;
+};
+
+export async function chatWithResearchAdvisor(
+  args: ChatWithResearchAdvisorArgs,
+): Promise<ResearchAdvisorResult> {
+  const { messages, context, language = "en" } = args;
+
+  const contextBlock = {
+    userLanguage: language,
+    focusSymbol: context.symbol ?? null,
+    comparisonSymbols: context.comparisonSymbols ?? [],
+  };
+
+  const history = trimHistory(messages);
+  const preamble: ChatMessage = {
+    role: "user",
+    content:
+      `Context about the user's research session (use to ground your answers, do not quote verbatim):\n${JSON.stringify(contextBlock)}`,
+  };
+
+  const result = await researchAdvisorAgent.generate([preamble, ...history]);
+  const fullText = result.text;
+
+  const jsonFenceMatch = fullText.match(/```json\s*([\s\S]*?)```/);
+  let citations: ResearchCitation["citations"] = [];
+  let confidence: ResearchCitation["confidence"] = "medium";
+  let responseText = fullText;
+
+  if (jsonFenceMatch) {
+    responseText = fullText.slice(0, jsonFenceMatch.index).trim();
+    try {
+      const parsed = ResearchCitationSchema.parse(JSON.parse(jsonFenceMatch[1]!.trim()));
+      citations = parsed.citations;
+      confidence = parsed.confidence;
+    } catch {
+      // If JSON parse fails, return the full text as response
+    }
+  }
+
+  return {
+    response: responseText,
+    citations,
+    confidence,
+    provider: process.env.AI_PROVIDER ?? "anthropic",
+  };
 }
