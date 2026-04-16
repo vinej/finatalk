@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -58,6 +59,9 @@ function MarketsPage() {
   const [loadedAnalysisTitle, setLoadedAnalysisTitle] = useState<string | null>(persisted?.loadedAnalysisTitle ?? null);
   const [loadedAnalysisDescription, setLoadedAnalysisDescription] = useState<string | null>(persisted?.loadedAnalysisDescription ?? null);
   const [loadedChartTitle, setLoadedChartTitle] = useState<string | null>(persisted?.loadedChartTitle ?? null);
+  const [controlsCollapsed, setControlsCollapsed] = useState<boolean>(persisted?.controlsCollapsed ?? false);
+  const [indicatorsCollapsed, setIndicatorsCollapsed] = useState<boolean>(persisted?.indicatorsCollapsed ?? false);
+  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
 
   useEffect(() => {
     saveMarketsState({
@@ -72,6 +76,9 @@ function MarketsPage() {
       loadedAnalysisTitle,
       loadedAnalysisDescription,
       loadedChartTitle,
+      controlsCollapsed,
+      indicatorsCollapsed,
+      assetTypeFilter,
     });
   }, [
     symbolInput,
@@ -85,6 +92,9 @@ function MarketsPage() {
     loadedAnalysisTitle,
     loadedAnalysisDescription,
     loadedChartTitle,
+    controlsCollapsed,
+    indicatorsCollapsed,
+    assetTypeFilter,
   ]);
 
   const indicators = useMemo(() => activeIndicators.map((a) => a.spec), [activeIndicators]);
@@ -198,7 +208,8 @@ function MarketsPage() {
   }
 
   const suggestions = useMemo(() => {
-    const all = symbolsQuery.data?.symbols ?? [];
+    const raw = symbolsQuery.data?.symbols ?? [];
+    const all = assetTypeFilter === "all" ? raw : raw.filter((s) => s.assetType === assetTypeFilter);
     const q = symbolInput.trim().toUpperCase();
     if (!q) return all.slice(0, 200);
     const starts: typeof all = [];
@@ -209,7 +220,7 @@ function MarketsPage() {
       if (starts.length >= 200) break;
     }
     return [...starts, ...contains].slice(0, 200);
-  }, [symbolsQuery.data, symbolInput]);
+  }, [symbolsQuery.data, symbolInput, assetTypeFilter]);
 
   useEffect(() => {
     if (query.error) toast.error(query.error.message ?? t("markets.fetchFailed"));
@@ -281,7 +292,20 @@ function MarketsPage() {
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle>{t("markets.title")}</CardTitle>
+          <button
+            type="button"
+            onClick={() => setControlsCollapsed((c) => !c)}
+            className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-[var(--color-accent)]"
+            aria-expanded={!controlsCollapsed}
+            title={controlsCollapsed ? t("markets.expand") : t("markets.collapse")}
+          >
+            {controlsCollapsed ? (
+              <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+            )}
+            <CardTitle>{t("markets.title")}</CardTitle>
+          </button>
           <div className="flex flex-wrap items-center gap-2">
             <SaveChartAction
               current={{
@@ -296,8 +320,22 @@ function MarketsPage() {
             <OpenSavedChartsAction onLoad={loadSavedChart} />
           </div>
         </CardHeader>
+        {!controlsCollapsed && (
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="assetType">{t("markets.assetType")}</Label>
+              <select
+                id="assetType"
+                value={assetTypeFilter}
+                onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf")}
+                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
+              >
+                <option value="all">{t("markets.assetAll")}</option>
+                <option value="stock">{t("markets.assetStock")}</option>
+                <option value="etf">{t("markets.assetEtf")}</option>
+              </select>
+            </div>
             <div className="grid gap-1.5">
               <Label htmlFor="symbol">{t("markets.symbol")}</Label>
               <Input
@@ -312,7 +350,7 @@ function MarketsPage() {
               <datalist id="symbol-suggestions">
                 {suggestions.map((s) => (
                   <option key={s.symbol} value={s.symbol}>
-                    {s.name} ({s.exchange})
+                    {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : ""}
                   </option>
                 ))}
               </datalist>
@@ -379,12 +417,26 @@ function MarketsPage() {
             </p>
           )}
         </CardContent>
+        )}
       </Card>
 
-      <div className={loadedAnalysisDescription || loadedAnalysisTitle ? "grid gap-4 md:grid-cols-2" : ""}>
+      <div className={!indicatorsCollapsed && (loadedAnalysisDescription || loadedAnalysisTitle) ? "grid gap-4 md:grid-cols-2" : ""}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-            <CardTitle className="text-base">{t("markets.indicators")}</CardTitle>
+            <button
+              type="button"
+              onClick={() => setIndicatorsCollapsed((c) => !c)}
+              className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-[var(--color-accent)]"
+              aria-expanded={!indicatorsCollapsed}
+              title={indicatorsCollapsed ? t("markets.expand") : t("markets.collapse")}
+            >
+              {indicatorsCollapsed ? (
+                <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+              )}
+              <CardTitle className="text-base">{t("markets.indicators")}</CardTitle>
+            </button>
             <div className="flex flex-wrap items-center gap-2">
               <SaveAnalysisAction
                 symbol={submittedSymbol}
@@ -408,19 +460,21 @@ function MarketsPage() {
               />
             </div>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <IndicatorLibrary onAdd={addIndicator} />
-            <IndicatorList
-              items={activeIndicators}
-              hiddenIds={hiddenIds}
-              onToggleHidden={toggleHidden}
-              onChange={updateIndicator}
-              onRemove={removeIndicator}
-            />
-          </CardContent>
+          {!indicatorsCollapsed && (
+            <CardContent className="flex flex-col gap-3">
+              <IndicatorLibrary onAdd={addIndicator} />
+              <IndicatorList
+                items={activeIndicators}
+                hiddenIds={hiddenIds}
+                onToggleHidden={toggleHidden}
+                onChange={updateIndicator}
+                onRemove={removeIndicator}
+              />
+            </CardContent>
+          )}
         </Card>
 
-        {(loadedAnalysisDescription || loadedAnalysisTitle) && (
+        {!indicatorsCollapsed && (loadedAnalysisDescription || loadedAnalysisTitle) && (
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
@@ -518,7 +572,7 @@ function MarketsPage() {
 }
 
 function LatestCell({ result }: { result: AnalyzeResult }) {
-  const last = result.series[result.series.length - 1];
+  const last = latestEntry(result);
   const label = cellLabel(result);
 
   return (
@@ -527,6 +581,25 @@ function LatestCell({ result }: { result: AnalyzeResult }) {
       <div className="mt-1 font-mono">{last ? formatLast(result.kind, last) : "—"}</div>
     </div>
   );
+}
+
+function latestEntry(result: AnalyzeResult): Record<string, unknown> | undefined {
+  if (result.kind === "maCross") {
+    const fast = result.series.fast.at(-1);
+    const slow = result.series.slow.at(-1);
+    const lastEvent = result.series.events.at(-1);
+    return fast && slow
+      ? { fast: fast.value, slow: slow.value, event: lastEvent?.direction ?? null }
+      : undefined;
+  }
+  if (result.kind === "macdCross") {
+    const last = result.series.macd.at(-1);
+    const lastEvent = result.series.events.at(-1);
+    return last
+      ? { macd: last.macd, signal: last.signal, event: lastEvent?.direction ?? null }
+      : undefined;
+  }
+  return result.series[result.series.length - 1];
 }
 
 function cellLabel(result: AnalyzeResult): string {
@@ -541,6 +614,10 @@ function cellLabel(result: AnalyzeResult): string {
       return "OBV";
     case "psar":
       return `PSAR ${result.spec.step}/${result.spec.max}`;
+    case "maCross":
+      return `${result.spec.maType.toUpperCase()} CROSS ${result.spec.fastPeriod}/${result.spec.slowPeriod}`;
+    case "macdCross":
+      return `MACD CROSS ${result.spec.fast}/${result.spec.slow}/${result.spec.signal}`;
     default:
       return `${result.kind.toUpperCase()} ${result.spec.period}`;
   }
@@ -552,5 +629,13 @@ function formatLast(kind: string, last: Record<string, number | unknown>): strin
   if (kind === "bbands") return `${fmt(last.upper)} / ${fmt(last.middle)} / ${fmt(last.lower)}`;
   if (kind === "stoch") return `${fmt(last.k)} / ${fmt(last.d)}`;
   if (kind === "adx") return `${fmt(last.adx)} / +DI ${fmt(last.pdi)} / −DI ${fmt(last.mdi)}`;
+  if (kind === "maCross") {
+    const ev = last.event === "bull" ? " ↑" : last.event === "bear" ? " ↓" : "";
+    return `${fmt(last.fast)} / ${fmt(last.slow)}${ev}`;
+  }
+  if (kind === "macdCross") {
+    const ev = last.event === "bull" ? " ↑" : last.event === "bear" ? " ↓" : "";
+    return `${fmt(last.macd)} / ${fmt(last.signal)}${ev}`;
+  }
   return fmt(last.value);
 }

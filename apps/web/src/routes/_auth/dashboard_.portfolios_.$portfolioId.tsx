@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
 import { GenerateAnalysisDialog } from "@/components/portfolio/generate-analysis-dialog";
 import { PortfolioChatDrawer } from "@/components/portfolio/portfolio-chat-drawer";
+import { PortfolioPerformanceChart } from "@/components/portfolio/portfolio-performance-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
@@ -91,6 +92,7 @@ function PortfolioDetailPage() {
   const [newQty, setNewQty] = useState("");
   const [newCost, setNewCost] = useState("");
   const [newDate, setNewDate] = useState(todayIso());
+  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">("all");
   const [linking, setLinking] = useState<{
     holdingId: string;
     symbol: string;
@@ -186,10 +188,17 @@ function PortfolioDetailPage() {
     return m;
   }, [holdings]);
 
+  const symbolNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of symbolsQuery.data?.symbols ?? []) m.set(s.symbol, s.name);
+    return m;
+  }, [symbolsQuery.data]);
+
   const symbolQuery =
     editingHoldingId != null ? holdingDraft.symbol : newSymbol;
   const symbolSuggestions = useMemo(() => {
-    const all = symbolsQuery.data?.symbols ?? [];
+    const raw = symbolsQuery.data?.symbols ?? [];
+    const all = assetTypeFilter === "all" ? raw : raw.filter((s) => s.assetType === assetTypeFilter);
     const q = symbolQuery.trim().toUpperCase();
     if (!q) return all.slice(0, 200);
     const starts: typeof all = [];
@@ -200,7 +209,7 @@ function PortfolioDetailPage() {
       if (starts.length >= 200) break;
     }
     return [...starts, ...contains].slice(0, 200);
-  }, [symbolsQuery.data, symbolQuery]);
+  }, [symbolsQuery.data, symbolQuery, assetTypeFilter]);
 
   const newSymbolResolved = useMemo(() => {
     const q = newSymbol.trim().toUpperCase();
@@ -263,6 +272,17 @@ function PortfolioDetailPage() {
       color: colorFor(r.holding.symbol, i),
     }));
   }, [rows]);
+
+  const performanceItems = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { symbol: string; color: string }[] = [];
+    for (const seg of segments) {
+      if (seen.has(seg.label)) continue;
+      seen.add(seg.label);
+      out.push({ symbol: seg.label, color: seg.color });
+    }
+    return out;
+  }, [segments]);
 
   function sortValue(r: ValuationRow, key: SortKey): string | number | null {
     switch (key) {
@@ -464,6 +484,9 @@ function PortfolioDetailPage() {
                 {t("portfolio.asOf", { date: new Date(valuationQuery.data.asOf).toLocaleString() })}
               </p>
             )}
+            {performanceItems.length > 0 && (
+              <PortfolioPerformanceChart items={performanceItems} currency={currency} />
+            )}
           </CardContent>
         </Card>
 
@@ -569,22 +592,28 @@ function PortfolioDetailPage() {
                               className="h-8 w-36"
                             />
                           </td>
-                          <td className="px-2 py-1.5" colSpan={4} />
-                          <td className="px-2 py-1.5 text-right">
-                            <div className="flex justify-end gap-1">
+                          <td className="px-2 py-1.5" colSpan={5}>
+                            <div className="flex items-center gap-1">
                               <Button size="sm" onClick={submitEditHolding} disabled={updateHolding.isPending}>
-                                <Check className="h-3.5 w-3.5" />
+                                <Check className="mr-1 h-3.5 w-3.5" />
+                                {t("portfolio.save")}
                               </Button>
                               <Button size="sm" variant="outline" onClick={() => setEditingHoldingId(null)}>
-                                <X className="h-3.5 w-3.5" />
+                                <X className="mr-1 h-3.5 w-3.5" />
+                                {t("portfolio.cancel")}
                               </Button>
                             </div>
                           </td>
                         </tr>
                       );
                     }
+                    const fullName = symbolNameMap.get(h.symbol.toUpperCase());
                     return (
-                      <tr key={h.id} className="border-b border-[var(--color-border)] text-sm">
+                      <tr
+                        key={h.id}
+                        className="border-b border-[var(--color-border)] text-sm"
+                        title={fullName ?? h.symbol}
+                      >
                         <td className="px-2 py-2 font-medium">
                           {h.symbol}
                           {r.nativeCurrency && r.nativeCurrency !== currency && (
@@ -673,6 +702,21 @@ function PortfolioDetailPage() {
                   <td colSpan={9} className="px-2 py-2">
                     <form onSubmit={submitAdd} className="flex flex-wrap items-end gap-2">
                       <div className="flex flex-col gap-1">
+                        <Label htmlFor="new-asset-type" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
+                          {t("markets.assetType")}
+                        </Label>
+                        <select
+                          id="new-asset-type"
+                          value={assetTypeFilter}
+                          onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf")}
+                          className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
+                        >
+                          <option value="all">{t("markets.assetAll")}</option>
+                          <option value="stock">{t("markets.assetStock")}</option>
+                          <option value="etf">{t("markets.assetEtf")}</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
                         <Label htmlFor="new-symbol" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
                           {t("portfolio.symbol")}
                         </Label>
@@ -753,7 +797,7 @@ function PortfolioDetailPage() {
       <datalist id="portfolio-symbol-suggestions">
         {symbolSuggestions.map((s) => (
           <option key={s.symbol} value={s.symbol}>
-            {s.name} ({s.exchange})
+            {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : ""}
           </option>
         ))}
       </datalist>

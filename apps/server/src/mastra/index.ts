@@ -1,6 +1,6 @@
 import { Mastra } from "@mastra/core/mastra";
 import { z } from "zod";
-import { runAnalysis, type RunAnalysisInput } from "@finatalk/trpc/routers/market";
+import { indicatorTail, runAnalysis, type RunAnalysisInput } from "@finatalk/trpc/routers/market";
 import { StoredIndicator } from "@finatalk/trpc/schemas/indicator";
 import { chartSummaryAgent } from "./agents/chart-summary";
 import { chartAdvisorAgent } from "./agents/chart-advisor";
@@ -34,13 +34,13 @@ function buildSnapshot(input: RunAnalysisInput, language: string, analysis: Awai
   const latest = recent[recent.length - 1];
   const first = recent[0];
   const indicators = analysis.results.map((r) => {
-    const last = r.series[r.series.length - 1];
-    const tail = r.series.slice(-5).map((p) => roundEntry(p));
+    const { last, tail, events } = indicatorTail(r);
     return {
       kind: r.kind,
       spec: r.spec,
       last: last ? roundEntry(last) : null,
-      tail,
+      tail: tail.map((p) => roundEntry(p)),
+      ...(events ? { events: events.slice(-5) } : {}),
     };
   });
   return {

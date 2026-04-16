@@ -5,4 +5,6 @@ export type IndicatorColor =
   | string
   | { kind: "macd"; line: string; signal: string; hist: string }
   | { kind: "stoch"; k: string; d: string }
-  | { kind: "adx"; adx: string; pdi: string; mdi: string };
+  | { kind: "adx"; adx: string; pdi: string; mdi: string }
+  | { kind: "maCross"; fast: string; slow: string; bull: string; bear: string }
+  | { kind: "macdCross"; bull: string; bear: string };

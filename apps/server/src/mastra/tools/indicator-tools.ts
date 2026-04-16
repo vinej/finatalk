@@ -1,5 +1,5 @@
 import { createTool } from "@mastra/core/tools";
-import { runAnalysis } from "@finatalk/trpc/routers/market";
+import { indicatorTail, runAnalysis } from "@finatalk/trpc/routers/market";
 import { z } from "zod";
 
 const MAX_BARS = 60;
@@ -212,9 +212,14 @@ export const analyzeSymbol = createTool({
       v: c.volume,
     }));
     const indicatorResults = analysis.results.map((r) => {
-      const last = r.series[r.series.length - 1];
-      const tail = r.series.slice(-5).map((p) => roundEntry(p));
-      return { kind: r.kind, spec: r.spec, last: last ? roundEntry(last) : null, tail };
+      const { last, tail, events } = indicatorTail(r);
+      return {
+        kind: r.kind,
+        spec: r.spec,
+        last: last ? roundEntry(last) : null,
+        tail: tail.map((p) => roundEntry(p)),
+        ...(events ? { events: events.slice(-5) } : {}),
+      };
     });
     const first = recent[0];
     const latest = recent[recent.length - 1];

@@ -10,6 +10,7 @@ export const KINDS: IndicatorKind[] = [
   "sma", "ema", "rma", "wma", "dema",
   "rsi", "mom", "roc", "macd", "bbands",
   "atr", "adx", "stoch", "stochRsi", "williamsR", "obv", "psar",
+  "maCross", "macdCross",
 ];
 
 export function kindLabel(kind: IndicatorKind): string {
@@ -31,6 +32,8 @@ export function kindLabel(kind: IndicatorKind): string {
     case "williamsR": return "Williams %R";
     case "obv": return "OBV";
     case "psar": return "PSAR";
+    case "maCross": return "MA Cross";
+    case "macdCross": return "MACD Cross";
   }
 }
 
@@ -53,6 +56,8 @@ export function defaultSpec(kind: IndicatorKind): IndicatorSpec {
     case "williamsR": return { kind: "williamsR", period: 14 };
     case "obv": return { kind: "obv" };
     case "psar": return { kind: "psar", step: 0.02, max: 0.2 };
+    case "maCross": return { kind: "maCross", fastPeriod: 50, slowPeriod: 200, maType: "sma" };
+    case "macdCross": return { kind: "macdCross", fast: 12, slow: 26, signal: 9 };
   }
 }
 
@@ -75,6 +80,10 @@ export function defaultColor(kind: IndicatorKind): IndicatorColor {
     case "williamsR": return "#0891b2";
     case "obv": return "#64748b";
     case "psar": return "#f43f5e";
+    case "maCross":
+      return { kind: "maCross", fast: "#2563eb", slow: "#ea580c", bull: "#16a34a", bear: "#dc2626" };
+    case "macdCross":
+      return { kind: "macdCross", bull: "#16a34a", bear: "#dc2626" };
   }
 }
 
@@ -114,6 +123,10 @@ export function kindDescription(kind: IndicatorKind): string {
       return "On-Balance Volume — cumulative volume: adds volume on up days, subtracts on down days. Rising OBV confirms uptrends; divergence with price often precedes reversals. Direction matters more than absolute level.";
     case "psar":
       return "Parabolic SAR — trend-following stop-and-reverse dots that flip from below price (uptrend) to above (downtrend). Used as a trailing stop or trend filter. Defaults step 0.02, max 0.2.";
+    case "maCross":
+      return "MA Cross — plots a fast and a slow moving average on the price chart and marks every crossover. The classic 50/200 SMA pair produces the 'Golden Cross' (fast crosses above slow — bullish regime) and 'Death Cross' (fast crosses below — bearish). Configurable periods and SMA/EMA.";
+    case "macdCross":
+      return "MACD Signal Cross — runs MACD and flags every time the MACD line crosses its signal line: up-arrow for bullish, down-arrow for bearish. Use alongside a trend filter to avoid choppy-market whipsaws. Defaults 12/26/9.";
   }
 }
 
@@ -142,6 +155,14 @@ export function formatLabel(spec: IndicatorSpec): string {
       return "OBV";
     case "psar":
       return `PSAR ${spec.step}/${spec.max}`;
+    case "maCross": {
+      const isGolden = spec.maType === "sma" && spec.fastPeriod === 50 && spec.slowPeriod === 200;
+      if (isGolden) return "Golden/Death Cross (SMA 50/200)";
+      const base = spec.maType.toUpperCase();
+      return `${base} Cross ${spec.fastPeriod}/${spec.slowPeriod}`;
+    }
+    case "macdCross":
+      return `MACD Cross ${spec.fast}/${spec.slow}/${spec.signal}`;
   }
 }
 

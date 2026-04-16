@@ -23,7 +23,7 @@
   },
   "nav": {
     "home": "Accueil",
-    "markets": "Marchés",
+    "markets": "Analyse",
     "portfolios": "Portefeuilles",
     "learnTa": "Apprendre l'AT",
     "settings": "Paramètres"
@@ -41,6 +41,10 @@
   "markets": {
     "title": "Analyse technique",
     "symbol": "Symbole",
+    "assetType": "Type",
+    "assetAll": "Tous",
+    "assetStock": "Action",
+    "assetEtf": "FNB",
     "range": "Période",
     "interval": "Intervalle",
     "load": "Charger",
@@ -83,6 +87,11 @@
     "colorAdx": "Couleur ADX",
     "colorPdi": "Couleur +DI",
     "colorMdi": "Couleur −DI",
+    "colorFast": "Couleur MM rapide",
+    "colorSlow": "Couleur MM lente",
+    "colorBull": "Marqueur haussier",
+    "colorBear": "Marqueur baissier",
+    "maType": "Type de MM",
     "smooth": "Lissage",
     "step": "Pas",
     "max": "Maximum",
@@ -125,7 +134,9 @@
     "chatPlaceholder": "Posez une question…",
     "chatSend": "Envoyer",
     "chatThinking": "Réflexion…",
-    "chatFailed": "Impossible de joindre le conseiller."
+    "chatFailed": "Impossible de joindre le conseiller.",
+    "collapse": "Réduire",
+    "expand": "Développer"
   },
   "portfolio": {
     "newPortfolio": "Nouveau portefeuille",
@@ -209,7 +220,10 @@
     "portfolioGenerated": "Portefeuille généré.",
     "generatePortfolioFailed": "Impossible de générer le portefeuille.",
     "rationale": "Stratégie",
-    "createPortfolio": "Créer le portefeuille"
+    "createPortfolio": "Créer le portefeuille",
+    "performanceTitle": "Performance",
+    "performanceHint": "Clôture de chaque titre normalisée à 100 en début de période.",
+    "performanceNoData": "Aucune donnée de prix pour l'instant."
   },
   "ai": {
     "disclaimer": "Contenu éducatif généré par IA, ne constitue pas un conseil en investissement."

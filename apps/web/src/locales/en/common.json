@@ -23,7 +23,7 @@
   },
   "nav": {
     "home": "Home",
-    "markets": "Markets",
+    "markets": "Analysis",
     "portfolios": "Portfolios",
     "learnTa": "Learn TA",
     "settings": "Settings"
@@ -41,6 +41,10 @@
   "markets": {
     "title": "Technical analysis",
     "symbol": "Symbol",
+    "assetType": "Type",
+    "assetAll": "All",
+    "assetStock": "Stock",
+    "assetEtf": "ETF",
     "range": "Range",
     "interval": "Interval",
     "load": "Load",
@@ -83,6 +87,11 @@
     "colorAdx": "ADX color",
     "colorPdi": "+DI color",
     "colorMdi": "−DI color",
+    "colorFast": "Fast MA color",
+    "colorSlow": "Slow MA color",
+    "colorBull": "Bullish marker",
+    "colorBear": "Bearish marker",
+    "maType": "MA type",
     "smooth": "Smooth",
     "step": "Step",
     "max": "Max",
@@ -125,7 +134,9 @@
     "chatPlaceholder": "Ask about this chart…",
     "chatSend": "Send",
     "chatThinking": "Thinking…",
-    "chatFailed": "Couldn't reach the advisor."
+    "chatFailed": "Couldn't reach the advisor.",
+    "collapse": "Collapse",
+    "expand": "Expand"
   },
   "portfolio": {
     "newPortfolio": "New portfolio",
@@ -209,7 +220,10 @@
     "portfolioGenerated": "Portfolio generated.",
     "generatePortfolioFailed": "Couldn't generate a portfolio.",
     "rationale": "Strategy",
-    "createPortfolio": "Create portfolio"
+    "createPortfolio": "Create portfolio",
+    "performanceTitle": "Performance",
+    "performanceHint": "Each stock's close normalized to 100 at the start of the range.",
+    "performanceNoData": "No price data yet."
   },
   "ai": {
     "disclaimer": "AI-generated educational content, not investment advice."

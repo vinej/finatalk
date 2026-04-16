@@ -2,11 +2,14 @@ import {
   CandlestickSeries,
   type IChartApi,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
   HistogramSeries,
   LineSeries,
+  type SeriesMarker,
   type SeriesType,
   type Time,
   createChart,
+  createSeriesMarkers,
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import type { RouterOutputs } from "@finatalk/trpc";
@@ -28,6 +31,7 @@ export function MarketChart({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
+  const markersRef = useRef<ISeriesMarkersPluginApi<Time>[]>([]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -52,6 +56,7 @@ export function MarketChart({
       chart.remove();
       chartRef.current = null;
       seriesRef.current = [];
+      markersRef.current = [];
     };
   }, []);
 
@@ -59,6 +64,8 @@ export function MarketChart({
     const chart = chartRef.current;
     if (!chart) return;
 
+    for (const m of markersRef.current) m.detach();
+    markersRef.current = [];
     for (const s of seriesRef.current) chart.removeSeries(s);
     seriesRef.current = [];
 
@@ -93,7 +100,11 @@ export function MarketChart({
             ? c.line
             : c.kind === "stoch"
               ? c.k
-              : c.adx;
+              : c.kind === "adx"
+                ? c.adx
+                : c.kind === "maCross"
+                  ? c.fast
+                  : c.bull;
 
       if (
         r.kind === "sma" ||
@@ -173,6 +184,57 @@ export function MarketChart({
         pdiLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.pdi })));
         mdiLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.mdi })));
         seriesRef.current.push(adxLine, pdiLine, mdiLine);
+      } else if (r.kind === "maCross") {
+        const mc =
+          typeof c === "object" && c.kind === "maCross"
+            ? c
+            : { fast: "#2563eb", slow: "#ea580c", bull: "#16a34a", bear: "#dc2626" };
+        const isGolden =
+          r.spec.maType === "sma" && r.spec.fastPeriod === 50 && r.spec.slowPeriod === 200;
+        const fastLine = chart.addSeries(LineSeries, { color: mc.fast, lineWidth: 2 });
+        const slowLine = chart.addSeries(LineSeries, { color: mc.slow, lineWidth: 2 });
+        fastLine.setData(r.series.fast.map((p) => ({ time: p.time as Time, value: p.value })));
+        slowLine.setData(r.series.slow.map((p) => ({ time: p.time as Time, value: p.value })));
+        seriesRef.current.push(fastLine, slowLine);
+        const markers: SeriesMarker<Time>[] = r.series.events.map((ev) => ({
+          time: ev.time as Time,
+          position: ev.direction === "bull" ? "belowBar" : "aboveBar",
+          shape: ev.direction === "bull" ? "arrowUp" : "arrowDown",
+          color: ev.direction === "bull" ? mc.bull : mc.bear,
+          text: isGolden
+            ? ev.direction === "bull"
+              ? "Golden Cross"
+              : "Death Cross"
+            : ev.direction === "bull"
+              ? "Bull"
+              : "Bear",
+        }));
+        if (markers.length > 0) {
+          markersRef.current.push(createSeriesMarkers(candle, markers));
+        }
+      } else if (r.kind === "macdCross") {
+        const mc =
+          typeof c === "object" && c.kind === "macdCross"
+            ? c
+            : { bull: "#16a34a", bear: "#dc2626" };
+        const pane = nextPane++;
+        const macdLine = chart.addSeries(LineSeries, { color: mc.bull, lineWidth: 2 }, pane);
+        const signalLine = chart.addSeries(LineSeries, { color: mc.bear, lineWidth: 2 }, pane);
+        const histo = chart.addSeries(HistogramSeries, { color: "#9ca3af" }, pane);
+        macdLine.setData(r.series.macd.map((p) => ({ time: p.time as Time, value: p.macd })));
+        signalLine.setData(r.series.macd.map((p) => ({ time: p.time as Time, value: p.signal })));
+        histo.setData(r.series.macd.map((p) => ({ time: p.time as Time, value: p.histogram })));
+        seriesRef.current.push(macdLine, signalLine, histo);
+        const markers: SeriesMarker<Time>[] = r.series.events.map((ev) => ({
+          time: ev.time as Time,
+          position: ev.direction === "bull" ? "belowBar" : "aboveBar",
+          shape: ev.direction === "bull" ? "arrowUp" : "arrowDown",
+          color: ev.direction === "bull" ? mc.bull : mc.bear,
+          text: ev.direction === "bull" ? "MACD ↑" : "MACD ↓",
+        }));
+        if (markers.length > 0) {
+          markersRef.current.push(createSeriesMarkers(candle, markers));
+        }
       }
     }
 

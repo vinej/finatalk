@@ -18,7 +18,11 @@
       "Bash(node scripts/apply-migration.mjs)",
       "Bash(pnpm --filter web typecheck)",
       "Bash(pnpm --filter @finatalk/db generate)",
-      "Bash(cd c:\\\\\\\\SanoTalk\\\\\\\\finatalk)"
+      "Bash(cd c:\\\\\\\\SanoTalk\\\\\\\\finatalk)",
+      "Bash(xargs ls *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(node -e \"console.log\\(require\\('./apps/web/package.json'\\).dependencies['lightweight-charts']\\)\")",
+      "Bash(grep -r \"createSeriesMarkers\" node_modules/.pnpm/lightweight-charts@*/node_modules/lightweight-charts/dist/)"
     ]
   }
 }

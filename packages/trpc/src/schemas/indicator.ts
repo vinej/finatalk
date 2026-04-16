@@ -36,6 +36,18 @@ export const IndicatorSpec = z.discriminatedUnion("kind", [
     step: z.number().min(0.001).max(0.5),
     max: z.number().min(0.01).max(1),
   }),
+  z.object({
+    kind: z.literal("maCross"),
+    fastPeriod: z.number().int().min(2).max(500),
+    slowPeriod: z.number().int().min(2).max(500),
+    maType: z.enum(["sma", "ema"]),
+  }),
+  z.object({
+    kind: z.literal("macdCross"),
+    fast: z.number().int().min(2).max(200),
+    slow: z.number().int().min(2).max(500),
+    signal: z.number().int().min(1).max(200),
+  }),
 ]);
 export type IndicatorSpec = z.infer<typeof IndicatorSpec>;
 
@@ -59,6 +71,18 @@ export const IndicatorColor = z.union([
     adx: HexColor,
     pdi: HexColor,
     mdi: HexColor,
+  }),
+  z.object({
+    kind: z.literal("maCross"),
+    fast: HexColor,
+    slow: HexColor,
+    bull: HexColor,
+    bear: HexColor,
+  }),
+  z.object({
+    kind: z.literal("macdCross"),
+    bull: HexColor,
+    bear: HexColor,
   }),
 ]);
 export type IndicatorColor = z.infer<typeof IndicatorColor>;

@@ -179,4 +179,23 @@ export const TA_GUIDE: Record<IndicatorKind, TaGuideEntry> = {
       { title: "StockCharts — Parabolic SAR", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/parabolic-sar" },
     ],
   },
+  maCross: {
+    when: "Use the MA Cross to visualise regime shifts between a fast and a slow moving average on the price chart. The classic 50/200 SMA pairing produces the widely-watched Golden Cross (bullish) and Death Cross (bearish) — useful as a long-horizon trend filter. Shorter pairings (e.g. 9/21 EMA) give swing-trading triggers.",
+    how: "Pick a fast and a slow period (defaults 50/200) and the MA type (SMA for smoother signals, EMA to react faster). Two lines are drawn on the price pane. Every time the fast line crosses the slow, a bull (↑) or bear (↓) marker is plotted on the candle at that bar.",
+    analyse: "Bull markers above rising price suggest a regime change to the upside; bear markers in a down-sloping structure confirm distribution. Crossovers near flat/tangled MAs are low-quality — the wider the separation after the cross, the stronger the signal. Confirm with rising ADX or increasing volume before acting on a cross in isolation.",
+    links: [
+      { title: "Investopedia — Golden Cross", url: "https://www.investopedia.com/terms/g/goldencross.asp" },
+      { title: "Investopedia — Death Cross", url: "https://www.investopedia.com/terms/d/deathcross.asp" },
+      { title: "StockCharts — Moving Average Crossovers", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/moving-averages" },
+    ],
+  },
+  macdCross: {
+    when: "Use MACD Signal Cross when you want the MACD signal-line crossovers made visually explicit on the chart — each cross gets a dated marker so you can scan reaction speed and false-signal rate at a glance. Best in trending markets.",
+    how: "Runs a standard MACD (defaults 12/26/9) and flags every bar where the MACD line crosses its signal line: bull (↑) markers when MACD crosses above signal, bear (↓) when it crosses below. The markers are drawn on the price candles so you can see context immediately.",
+    analyse: "Bullish crosses near or below the zero line are higher-quality long entries than ones already stretched above zero; the reverse holds for bearish crosses. Many crosses in a tight cluster = chop — stand aside. Pair with a trend filter (200 SMA, ADX) to reject counter-trend signals.",
+    links: [
+      { title: "Investopedia — MACD", url: "https://www.investopedia.com/terms/m/macd.asp" },
+      { title: "StockCharts — MACD (Moving Average Convergence/Divergence)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/moving-average-convergence-divergence-macd" },
+    ],
+  },
 };

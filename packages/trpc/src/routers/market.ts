@@ -147,6 +147,9 @@ type MacdSeries = { time: number; macd: number; signal: number; histogram: numbe
 type BandsSeries = { time: number; upper: number; middle: number; lower: number }[];
 type StochSeries = { time: number; k: number; d: number }[];
 type AdxSeries = { time: number; adx: number; pdi: number; mdi: number }[];
+type CrossEvent = { time: number; direction: "bull" | "bear"; price: number };
+type MaCrossSeries = { fast: LineSeries; slow: LineSeries; events: CrossEvent[] };
+type MacdCrossSeries = { macd: MacdSeries; events: CrossEvent[] };
 
 type IndicatorResult =
   | { kind: "sma"; spec: Extract<IndicatorSpecT, { kind: "sma" }>; series: LineSeries }
@@ -165,7 +168,9 @@ type IndicatorResult =
   | { kind: "stochRsi"; spec: Extract<IndicatorSpecT, { kind: "stochRsi" }>; series: LineSeries }
   | { kind: "williamsR"; spec: Extract<IndicatorSpecT, { kind: "williamsR" }>; series: LineSeries }
   | { kind: "obv"; spec: Extract<IndicatorSpecT, { kind: "obv" }>; series: LineSeries }
-  | { kind: "psar"; spec: Extract<IndicatorSpecT, { kind: "psar" }>; series: LineSeries };
+  | { kind: "psar"; spec: Extract<IndicatorSpecT, { kind: "psar" }>; series: LineSeries }
+  | { kind: "maCross"; spec: Extract<IndicatorSpecT, { kind: "maCross" }>; series: MaCrossSeries }
+  | { kind: "macdCross"; spec: Extract<IndicatorSpecT, { kind: "macdCross" }>; series: MacdCrossSeries };
 
 export type RunAnalysisInput = {
   symbol: string;
@@ -182,6 +187,36 @@ export type RunAnalysisOutput = {
   nativeCurrency: string;
   displayCurrency: string;
 };
+
+export function indicatorTail(r: IndicatorResult): {
+  last: Record<string, number> | null;
+  tail: Array<Record<string, number>>;
+  events?: Array<{ time: number; direction: "bull" | "bear"; price: number }>;
+} {
+  if (r.kind === "maCross") {
+    const arr = r.series.fast.map((p, i) => ({
+      time: p.time,
+      fast: p.value,
+      slow: r.series.slow[i]?.value ?? Number.NaN,
+    }));
+    return {
+      last: arr.at(-1) ?? null,
+      tail: arr.slice(-5),
+      events: r.series.events.slice(-5),
+    };
+  }
+  if (r.kind === "macdCross") {
+    return {
+      last: r.series.macd.at(-1) ?? null,
+      tail: r.series.macd.slice(-5),
+      events: r.series.events.slice(-5),
+    };
+  }
+  return {
+    last: r.series.at(-1) ?? null,
+    tail: r.series.slice(-5),
+  };
+}
 
 export async function runAnalysis(input: RunAnalysisInput): Promise<RunAnalysisOutput> {
   const symbol = input.symbol.toUpperCase();
@@ -306,10 +341,63 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
       }
       return { kind: "psar", spec, series };
     }
+    case "maCross": {
+      const make = (period: number) =>
+        spec.maType === "ema" ? new EMA(period) : new SMA(period);
+      const fastMa = make(spec.fastPeriod);
+      const slowMa = make(spec.slowPeriod);
+      const fast: LineSeries = [];
+      const slow: LineSeries = [];
+      const events: CrossEvent[] = [];
+      let prevDiff: number | null = null;
+      for (const c of candles) {
+        const f = fastMa.update(c.close, false);
+        const s = slowMa.update(c.close, false);
+        if (f == null || s == null) continue;
+        const fv = Number(f);
+        const sv = Number(s);
+        fast.push({ time: c.time, value: fv });
+        slow.push({ time: c.time, value: sv });
+        const diff = fv - sv;
+        if (prevDiff != null && prevDiff !== 0 && diff !== 0) {
+          if (prevDiff < 0 && diff > 0) {
+            events.push({ time: c.time, direction: "bull", price: c.close });
+          } else if (prevDiff > 0 && diff < 0) {
+            events.push({ time: c.time, direction: "bear", price: c.close });
+          }
+        }
+        prevDiff = diff;
+      }
+      return { kind: "maCross", spec, series: { fast, slow, events } };
+    }
+    case "macdCross": {
+      const macd = new MACD(new EMA(spec.fast), new EMA(spec.slow), new EMA(spec.signal));
+      const series: MacdSeries = [];
+      const events: CrossEvent[] = [];
+      let prevHist: number | null = null;
+      for (const c of candles) {
+        const v = macd.update(c.close, false);
+        if (v == null) continue;
+        const macdN = Number(v.macd);
+        const signalN = Number(v.signal);
+        const histN = Number(v.histogram);
+        series.push({ time: c.time, macd: macdN, signal: signalN, histogram: histN });
+        if (prevHist != null && prevHist !== 0 && histN !== 0) {
+          if (prevHist < 0 && histN > 0) {
+            events.push({ time: c.time, direction: "bull", price: c.close });
+          } else if (prevHist > 0 && histN < 0) {
+            events.push({ time: c.time, direction: "bear", price: c.close });
+          }
+        }
+        prevHist = histN;
+      }
+      return { kind: "macdCross", spec, series: { macd: series, events } };
+    }
   }
 }
 
-export type SymbolEntry = { symbol: string; name: string; exchange: string };
+export type AssetType = "stock" | "etf";
+export type SymbolEntry = { symbol: string; name: string; exchange: string; assetType: AssetType };
 
 let cachedSymbols: { data: SymbolEntry[]; fetchedAt: number } | null = null;
 
@@ -331,6 +419,7 @@ function parseNasdaqListed(text: string): SymbolEntry[] {
   const idxSymbol = header.indexOf("Symbol");
   const idxName = header.indexOf("Security Name");
   const idxTest = header.indexOf("Test Issue");
+  const idxEtf = header.indexOf("ETF");
   const out: SymbolEntry[] = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
@@ -340,7 +429,8 @@ function parseNasdaqListed(text: string): SymbolEntry[] {
     const symbol = cols[idxSymbol]?.trim();
     const name = cols[idxName]?.trim();
     if (!symbol || !name) continue;
-    out.push({ symbol, name, exchange: "NASDAQ" });
+    const assetType: AssetType = idxEtf >= 0 && cols[idxEtf]?.trim() === "Y" ? "etf" : "stock";
+    out.push({ symbol, name, exchange: "NASDAQ", assetType });
   }
   return out;
 }
@@ -353,6 +443,7 @@ function parseOtherListed(text: string): SymbolEntry[] {
   const idxName = header.indexOf("Security Name");
   const idxExch = header.indexOf("Exchange");
   const idxTest = header.indexOf("Test Issue");
+  const idxEtf = header.indexOf("ETF");
   const exchangeMap: Record<string, string> = {
     A: "NYSE MKT", N: "NYSE", P: "NYSE ARCA", Z: "BATS", V: "IEX",
   };
@@ -366,7 +457,8 @@ function parseOtherListed(text: string): SymbolEntry[] {
     const name = cols[idxName]?.trim();
     const code = cols[idxExch]?.trim() ?? "";
     if (!symbol || !name) continue;
-    out.push({ symbol, name, exchange: exchangeMap[code] ?? code ?? "OTHER" });
+    const assetType: AssetType = idxEtf >= 0 && cols[idxEtf]?.trim() === "Y" ? "etf" : "stock";
+    out.push({ symbol, name, exchange: exchangeMap[code] ?? code ?? "OTHER", assetType });
   }
   return out;
 }

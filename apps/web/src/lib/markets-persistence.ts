@@ -16,6 +16,9 @@ export type PersistedMarketsState = {
   loadedAnalysisTitle: string | null;
   loadedAnalysisDescription: string | null;
   loadedChartTitle: string | null;
+  controlsCollapsed?: boolean;
+  indicatorsCollapsed?: boolean;
+  assetTypeFilter?: "all" | "stock" | "etf";
 };
 
 export function loadMarketsState(): PersistedMarketsState | null {

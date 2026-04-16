@@ -34,6 +34,22 @@ function Swatch({ color, dim }: { color: IndicatorColor; dim?: boolean }) {
       </span>
     );
   }
+  if (color.kind === "maCross") {
+    return (
+      <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.fast }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.slow }} />
+      </span>
+    );
+  }
+  if (color.kind === "macdCross") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.bull }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.bear }} />
+      </span>
+    );
+  }
   return (
     <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
       <span className="h-full w-1/3" style={{ backgroundColor: color.adx }} />
@@ -211,6 +227,37 @@ function EditForm({
               onChange={(v) => setSpec({ ...spec, max: v })} />
           </>
         )}
+        {spec.kind === "maCross" && (
+          <>
+            <NumberField label={t("markets.fast")} value={spec.fastPeriod} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, fastPeriod: v })} />
+            <NumberField label={t("markets.slow")} value={spec.slowPeriod} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, slowPeriod: v })} />
+            <div className="grid gap-1.5">
+              <Label>{t("markets.maType")}</Label>
+              <select
+                value={spec.maType}
+                onChange={(e) =>
+                  setSpec({ ...spec, maType: e.target.value === "ema" ? "ema" : "sma" })
+                }
+                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
+              >
+                <option value="sma">SMA</option>
+                <option value="ema">EMA</option>
+              </select>
+            </div>
+          </>
+        )}
+        {spec.kind === "macdCross" && (
+          <>
+            <NumberField label={t("markets.fast")} value={spec.fast} min={2} max={200}
+              onChange={(v) => setSpec({ ...spec, fast: v })} />
+            <NumberField label={t("markets.slow")} value={spec.slow} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, slow: v })} />
+            <NumberField label={t("markets.signal")} value={spec.signal} min={1} max={200}
+              onChange={(v) => setSpec({ ...spec, signal: v })} />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -238,6 +285,24 @@ function EditForm({
               onChange={(v) => setColor({ kind: "adx", adx: color.adx, pdi: v, mdi: color.mdi })} />
             <ColorField label={t("markets.colorMdi")} value={color.mdi}
               onChange={(v) => setColor({ kind: "adx", adx: color.adx, pdi: color.pdi, mdi: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "maCross" ? (
+          <>
+            <ColorField label={t("markets.colorFast")} value={color.fast}
+              onChange={(v) => setColor({ ...color, fast: v })} />
+            <ColorField label={t("markets.colorSlow")} value={color.slow}
+              onChange={(v) => setColor({ ...color, slow: v })} />
+            <ColorField label={t("markets.colorBull")} value={color.bull}
+              onChange={(v) => setColor({ ...color, bull: v })} />
+            <ColorField label={t("markets.colorBear")} value={color.bear}
+              onChange={(v) => setColor({ ...color, bear: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "macdCross" ? (
+          <>
+            <ColorField label={t("markets.colorBull")} value={color.bull}
+              onChange={(v) => setColor({ ...color, bull: v })} />
+            <ColorField label={t("markets.colorBear")} value={color.bear}
+              onChange={(v) => setColor({ ...color, bear: v })} />
           </>
         ) : (
           <ColorField

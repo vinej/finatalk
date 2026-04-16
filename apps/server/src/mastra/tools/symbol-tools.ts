@@ -19,9 +19,11 @@ export const listAvailableSymbols = createTool({
   id: "listAvailableSymbols",
   description:
     "Search the universe of tradable tickers (NASDAQ + NYSE + ARCA). " +
+    "Includes both stocks and ETFs — each result carries `assetType: 'stock' | 'etf'`. " +
     "Pass a query to match by ticker prefix or company name substring. " +
     "Use this to verify a symbol exists or to discover tickers for a theme " +
-    "(e.g. query 'bank' → JPM, BAC, WFC). Returns up to `limit` entries.",
+    "(e.g. 'bank' → JPM/BAC/WFC; 'bond' → AGG/BND/TLT; 'allocation' → AOR/AOA). " +
+    "Returns up to `limit` entries.",
   inputSchema: z.object({
     query: z
       .string()
