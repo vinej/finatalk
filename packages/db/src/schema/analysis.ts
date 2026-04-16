@@ -8,6 +8,7 @@ export const analysis = createTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    symbol: text("symbol").notNull().default(""),
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
     indicators: jsonb("indicators").notNull(),
@@ -16,6 +17,7 @@ export const analysis = createTable(
   },
   (t) => ({
     userIdx: index("finatalk_analysis_user_idx").on(t.userId, t.createdAt),
+    userSymbolIdx: index("finatalk_analysis_user_symbol_idx").on(t.userId, t.symbol),
   }),
 );
 

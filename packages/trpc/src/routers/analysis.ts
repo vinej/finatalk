@@ -40,31 +40,38 @@ async function findOwnedSavedChart(ctx: { db: typeof import("@finatalk/db").db; 
 
 export const analysisRouter = createTRPCRouter({
   // ── Analyses ─────────────────────────────────────────────────────────────
-  listAnalyses: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await ctx.db
-      .select({
-        id: analysis.id,
-        title: analysis.title,
-        description: analysis.description,
-        indicators: analysis.indicators,
-        createdAt: analysis.createdAt,
-        updatedAt: analysis.updatedAt,
-      })
-      .from(analysis)
-      .where(eq(analysis.userId, ctx.user.id))
-      .orderBy(desc(analysis.createdAt));
-    return rows.map((r) => {
-      const items = parseIndicators(r.indicators);
-      return {
-        id: r.id,
-        title: r.title,
-        description: r.description,
-        indicatorCount: items.length,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      };
-    });
-  }),
+  listAnalyses: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema.optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const filter = input?.symbol
+        ? and(eq(analysis.userId, ctx.user.id), eq(analysis.symbol, input.symbol.toUpperCase()))
+        : eq(analysis.userId, ctx.user.id);
+      const rows = await ctx.db
+        .select({
+          id: analysis.id,
+          symbol: analysis.symbol,
+          title: analysis.title,
+          description: analysis.description,
+          indicators: analysis.indicators,
+          createdAt: analysis.createdAt,
+          updatedAt: analysis.updatedAt,
+        })
+        .from(analysis)
+        .where(filter)
+        .orderBy(desc(analysis.createdAt));
+      return rows.map((r) => {
+        const items = parseIndicators(r.indicators);
+        return {
+          id: r.id,
+          symbol: r.symbol,
+          title: r.title,
+          description: r.description,
+          indicatorCount: items.length,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+        };
+      });
+    }),
 
   getAnalysis: protectedProcedure
     .input(z.object({ id: z.string() }))
@@ -72,6 +79,7 @@ export const analysisRouter = createTRPCRouter({
       const row = await findOwnedAnalysis(ctx, input.id);
       return {
         id: row.id,
+        symbol: row.symbol,
         title: row.title,
         description: row.description,
         indicators: parseIndicators(row.indicators),
@@ -82,20 +90,26 @@ export const analysisRouter = createTRPCRouter({
 
   createAnalysis: protectedProcedure
     .input(z.object({
+      symbol: SymbolSchema,
       title: TitleSchema,
       description: DescriptionSchema.default(""),
       indicators: IndicatorsSchema,
       overwrite: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const sym = input.symbol.toUpperCase();
       const existing = await ctx.db.query.analysis.findFirst({
-        where: and(eq(analysis.userId, ctx.user.id), eq(analysis.title, input.title)),
+        where: and(
+          eq(analysis.userId, ctx.user.id),
+          eq(analysis.symbol, sym),
+          eq(analysis.title, input.title),
+        ),
       });
       if (existing) {
         if (!input.overwrite) {
           throw new TRPCError({
             code: "CONFLICT",
-            message: `An analysis titled "${input.title}" already exists.`,
+            message: `An analysis titled "${input.title}" already exists for ${sym}.`,
           });
         }
         await ctx.db
@@ -112,6 +126,7 @@ export const analysisRouter = createTRPCRouter({
       await ctx.db.insert(analysis).values({
         id,
         userId: ctx.user.id,
+        symbol: sym,
         title: input.title,
         description: input.description,
         indicators: input.indicators,

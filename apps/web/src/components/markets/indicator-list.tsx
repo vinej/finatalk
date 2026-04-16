@@ -17,11 +17,28 @@ function Swatch({ color, dim }: { color: IndicatorColor; dim?: boolean }) {
   if (typeof color === "string") {
     return <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: color, ...style }} />;
   }
+  if (color.kind === "macd") {
+    return (
+      <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/3" style={{ backgroundColor: color.line }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.signal }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.hist }} />
+      </span>
+    );
+  }
+  if (color.kind === "stoch") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.k }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.d }} />
+      </span>
+    );
+  }
   return (
     <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
-      <span className="h-full w-1/3" style={{ backgroundColor: color.line }} />
-      <span className="h-full w-1/3" style={{ backgroundColor: color.signal }} />
-      <span className="h-full w-1/3" style={{ backgroundColor: color.hist }} />
+      <span className="h-full w-1/3" style={{ backgroundColor: color.adx }} />
+      <span className="h-full w-1/3" style={{ backgroundColor: color.pdi }} />
+      <span className="h-full w-1/3" style={{ backgroundColor: color.mdi }} />
     </span>
   );
 }
@@ -142,7 +159,9 @@ function EditForm({
   const isSinglePeriod =
     spec.kind === "sma" || spec.kind === "ema" || spec.kind === "rma" ||
     spec.kind === "wma" || spec.kind === "dema" || spec.kind === "rsi" ||
-    spec.kind === "mom" || spec.kind === "roc";
+    spec.kind === "mom" || spec.kind === "roc" ||
+    spec.kind === "atr" || spec.kind === "adx" ||
+    spec.kind === "stochRsi" || spec.kind === "williamsR";
 
   return (
     <form onSubmit={submit} className="grid gap-3">
@@ -174,10 +193,28 @@ function EditForm({
               onChange={(v) => setSpec({ ...spec, stdDev: v })} />
           </>
         )}
+        {spec.kind === "stoch" && (
+          <>
+            <NumberField label={t("markets.period")} value={spec.period} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, period: v })} />
+            <NumberField label={t("markets.signal")} value={spec.signal} min={1} max={200}
+              onChange={(v) => setSpec({ ...spec, signal: v })} />
+            <NumberField label={t("markets.smooth")} value={spec.smooth} min={1} max={200}
+              onChange={(v) => setSpec({ ...spec, smooth: v })} />
+          </>
+        )}
+        {spec.kind === "psar" && (
+          <>
+            <NumberField label={t("markets.step")} value={spec.step} min={0.001} max={0.5} step={0.01}
+              onChange={(v) => setSpec({ ...spec, step: v })} />
+            <NumberField label={t("markets.max")} value={spec.max} min={0.01} max={1} step={0.01}
+              onChange={(v) => setSpec({ ...spec, max: v })} />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {spec.kind === "macd" && color && typeof color !== "string" ? (
+        {typeof color === "object" && color.kind === "macd" ? (
           <>
             <ColorField label={t("markets.colorLine")} value={color.line}
               onChange={(v) => setColor({ kind: "macd", line: v, signal: color.signal, hist: color.hist })} />
@@ -185,6 +222,22 @@ function EditForm({
               onChange={(v) => setColor({ kind: "macd", line: color.line, signal: v, hist: color.hist })} />
             <ColorField label={t("markets.colorHist")} value={color.hist}
               onChange={(v) => setColor({ kind: "macd", line: color.line, signal: color.signal, hist: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "stoch" ? (
+          <>
+            <ColorField label={t("markets.colorK")} value={color.k}
+              onChange={(v) => setColor({ kind: "stoch", k: v, d: color.d })} />
+            <ColorField label={t("markets.colorD")} value={color.d}
+              onChange={(v) => setColor({ kind: "stoch", k: color.k, d: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "adx" ? (
+          <>
+            <ColorField label={t("markets.colorAdx")} value={color.adx}
+              onChange={(v) => setColor({ kind: "adx", adx: v, pdi: color.pdi, mdi: color.mdi })} />
+            <ColorField label={t("markets.colorPdi")} value={color.pdi}
+              onChange={(v) => setColor({ kind: "adx", adx: color.adx, pdi: v, mdi: color.mdi })} />
+            <ColorField label={t("markets.colorMdi")} value={color.mdi}
+              onChange={(v) => setColor({ kind: "adx", adx: color.adx, pdi: color.pdi, mdi: v })} />
           </>
         ) : (
           <ColorField

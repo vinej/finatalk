@@ -1,0 +1,3 @@
+ALTER TABLE "finatalk_holding" ADD COLUMN "analysis_id" text;--> statement-breakpoint
+ALTER TABLE "finatalk_holding" ADD CONSTRAINT "finatalk_holding_analysis_id_finatalk_analysis_id_fk" FOREIGN KEY ("analysis_id") REFERENCES "public"."finatalk_analysis"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "finatalk_holding_analysis_idx" ON "finatalk_holding" USING btree ("analysis_id");

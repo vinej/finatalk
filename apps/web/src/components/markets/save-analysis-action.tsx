@@ -8,10 +8,12 @@ import { trpc } from "@/lib/trpc";
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
 
 export function SaveAnalysisAction({
+  symbol,
   indicators,
   defaultTitle,
   defaultDescription,
 }: {
+  symbol: string;
   indicators: ActiveIndicator[];
   defaultTitle?: string | null;
   defaultDescription?: string | null;
@@ -62,7 +64,7 @@ export function SaveAnalysisAction({
     e.preventDefault();
     const t2 = title.trim();
     if (!t2) return;
-    create.mutate({ title: t2, description: description.trim(), indicators });
+    create.mutate({ symbol, title: t2, description: description.trim(), indicators });
   }
 
   return (
@@ -94,11 +96,13 @@ export function SaveAnalysisAction({
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="analysis-desc">{t("markets.analysisDescription")}</Label>
-              <Input
+              <textarea
                 id="analysis-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={2000}
+                rows={6}
+                className="rounded border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-sm"
               />
             </div>
             <div className="flex justify-end gap-2">

@@ -1,5 +1,23 @@
 import { TRPCError } from "@trpc/server";
-import { BollingerBands, DEMA, EMA, MACD, MOM, RMA, ROC, RSI, SMA, WMA } from "trading-signals";
+import {
+  ADX,
+  ATR,
+  BollingerBands,
+  DEMA,
+  EMA,
+  MACD,
+  MOM,
+  OBV,
+  PSAR,
+  RMA,
+  ROC,
+  RSI,
+  SMA,
+  StochasticOscillator,
+  StochasticRSI,
+  WMA,
+  WilliamsR,
+} from "trading-signals";
 import YahooFinance from "yahoo-finance2";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
@@ -100,11 +118,11 @@ function applyFx(candles: Candle[], rates: Map<number, number>): Candle[] {
   return out;
 }
 
-async function fetchCandlesWithCurrency(
+export async function fetchCandlesWithCurrency(
   symbol: string,
   range: z.infer<typeof RangeSchema>,
   interval: z.infer<typeof IntervalSchema>,
-  convertTo: "CAD" | null,
+  convertTo: string | null,
 ): Promise<{ candles: Candle[]; nativeCurrency: string; displayCurrency: string }> {
   const result = await fetchChart(symbol, range, interval);
   const nativeCurrency = (result.meta.currency ?? "USD").toUpperCase();
@@ -112,20 +130,23 @@ async function fetchCandlesWithCurrency(
   if (candles.length === 0) {
     throw new TRPCError({ code: "BAD_REQUEST", message: `No data for ${symbol}` });
   }
-  if (!convertTo || convertTo === nativeCurrency) {
+  const target = convertTo ? convertTo.toUpperCase() : null;
+  if (!target || target === nativeCurrency) {
     return { candles, nativeCurrency, displayCurrency: nativeCurrency };
   }
-  const rates = await fetchFxRates(nativeCurrency, convertTo, range, interval);
+  const rates = await fetchFxRates(nativeCurrency, target, range, interval);
   if (rates.size === 0) {
     return { candles, nativeCurrency, displayCurrency: nativeCurrency };
   }
   candles = applyFx(candles, rates);
-  return { candles, nativeCurrency, displayCurrency: convertTo };
+  return { candles, nativeCurrency, displayCurrency: target };
 }
 
 type LineSeries = { time: number; value: number }[];
 type MacdSeries = { time: number; macd: number; signal: number; histogram: number }[];
 type BandsSeries = { time: number; upper: number; middle: number; lower: number }[];
+type StochSeries = { time: number; k: number; d: number }[];
+type AdxSeries = { time: number; adx: number; pdi: number; mdi: number }[];
 
 type IndicatorResult =
   | { kind: "sma"; spec: Extract<IndicatorSpecT, { kind: "sma" }>; series: LineSeries }
@@ -137,7 +158,14 @@ type IndicatorResult =
   | { kind: "mom"; spec: Extract<IndicatorSpecT, { kind: "mom" }>; series: LineSeries }
   | { kind: "roc"; spec: Extract<IndicatorSpecT, { kind: "roc" }>; series: LineSeries }
   | { kind: "macd"; spec: Extract<IndicatorSpecT, { kind: "macd" }>; series: MacdSeries }
-  | { kind: "bbands"; spec: Extract<IndicatorSpecT, { kind: "bbands" }>; series: BandsSeries };
+  | { kind: "bbands"; spec: Extract<IndicatorSpecT, { kind: "bbands" }>; series: BandsSeries }
+  | { kind: "atr"; spec: Extract<IndicatorSpecT, { kind: "atr" }>; series: LineSeries }
+  | { kind: "adx"; spec: Extract<IndicatorSpecT, { kind: "adx" }>; series: AdxSeries }
+  | { kind: "stoch"; spec: Extract<IndicatorSpecT, { kind: "stoch" }>; series: StochSeries }
+  | { kind: "stochRsi"; spec: Extract<IndicatorSpecT, { kind: "stochRsi" }>; series: LineSeries }
+  | { kind: "williamsR"; spec: Extract<IndicatorSpecT, { kind: "williamsR" }>; series: LineSeries }
+  | { kind: "obv"; spec: Extract<IndicatorSpecT, { kind: "obv" }>; series: LineSeries }
+  | { kind: "psar"; spec: Extract<IndicatorSpecT, { kind: "psar" }>; series: LineSeries };
 
 export type RunAnalysisInput = {
   symbol: string;
@@ -208,12 +236,90 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
       }
       return { kind: "bbands", spec, series };
     }
+    case "atr": {
+      const atr = new ATR(spec.period);
+      const series: LineSeries = [];
+      for (const c of candles) {
+        const v = atr.update({ high: c.high, low: c.low, close: c.close }, false);
+        if (v != null) series.push({ time: c.time, value: Number(v) });
+      }
+      return { kind: "atr", spec, series };
+    }
+    case "adx": {
+      const adx = new ADX(spec.period);
+      const series: AdxSeries = [];
+      for (const c of candles) {
+        const v = adx.update({ high: c.high, low: c.low, close: c.close }, false);
+        if (v != null) {
+          const pdi = typeof adx.pdi === "number" ? adx.pdi : 0;
+          const mdi = typeof adx.mdi === "number" ? adx.mdi : 0;
+          series.push({ time: c.time, adx: Number(v), pdi, mdi });
+        }
+      }
+      return { kind: "adx", spec, series };
+    }
+    case "stoch": {
+      const stoch = new StochasticOscillator(spec.period, spec.signal, spec.smooth);
+      const series: StochSeries = [];
+      for (const c of candles) {
+        const v = stoch.update({ high: c.high, low: c.low, close: c.close }, false);
+        if (v != null) series.push({ time: c.time, k: v.stochK, d: v.stochD });
+      }
+      return { kind: "stoch", spec, series };
+    }
+    case "stochRsi": {
+      const sr = new StochasticRSI(spec.period);
+      const series: LineSeries = [];
+      for (const c of candles) {
+        const v = sr.update(c.close, false);
+        if (v != null) series.push({ time: c.time, value: Number(v) });
+      }
+      return { kind: "stochRsi", spec, series };
+    }
+    case "williamsR": {
+      const wr = new WilliamsR(spec.period);
+      const series: LineSeries = [];
+      for (const c of candles) {
+        const v = wr.update({ high: c.high, low: c.low, close: c.close }, false);
+        if (v != null) series.push({ time: c.time, value: Number(v) });
+      }
+      return { kind: "williamsR", spec, series };
+    }
+    case "obv": {
+      const obv = new OBV(1);
+      const series: LineSeries = [];
+      for (const c of candles) {
+        const v = obv.update(
+          { open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume },
+          false,
+        );
+        if (v != null) series.push({ time: c.time, value: Number(v) });
+      }
+      return { kind: "obv", spec, series };
+    }
+    case "psar": {
+      const psar = new PSAR({ accelerationStep: spec.step, accelerationMax: spec.max });
+      const series: LineSeries = [];
+      for (const c of candles) {
+        const v = psar.update({ high: c.high, low: c.low }, false);
+        if (v != null) series.push({ time: c.time, value: Number(v) });
+      }
+      return { kind: "psar", spec, series };
+    }
   }
 }
 
-type SymbolEntry = { symbol: string; name: string; exchange: string };
+export type SymbolEntry = { symbol: string; name: string; exchange: string };
 
 let cachedSymbols: { data: SymbolEntry[]; fetchedAt: number } | null = null;
+
+export async function getCachedSymbols(): Promise<{ data: SymbolEntry[]; fetchedAt: number }> {
+  if (!cachedSymbols) {
+    const data = await fetchSymbolUniverse();
+    cachedSymbols = { data, fetchedAt: Date.now() };
+  }
+  return cachedSymbols;
+}
 
 const NASDAQ_URL = "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt";
 const OTHER_URL = "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt";

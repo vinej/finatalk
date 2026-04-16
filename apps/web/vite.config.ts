@@ -6,8 +6,8 @@ import path from "path";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname, "../.."), "");
-  const apiTarget = env.VITE_API_URL || "http://localhost:30001";
-  const port = Number(env.VITE_PORT ?? env.PORT_WEB ?? 51733);
+  const apiTarget = env.VITE_API_URL || "http://localhost:3001";
+  const port = Number(env.VITE_PORT ?? env.PORT_WEB ?? 5173);
 
   return {
     plugins: [

@@ -12,7 +12,13 @@
       "Bash(node -e \"const ts=require\\('trading-signals'\\);console.log\\(Object.keys\\(ts\\).filter\\(k=>['RMA','WMA','DEMA','MOM','ROC'].includes\\(k\\)\\)\\)\")",
       "Bash(pnpm -r typecheck)",
       "WebFetch(domain:chartschool.stockcharts.com)",
-      "Read(//c/SanoTalk/sanotalk/**)"
+      "Read(//c/SanoTalk/sanotalk/**)",
+      "Bash(pnpm --filter @finatalk/db db:migrate)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(node scripts/apply-migration.mjs)",
+      "Bash(pnpm --filter web typecheck)",
+      "Bash(pnpm --filter @finatalk/db generate)",
+      "Bash(cd c:\\\\\\\\SanoTalk\\\\\\\\finatalk)"
     ]
   }
 }

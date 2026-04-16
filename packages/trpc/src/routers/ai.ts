@@ -7,6 +7,7 @@ import {
   RangeSchema,
   SymbolSchema,
 } from "../schemas/indicator";
+import { CurrencySchema, HoldingInputSchema } from "../schemas/portfolio";
 
 const ChatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -72,6 +73,35 @@ export const aiRouter = createTRPCRouter({
           interval: input.context.interval,
           convertTo: input.context.convertTo ?? null,
           activeIndicators: input.context.activeIndicators,
+        },
+        ...(input.language ? { language: input.language } : {}),
+      });
+    }),
+
+  chatPortfolio: protectedProcedure
+    .input(z.object({
+      messages: z.array(ChatMessageSchema).min(1).max(40),
+      context: z.object({
+        portfolioTitle: z.string().min(1).max(120),
+        currency: CurrencySchema,
+        holdings: z.array(HoldingInputSchema).max(200),
+      }),
+      language: z.string().min(2).max(10).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const fn = ctx.services.chatWithPortfolioAdvisor;
+      if (!fn) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "AI portfolio chat is not configured on this server.",
+        });
+      }
+      return fn({
+        messages: input.messages,
+        context: {
+          portfolioTitle: input.context.portfolioTitle,
+          currency: input.context.currency,
+          holdings: input.context.holdings,
         },
         ...(input.language ? { language: input.language } : {}),
       });

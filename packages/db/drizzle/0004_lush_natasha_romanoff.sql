@@ -1,0 +1,2 @@
+ALTER TABLE "finatalk_analysis" ADD COLUMN "symbol" text DEFAULT '' NOT NULL;--> statement-breakpoint
+CREATE INDEX "finatalk_analysis_user_symbol_idx" ON "finatalk_analysis" USING btree ("user_id","symbol");

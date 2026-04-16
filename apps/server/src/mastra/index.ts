@@ -1,12 +1,23 @@
 import { Mastra } from "@mastra/core/mastra";
+import { z } from "zod";
 import { runAnalysis, type RunAnalysisInput } from "@finatalk/trpc/routers/market";
+import { StoredIndicator } from "@finatalk/trpc/schemas/indicator";
 import { chartSummaryAgent } from "./agents/chart-summary";
 import { chartAdvisorAgent } from "./agents/chart-advisor";
+import { portfolioAdvisorAgent } from "./agents/portfolio-advisor";
+import { analysisGeneratorAgent } from "./agents/analysis-generator";
+import { portfolioGeneratorAgent } from "./agents/portfolio-generator";
 
 type IndicatorSpec = RunAnalysisInput["indicators"][number];
 
 export const mastra = new Mastra({
-  agents: { chartSummaryAgent, chartAdvisorAgent },
+  agents: {
+    chartSummaryAgent,
+    chartAdvisorAgent,
+    portfolioAdvisorAgent,
+    analysisGeneratorAgent,
+    portfolioGeneratorAgent,
+  },
 });
 
 const MAX_BARS = 60;
@@ -128,4 +139,124 @@ export async function chatWithAdvisor(args: ChatWithAdvisorArgs): Promise<{ resp
   };
   const result = await chartAdvisorAgent.generate([preamble, ...history]);
   return { response: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
+}
+
+export type PortfolioAdvisorHolding = {
+  symbol: string;
+  quantity: number;
+  costBasis: number;
+  purchaseDate: string;
+};
+
+export type ChatWithPortfolioAdvisorArgs = {
+  messages: ChatMessage[];
+  context: {
+    portfolioTitle: string;
+    currency: string;
+    holdings: PortfolioAdvisorHolding[];
+  };
+  language?: string;
+};
+
+export async function chatWithPortfolioAdvisor(
+  args: ChatWithPortfolioAdvisorArgs,
+): Promise<{ response: string; provider: string }> {
+  const { messages, context, language = "en" } = args;
+  const contextBlock = {
+    userLanguage: language,
+    portfolio: {
+      title: context.portfolioTitle,
+      currency: context.currency,
+      holdings: context.holdings,
+    },
+  };
+  const history = trimHistory(messages);
+  const preamble: ChatMessage = {
+    role: "user",
+    content:
+      `Context about the user's portfolio (do not quote this verbatim, use it to ground your answers):\n${JSON.stringify(contextBlock)}`,
+  };
+  const result = await portfolioAdvisorAgent.generate([preamble, ...history]);
+  return { response: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
+}
+
+const GeneratedAnalysisSchema = z.object({
+  title: z.string().min(1).max(120),
+  description: z.string().max(2000),
+  indicators: z.array(StoredIndicator).min(1).max(8),
+});
+export type GeneratedAnalysis = z.infer<typeof GeneratedAnalysisSchema>;
+
+export type GenerateAnalysisArgs = {
+  symbol: string;
+  language?: string;
+};
+
+export async function generateAnalysisForSymbol(
+  args: GenerateAnalysisArgs,
+): Promise<GeneratedAnalysis & { provider: string }> {
+  const { symbol, language = "en" } = args;
+  const preamble = {
+    role: "user" as const,
+    content:
+      `Generate a technical-analysis indicator set for ONE symbol. ` +
+      `Symbol: ${symbol}. User language: ${language}. ` +
+      `Follow your workflow: call listAvailableIndicators, then analyzeSymbol for ${symbol}, ` +
+      `then return the structured object. Title and description MUST be written in the user language (${language}).`,
+  };
+  const result = await analysisGeneratorAgent.generate([preamble]);
+  const parsed = GeneratedAnalysisSchema.parse(extractJson(result.text));
+  return { ...parsed, provider: process.env.AI_PROVIDER ?? "anthropic" };
+}
+
+function extractJson(text: string): unknown {
+  const trimmed = text.trim();
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("Agent did not return JSON.");
+  }
+  return JSON.parse(trimmed.slice(start, end + 1));
+}
+
+const GeneratedPortfolioSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  currency: z.enum(["USD", "CAD"]),
+  rationale: z.string().max(2000),
+  holdings: z
+    .array(
+      z.object({
+        symbol: z.string().trim().min(1).max(20),
+        quantity: z.number().positive(),
+        costBasis: z.number().nonnegative(),
+        rationale: z.string().max(500),
+      }),
+    )
+    .min(1)
+    .max(12),
+});
+export type GeneratedPortfolio = z.infer<typeof GeneratedPortfolioSchema>;
+
+export type GeneratePortfolioArgs = {
+  prompt: string;
+  language?: string;
+};
+
+export async function generatePortfolioFromPrompt(
+  args: GeneratePortfolioArgs,
+): Promise<GeneratedPortfolio & { provider: string }> {
+  const { prompt, language = "en" } = args;
+  const preamble = {
+    role: "user" as const,
+    content:
+      `Build a single draft portfolio from this user request. ` +
+      `User language: ${language}. ` +
+      `User request: ${prompt}\n\n` +
+      `Follow your workflow: parse the request, call getLatestPrice for every ticker you pick ` +
+      `(convertTo = the target currency from the request), size quantities to the budget, ` +
+      `then return the JSON object. Title, rationale, and per-holding rationale MUST be in ${language}.`,
+  };
+  const result = await portfolioGeneratorAgent.generate([preamble]);
+  const parsed = GeneratedPortfolioSchema.parse(extractJson(result.text));
+  return { ...parsed, provider: process.env.AI_PROVIDER ?? "anthropic" };
 }

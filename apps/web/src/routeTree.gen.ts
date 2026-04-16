@@ -18,8 +18,10 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
+import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
 import { Route as AuthDashboardMarketsRouteImport } from './routes/_auth/dashboard_.markets'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
+import { Route as AuthDashboardPortfoliosPortfolioIdRouteImport } from './routes/_auth/dashboard_.portfolios_.$portfolioId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -65,6 +67,11 @@ const AuthDashboardSettingsRoute = AuthDashboardSettingsRouteImport.update({
   path: '/dashboard/settings',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardPortfoliosRoute = AuthDashboardPortfoliosRouteImport.update({
+  id: '/dashboard_/portfolios',
+  path: '/dashboard/portfolios',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardMarketsRoute = AuthDashboardMarketsRouteImport.update({
   id: '/dashboard_/markets',
   path: '/dashboard/markets',
@@ -75,6 +82,12 @@ const AuthDashboardLearnTaRoute = AuthDashboardLearnTaRouteImport.update({
   path: '/dashboard/learn-ta',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardPortfoliosPortfolioIdRoute =
+  AuthDashboardPortfoliosPortfolioIdRouteImport.update({
+    id: '/dashboard_/portfolios_/$portfolioId',
+    path: '/dashboard/portfolios/$portfolioId',
+    getParentRoute: () => AuthRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,7 +99,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
+  '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
+  '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -98,7 +113,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/markets': typeof AuthDashboardMarketsRoute
+  '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
+  '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -112,7 +129,9 @@ export interface FileRoutesById {
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/markets': typeof AuthDashboardMarketsRoute
+  '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
+  '/_auth/dashboard_/portfolios_/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -126,7 +145,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/learn-ta'
     | '/dashboard/markets'
+    | '/dashboard/portfolios'
     | '/dashboard/settings'
+    | '/dashboard/portfolios/$portfolioId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -138,7 +159,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/learn-ta'
     | '/dashboard/markets'
+    | '/dashboard/portfolios'
     | '/dashboard/settings'
+    | '/dashboard/portfolios/$portfolioId'
   id:
     | '__root__'
     | '/'
@@ -151,7 +174,9 @@ export interface FileRouteTypes {
     | '/_auth/dashboard'
     | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/markets'
+    | '/_auth/dashboard_/portfolios'
     | '/_auth/dashboard_/settings'
+    | '/_auth/dashboard_/portfolios_/$portfolioId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -229,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardSettingsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/portfolios': {
+      id: '/_auth/dashboard_/portfolios'
+      path: '/dashboard/portfolios'
+      fullPath: '/dashboard/portfolios'
+      preLoaderRoute: typeof AuthDashboardPortfoliosRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/markets': {
       id: '/_auth/dashboard_/markets'
       path: '/dashboard/markets'
@@ -243,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardLearnTaRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/portfolios_/$portfolioId': {
+      id: '/_auth/dashboard_/portfolios_/$portfolioId'
+      path: '/dashboard/portfolios/$portfolioId'
+      fullPath: '/dashboard/portfolios/$portfolioId'
+      preLoaderRoute: typeof AuthDashboardPortfoliosPortfolioIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
@@ -250,14 +289,19 @@ interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardMarketsRoute: typeof AuthDashboardMarketsRoute
+  AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
+  AuthDashboardPortfoliosPortfolioIdRoute: typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardMarketsRoute: AuthDashboardMarketsRoute,
+  AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
+  AuthDashboardPortfoliosPortfolioIdRoute:
+    AuthDashboardPortfoliosPortfolioIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

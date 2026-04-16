@@ -5,12 +5,14 @@ import { trpc } from "@/lib/trpc";
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
 
 export function AnalysisBrowser({
+  symbol,
   indicators,
   loadedAnalysisId,
   loadedAnalysisTitle,
   onLoad,
   onLoadedChange,
 }: {
+  symbol: string;
   indicators: ActiveIndicator[];
   loadedAnalysisId: string | null;
   loadedAnalysisTitle: string | null;
@@ -19,7 +21,7 @@ export function AnalysisBrowser({
 }) {
   const { t } = useTranslation();
   const utils = trpc.useUtils();
-  const list = trpc.analysis.listAnalyses.useQuery();
+  const list = trpc.analysis.listAnalyses.useQuery({ symbol });
 
   const update = trpc.analysis.updateAnalysis.useMutation({
     onSuccess: () => {
@@ -110,7 +112,7 @@ export function AnalysisBrowser({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-[var(--color-muted-fg)]">{t("markets.noAnalyses")}</p>
+        <p className="text-sm text-[var(--color-muted-fg)]">{t("markets.noAnalysesForSymbol", { symbol })}</p>
       )}
     </div>
   );

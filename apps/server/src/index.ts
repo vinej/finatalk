@@ -13,7 +13,13 @@ import { appRouter, createTRPCContext } from "@finatalk/trpc";
 import { auth, checkAccountLockout, recordFailedLogin, clearFailedLogins } from "@finatalk/trpc/auth";
 import { toNodeHandler } from "better-auth/node";
 import { logger } from "./logger";
-import { summarizeChart, chatWithAdvisor } from "./mastra";
+import {
+  summarizeChart,
+  chatWithAdvisor,
+  chatWithPortfolioAdvisor,
+  generateAnalysisForSymbol,
+  generatePortfolioFromPrompt,
+} from "./mastra";
 
 const REQUIRED_ENV = ["APP_URL", "DATABASE_URL", "BETTER_AUTH_URL", "BETTER_AUTH_SECRET", "ENCRYPTION_KEY"] as const;
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
@@ -161,7 +167,14 @@ app.use(
   "/api/trpc",
   createExpressMiddleware({
     router: appRouter,
-    createContext: (opts) => createTRPCContext(opts, { summarizeChart, chatWithAdvisor }),
+    createContext: (opts) =>
+      createTRPCContext(opts, {
+        summarizeChart,
+        chatWithAdvisor,
+        chatWithPortfolioAdvisor,
+        generateAnalysis: generateAnalysisForSymbol,
+        generatePortfolio: generatePortfolioFromPrompt,
+      }),
     onError({ path, error }) {
       const expected = new Set(["UNAUTHORIZED", "FORBIDDEN", "BAD_REQUEST", "NOT_FOUND", "TOO_MANY_REQUESTS", "CONFLICT"]);
       if (expected.has(error.code)) {

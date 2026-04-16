@@ -20,6 +20,22 @@ export const IndicatorSpec = z.discriminatedUnion("kind", [
     period: z.number().int().min(2).max(500),
     stdDev: z.number().min(0.1).max(10),
   }),
+  z.object({ kind: z.literal("atr"), period: z.number().int().min(2).max(500) }),
+  z.object({ kind: z.literal("adx"), period: z.number().int().min(2).max(500) }),
+  z.object({
+    kind: z.literal("stoch"),
+    period: z.number().int().min(2).max(500),
+    signal: z.number().int().min(1).max(200),
+    smooth: z.number().int().min(1).max(200),
+  }),
+  z.object({ kind: z.literal("stochRsi"), period: z.number().int().min(2).max(500) }),
+  z.object({ kind: z.literal("williamsR"), period: z.number().int().min(2).max(500) }),
+  z.object({ kind: z.literal("obv") }),
+  z.object({
+    kind: z.literal("psar"),
+    step: z.number().min(0.001).max(0.5),
+    max: z.number().min(0.01).max(1),
+  }),
 ]);
 export type IndicatorSpec = z.infer<typeof IndicatorSpec>;
 
@@ -32,6 +48,17 @@ export const IndicatorColor = z.union([
     line: HexColor,
     signal: HexColor,
     hist: HexColor,
+  }),
+  z.object({
+    kind: z.literal("stoch"),
+    k: HexColor,
+    d: HexColor,
+  }),
+  z.object({
+    kind: z.literal("adx"),
+    adx: HexColor,
+    pdi: HexColor,
+    mdi: HexColor,
   }),
 ]);
 export type IndicatorColor = z.infer<typeof IndicatorColor>;

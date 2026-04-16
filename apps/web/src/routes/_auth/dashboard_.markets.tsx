@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AiDisclaimer } from "@/components/ai/disclaimer";
@@ -25,8 +25,17 @@ import { loadMarketsState, saveMarketsState } from "@/lib/markets-persistence";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
+type MarketsSearch = {
+  analysisId?: string;
+  symbol?: string;
+};
+
 export const Route = createFileRoute("/_auth/dashboard_/markets")({
   component: MarketsPage,
+  validateSearch: (raw: Record<string, unknown>): MarketsSearch => ({
+    analysisId: typeof raw.analysisId === "string" ? raw.analysisId : undefined,
+    symbol: typeof raw.symbol === "string" ? raw.symbol : undefined,
+  }),
 });
 
 type AnalyzeResult = RouterOutputs["market"]["analyze"]["results"][number];
@@ -36,6 +45,7 @@ const INTERVALS = ["1d", "1wk", "1mo"] as const;
 
 function MarketsPage() {
   const { t, i18n } = useTranslation();
+  const search = Route.useSearch();
   const persisted = useMemo(() => loadMarketsState(), []);
   const [symbolInput, setSymbolInput] = useState(persisted?.symbolInput ?? "AAPL");
   const [submittedSymbol, setSubmittedSymbol] = useState(persisted?.submittedSymbol ?? "AAPL");
@@ -105,7 +115,18 @@ function MarketsPage() {
     retry: false,
   });
 
+  const updateAnalysisMutation = trpc.analysis.updateAnalysis.useMutation({
+    onSuccess: () => utils.analysis.listAnalyses.invalidate(),
+    onError: (err) => toast.error(err.message),
+  });
+
   const summarizeMutation = trpc.ai.summarizeChart.useMutation({
+    onSuccess: (data) => {
+      setLoadedAnalysisDescription(data.summary);
+      if (loadedAnalysisId) {
+        updateAnalysisMutation.mutate({ id: loadedAnalysisId, description: data.summary });
+      }
+    },
     onError: (err) => toast.error(err.message ?? t("markets.summarizeFailed")),
   });
 
@@ -121,6 +142,32 @@ function MarketsPage() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  const appliedSearchRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!search.analysisId) return;
+    const key = `${search.analysisId}:${search.symbol ?? ""}`;
+    if (appliedSearchRef.current === key) return;
+    appliedSearchRef.current = key;
+    (async () => {
+      try {
+        const data = await utils.client.analysis.getAnalysis.query({ id: search.analysisId! });
+        const sym = (data.symbol || search.symbol || "").toUpperCase();
+        if (sym) {
+          setSymbolInput(sym);
+          setSubmittedSymbol(sym);
+        }
+        setActiveIndicators(data.indicators);
+        setHiddenIds(new Set());
+        setLoadedAnalysisId(data.id);
+        setLoadedAnalysisTitle(data.title);
+        setLoadedAnalysisDescription(data.description);
+        setLoadedChartTitle(null);
+      } catch (err) {
+        toast.error((err as Error).message ?? t("markets.loadFailed"));
+      }
+    })();
+  }, [search.analysisId, search.symbol, utils, t]);
 
   function onSummarize() {
     const visibleIndicators = activeIndicators
@@ -194,6 +241,15 @@ function MarketsPage() {
     setLoadedAnalysisDescription(description);
   }
 
+  function onSymbolChange(next: string) {
+    setSymbolInput(next);
+    if (loadedAnalysisId) {
+      setLoadedAnalysisId(null);
+      setLoadedAnalysisTitle(null);
+      setLoadedAnalysisDescription(null);
+    }
+  }
+
   function loadSavedChart(chart: {
     title: string;
     symbol: string;
@@ -249,7 +305,7 @@ function MarketsPage() {
                 list="symbol-suggestions"
                 autoComplete="off"
                 value={symbolInput}
-                onChange={(e) => setSymbolInput(e.target.value)}
+                onChange={(e) => onSymbolChange(e.target.value)}
                 className="w-48"
                 placeholder={symbolsQuery.isPending ? t("markets.loadingSymbols") : "AAPL"}
               />
@@ -325,41 +381,67 @@ function MarketsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-          <CardTitle className="text-base">{t("markets.indicators")}</CardTitle>
-          <div className="flex flex-wrap items-center gap-2">
-            <SaveAnalysisAction
-              indicators={activeIndicators}
-              defaultTitle={loadedAnalysisTitle}
-              defaultDescription={loadedAnalysisDescription}
+      <div className={loadedAnalysisDescription || loadedAnalysisTitle ? "grid gap-4 md:grid-cols-2" : ""}>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+            <CardTitle className="text-base">{t("markets.indicators")}</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <SaveAnalysisAction
+                symbol={submittedSymbol}
+                indicators={activeIndicators}
+                defaultTitle={loadedAnalysisTitle}
+                defaultDescription={loadedAnalysisDescription}
+              />
+              <OpenAnalysisAction
+                symbol={submittedSymbol}
+                indicators={activeIndicators}
+                loadedAnalysisId={loadedAnalysisId}
+                loadedAnalysisTitle={loadedAnalysisTitle}
+                onLoad={loadAnalysis}
+                onLoadedChange={(id) => {
+                  setLoadedAnalysisId(id);
+                  if (id === null) {
+                    setLoadedAnalysisTitle(null);
+                    setLoadedAnalysisDescription(null);
+                  }
+                }}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <IndicatorLibrary onAdd={addIndicator} />
+            <IndicatorList
+              items={activeIndicators}
+              hiddenIds={hiddenIds}
+              onToggleHidden={toggleHidden}
+              onChange={updateIndicator}
+              onRemove={removeIndicator}
             />
-            <OpenAnalysisAction
-              indicators={activeIndicators}
-              loadedAnalysisId={loadedAnalysisId}
-              loadedAnalysisTitle={loadedAnalysisTitle}
-              onLoad={loadAnalysis}
-              onLoadedChange={(id) => {
-                setLoadedAnalysisId(id);
-                if (id === null) {
-                  setLoadedAnalysisTitle(null);
-                  setLoadedAnalysisDescription(null);
-                }
-              }}
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <IndicatorLibrary onAdd={addIndicator} />
-          <IndicatorList
-            items={activeIndicators}
-            hiddenIds={hiddenIds}
-            onToggleHidden={toggleHidden}
-            onChange={updateIndicator}
-            onRemove={removeIndicator}
-          />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {(loadedAnalysisDescription || loadedAnalysisTitle) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">
+                {loadedAnalysisTitle ?? t("markets.analyses")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {loadedAnalysisDescription ? (
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-fg)]">
+                  {loadedAnalysisDescription}
+                </p>
+              ) : (
+                <p className="text-xs text-[var(--color-muted-fg)]">
+                  {t("markets.analysisDescription")}
+                </p>
+              )}
+              <AiDisclaimer />
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
@@ -404,20 +486,6 @@ function MarketsPage() {
         </CardContent>
       </Card>
 
-      {summarizeMutation.data && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t("markets.summaryTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
-              {summarizeMutation.data.summary}
-            </p>
-            <AiDisclaimer />
-          </CardContent>
-        </Card>
-      )}
-
       {query.data && query.data.results.length > 0 && (
         <Card>
           <CardHeader>
@@ -451,12 +519,7 @@ function MarketsPage() {
 
 function LatestCell({ result }: { result: AnalyzeResult }) {
   const last = result.series[result.series.length - 1];
-  const label =
-    result.kind === "macd"
-      ? `MACD ${result.spec.fast}/${result.spec.slow}/${result.spec.signal}`
-      : result.kind === "bbands"
-        ? `BB ${result.spec.period}/${result.spec.stdDev}`
-        : `${result.kind.toUpperCase()} ${result.spec.period}`;
+  const label = cellLabel(result);
 
   return (
     <div className="rounded-md border border-[var(--color-border)] p-3">
@@ -466,9 +529,28 @@ function LatestCell({ result }: { result: AnalyzeResult }) {
   );
 }
 
+function cellLabel(result: AnalyzeResult): string {
+  switch (result.kind) {
+    case "macd":
+      return `MACD ${result.spec.fast}/${result.spec.slow}/${result.spec.signal}`;
+    case "bbands":
+      return `BB ${result.spec.period}/${result.spec.stdDev}`;
+    case "stoch":
+      return `STOCH ${result.spec.period}/${result.spec.signal}/${result.spec.smooth}`;
+    case "obv":
+      return "OBV";
+    case "psar":
+      return `PSAR ${result.spec.step}/${result.spec.max}`;
+    default:
+      return `${result.kind.toUpperCase()} ${result.spec.period}`;
+  }
+}
+
 function formatLast(kind: string, last: Record<string, number | unknown>): string {
   const fmt = (n: unknown) => (typeof n === "number" ? n.toFixed(2) : "—");
   if (kind === "macd") return `${fmt(last.macd)} / ${fmt(last.signal)} / ${fmt(last.histogram)}`;
   if (kind === "bbands") return `${fmt(last.upper)} / ${fmt(last.middle)} / ${fmt(last.lower)}`;
+  if (kind === "stoch") return `${fmt(last.k)} / ${fmt(last.d)}`;
+  if (kind === "adx") return `${fmt(last.adx)} / +DI ${fmt(last.pdi)} / −DI ${fmt(last.mdi)}`;
   return fmt(last.value);
 }

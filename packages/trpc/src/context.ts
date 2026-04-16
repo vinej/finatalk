@@ -1,7 +1,7 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { db } from "@finatalk/db";
 import { auth } from "./auth";
-import type { IndicatorSpec, Range, Interval } from "./schemas/indicator";
+import type { IndicatorSpec, Range, Interval, StoredIndicator } from "./schemas/indicator";
 
 export type SummarizeChartFn = (args: {
   symbol: string;
@@ -26,9 +26,53 @@ export type ChatWithAdvisorFn = (args: {
   language?: string;
 }) => Promise<{ response: string; provider: string }>;
 
+export type ChatWithPortfolioAdvisorFn = (args: {
+  messages: ChatMessage[];
+  context: {
+    portfolioTitle: string;
+    currency: string;
+    holdings: Array<{
+      symbol: string;
+      quantity: number;
+      costBasis: number;
+      purchaseDate: string;
+    }>;
+  };
+  language?: string;
+}) => Promise<{ response: string; provider: string }>;
+
+export type GenerateAnalysisFn = (args: {
+  symbol: string;
+  language?: string;
+}) => Promise<{
+  title: string;
+  description: string;
+  indicators: StoredIndicator[];
+  provider: string;
+}>;
+
+export type GeneratePortfolioFn = (args: {
+  prompt: string;
+  language?: string;
+}) => Promise<{
+  title: string;
+  currency: "USD" | "CAD";
+  rationale: string;
+  holdings: Array<{
+    symbol: string;
+    quantity: number;
+    costBasis: number;
+    rationale: string;
+  }>;
+  provider: string;
+}>;
+
 export type TRPCServices = {
   summarizeChart?: SummarizeChartFn;
   chatWithAdvisor?: ChatWithAdvisorFn;
+  chatWithPortfolioAdvisor?: ChatWithPortfolioAdvisorFn;
+  generateAnalysis?: GenerateAnalysisFn;
+  generatePortfolio?: GeneratePortfolioFn;
 };
 
 export async function createTRPCContext(

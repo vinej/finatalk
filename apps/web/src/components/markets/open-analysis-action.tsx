@@ -6,12 +6,14 @@ import { AnalysisBrowser } from "@/components/markets/analysis-panel";
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
 
 export function OpenAnalysisAction({
+  symbol,
   indicators,
   loadedAnalysisId,
   loadedAnalysisTitle,
   onLoad,
   onLoadedChange,
 }: {
+  symbol: string;
   indicators: ActiveIndicator[];
   loadedAnalysisId: string | null;
   loadedAnalysisTitle: string | null;
@@ -26,8 +28,9 @@ export function OpenAnalysisAction({
       <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>
         {t("markets.openAnalyses")}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen} title={t("markets.analyses")}>
+      <Dialog open={open} onOpenChange={setOpen} title={t("markets.analysesFor", { symbol })}>
         <AnalysisBrowser
+          symbol={symbol}
           indicators={indicators}
           loadedAnalysisId={loadedAnalysisId}
           loadedAnalysisTitle={loadedAnalysisTitle}

@@ -86,7 +86,14 @@ export function MarketChart({
     for (let i = 0; i < results.length; i++) {
       const r = results[i]!;
       const c = colors[i] ?? "#2563eb";
-      const lineColor = typeof c === "string" ? c : c.line;
+      const lineColor =
+        typeof c === "string"
+          ? c
+          : c.kind === "macd"
+            ? c.line
+            : c.kind === "stoch"
+              ? c.k
+              : c.adx;
 
       if (
         r.kind === "sma" ||
@@ -106,16 +113,34 @@ export function MarketChart({
         middle.setData(r.series.map((p) => ({ time: p.time as Time, value: p.middle })));
         lower.setData(r.series.map((p) => ({ time: p.time as Time, value: p.lower })));
         seriesRef.current.push(upper, middle, lower);
-      } else if (r.kind === "rsi" || r.kind === "mom" || r.kind === "roc") {
+      } else if (r.kind === "psar") {
+        const s = chart.addSeries(LineSeries, {
+          color: lineColor,
+          lineWidth: 1,
+          lineVisible: false,
+          pointMarkersVisible: true,
+          pointMarkersRadius: 2,
+        });
+        s.setData(r.series.map((p) => ({ time: p.time as Time, value: p.value })));
+        seriesRef.current.push(s);
+      } else if (
+        r.kind === "rsi" ||
+        r.kind === "mom" ||
+        r.kind === "roc" ||
+        r.kind === "atr" ||
+        r.kind === "stochRsi" ||
+        r.kind === "williamsR" ||
+        r.kind === "obv"
+      ) {
         const pane = nextPane++;
         const s = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 2 }, pane);
         s.setData(r.series.map((p) => ({ time: p.time as Time, value: p.value })));
         seriesRef.current.push(s);
       } else if (r.kind === "macd") {
         const macdC =
-          typeof c === "string"
-            ? { line: c, signal: c, hist: c }
-            : { line: c.line, signal: c.signal, hist: c.hist };
+          typeof c === "object" && "line" in c
+            ? { line: c.line, signal: c.signal, hist: c.hist }
+            : { line: lineColor, signal: lineColor, hist: lineColor };
         const pane = nextPane++;
         const macdLine = chart.addSeries(LineSeries, { color: macdC.line, lineWidth: 2 }, pane);
         const signalLine = chart.addSeries(LineSeries, { color: macdC.signal, lineWidth: 2 }, pane);
@@ -124,6 +149,30 @@ export function MarketChart({
         signalLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.signal })));
         histo.setData(r.series.map((p) => ({ time: p.time as Time, value: p.histogram })));
         seriesRef.current.push(macdLine, signalLine, histo);
+      } else if (r.kind === "stoch") {
+        const stochC =
+          typeof c === "object" && "k" in c
+            ? { k: c.k, d: c.d }
+            : { k: lineColor, d: lineColor };
+        const pane = nextPane++;
+        const kLine = chart.addSeries(LineSeries, { color: stochC.k, lineWidth: 2 }, pane);
+        const dLine = chart.addSeries(LineSeries, { color: stochC.d, lineWidth: 2 }, pane);
+        kLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.k })));
+        dLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.d })));
+        seriesRef.current.push(kLine, dLine);
+      } else if (r.kind === "adx") {
+        const adxC =
+          typeof c === "object" && "adx" in c
+            ? { adx: c.adx, pdi: c.pdi, mdi: c.mdi }
+            : { adx: lineColor, pdi: lineColor, mdi: lineColor };
+        const pane = nextPane++;
+        const adxLine = chart.addSeries(LineSeries, { color: adxC.adx, lineWidth: 2 }, pane);
+        const pdiLine = chart.addSeries(LineSeries, { color: adxC.pdi, lineWidth: 1 }, pane);
+        const mdiLine = chart.addSeries(LineSeries, { color: adxC.mdi, lineWidth: 1 }, pane);
+        adxLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.adx })));
+        pdiLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.pdi })));
+        mdiLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.mdi })));
+        seriesRef.current.push(adxLine, pdiLine, mdiLine);
       }
     }
 

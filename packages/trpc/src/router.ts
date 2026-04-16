@@ -3,12 +3,14 @@ import { userRouter } from "./routers/user";
 import { marketRouter } from "./routers/market";
 import { analysisRouter } from "./routers/analysis";
 import { aiRouter } from "./routers/ai";
+import { portfolioRouter } from "./routers/portfolio";
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
   market: marketRouter,
   analysis: analysisRouter,
   ai: aiRouter,
+  portfolio: portfolioRouter,
 });
 
 export type AppRouter = typeof appRouter;

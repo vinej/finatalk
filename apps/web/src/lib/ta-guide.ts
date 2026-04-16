@@ -116,4 +116,67 @@ export const TA_GUIDE: Record<IndicatorKind, TaGuideEntry> = {
       { title: "BollingerBands.com — John Bollinger's official site", url: "https://www.bollingerbands.com/" },
     ],
   },
+  atr: {
+    when: "Use Average True Range when you need to size positions or place stops in a way that respects the instrument's actual volatility. ATR is a volatility gauge, not a direction signal.",
+    how: "ATR = Wilder-smoothed average of true range (max of: high−low, |high−prev close|, |low−prev close|) over N periods. Default 14. Plotted in its own pane in the same units as price.",
+    analyse: "Rising ATR = volatility expanding (bigger moves, wider stops needed); falling ATR = volatility contracting (tighter market, often preceding breakouts). Typical use: stop = entry − k·ATR (k often 1.5–3). Don't look for buy/sell signals in ATR itself — it's a risk-sizing input.",
+    links: [
+      { title: "Investopedia — Average True Range (ATR)", url: "https://www.investopedia.com/terms/a/atr.asp" },
+      { title: "StockCharts — Average True Range (ATR)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/average-true-range-atr" },
+    ],
+  },
+  adx: {
+    when: "Use ADX to measure how strong a trend is, regardless of direction. It's the best filter for deciding whether trend-following setups (moving-average crossovers, breakouts) are worth trading right now.",
+    how: "ADX = smoothed average of DX, where DX combines +DI and −DI (directional movement). Plotted 0–100 in its own pane alongside +DI and −DI. Default 14.",
+    analyse: "ADX > 25 = trending market (trade trend-following systems); ADX < 20 = range-bound (fade extremes, avoid breakout entries). +DI above −DI = uptrend; −DI above +DI = downtrend. ADX itself says nothing about direction — only strength. A rising ADX from low levels is often the earliest sign a new trend is starting.",
+    links: [
+      { title: "Investopedia — Average Directional Index (ADX)", url: "https://www.investopedia.com/terms/a/adx.asp" },
+      { title: "StockCharts — ADX", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/average-directional-index-adx" },
+    ],
+  },
+  stoch: {
+    when: "Use the Stochastic Oscillator in ranging or cyclical markets to time entries on overbought/oversold extremes. Complements RSI — it catches turns RSI misses on faster timeframes.",
+    how: "%K = 100·(close − lowest low N) / (highest high N − lowest low N), smoothed by M periods. %D = SMA(%K, P). Defaults 14/3/3. Plotted 0–100 in its own pane.",
+    analyse: "Above 80 = overbought, below 20 = oversold. The classic signal is a %K/%D crossover inside those zones: %K crossing above %D below 20 = buy, %K crossing below %D above 80 = sell. Divergence (price new high, stochastic doesn't) is a strong reversal warning. In a strong trend, Stochastic can stay pinned at extremes — pair with ADX as a trend filter.",
+    links: [
+      { title: "Investopedia — Stochastic Oscillator", url: "https://www.investopedia.com/terms/s/stochasticoscillator.asp" },
+      { title: "StockCharts — Stochastic Oscillator (Fast, Slow, Full)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/stochastic-oscillator-fast-slow-and-full" },
+    ],
+  },
+  stochRsi: {
+    when: "Use Stochastic RSI when plain RSI is too slow to catch short-cycle reversals. It's RSI's sensitivity amplifier — faster signals, more noise.",
+    how: "Applies the Stochastic formula to RSI values instead of price: (RSI − lowest RSI N) / (highest RSI N − lowest RSI N). Default period 14. Output is 0–1 (or 0–100 depending on library).",
+    analyse: "Treat the extremes like Stochastic — above 0.8 overbought, below 0.2 oversold — but expect more whipsaws. Most useful on ranging markets; in a trend, StochRSI pins at extremes and its signals become unreliable. Combine with plain RSI for divergence or with ADX to filter trends out.",
+    links: [
+      { title: "Investopedia — Stochastic RSI (StochRSI)", url: "https://www.investopedia.com/terms/s/stochrsi.asp" },
+      { title: "StockCharts — StochRSI", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/stochrsi" },
+    ],
+  },
+  williamsR: {
+    when: "Use Williams %R as a momentum oscillator when you want a Stochastic-style read on overbought/oversold but without %D smoothing. Popular for short-term reversal trades.",
+    how: "%R = −100·(highest high N − close) / (highest high N − lowest low N). Default 14. Plotted on an inverted −100 to 0 scale in its own pane.",
+    analyse: "Above −20 = overbought, below −80 = oversold. Moves are mechanically the mirror of Stochastic %K. In strong trends it stays pinned at extremes, so use it with a trend filter (ADX or moving-average slope). Divergence with price often precedes reversals, same as RSI/Stochastic.",
+    links: [
+      { title: "Investopedia — Williams %R", url: "https://www.investopedia.com/terms/w/williamsr.asp" },
+      { title: "StockCharts — Williams %R", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/williams-r" },
+    ],
+  },
+  obv: {
+    when: "Use On-Balance Volume to confirm price moves with volume. It's the first stop for spotting whether a breakout or trend is being driven by real buying/selling pressure.",
+    how: "Cumulative running total: add today's volume if close went up, subtract if it went down, ignore flat days. No period parameter. Plotted as a line in its own pane — absolute level is arbitrary, only direction and slope matter.",
+    analyse: "OBV rising with price = uptrend confirmed; OBV flat or falling while price rises = bearish divergence (distribution). Breakouts accompanied by a sharp OBV acceleration are higher-quality than those on flat OBV. Treat OBV as volume-weighted trend confirmation, not a standalone entry signal.",
+    links: [
+      { title: "Investopedia — On-Balance Volume (OBV)", url: "https://www.investopedia.com/terms/o/onbalancevolume.asp" },
+      { title: "StockCharts — On Balance Volume (OBV)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/on-balance-volume-obv" },
+    ],
+  },
+  psar: {
+    when: "Use Parabolic SAR on clearly trending instruments for a visual trailing stop and trend-direction read. Avoid it in ranging markets — it whipsaws.",
+    how: "Dots plotted below price in an uptrend and above price in a downtrend. The gap accelerates (step starts at 0.02, grows by 0.02 up to max 0.2) each bar a new extreme forms, tightening the stop as the trend matures.",
+    analyse: "A flip from below to above price = trend reversal signal (and suggested exit of longs); flip from above to below = reverse. Use the dot's price as a hard trailing stop. In choppy markets expect frequent flips with small losses — pair with ADX > 25 to only act on PSAR in genuine trends.",
+    links: [
+      { title: "Investopedia — Parabolic SAR", url: "https://www.investopedia.com/terms/p/parabolicindicator.asp" },
+      { title: "StockCharts — Parabolic SAR", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/parabolic-sar" },
+    ],
+  },
 };

@@ -7,7 +7,9 @@ export type IndicatorColor = ActiveIndicator["color"];
 export type IndicatorKind = IndicatorSpec["kind"];
 
 export const KINDS: IndicatorKind[] = [
-  "sma", "ema", "rma", "wma", "dema", "rsi", "mom", "roc", "macd", "bbands",
+  "sma", "ema", "rma", "wma", "dema",
+  "rsi", "mom", "roc", "macd", "bbands",
+  "atr", "adx", "stoch", "stochRsi", "williamsR", "obv", "psar",
 ];
 
 export function kindLabel(kind: IndicatorKind): string {
@@ -22,6 +24,13 @@ export function kindLabel(kind: IndicatorKind): string {
     case "roc": return "ROC";
     case "macd": return "MACD";
     case "bbands": return "BBands";
+    case "atr": return "ATR";
+    case "adx": return "ADX";
+    case "stoch": return "Stoch";
+    case "stochRsi": return "StochRSI";
+    case "williamsR": return "Williams %R";
+    case "obv": return "OBV";
+    case "psar": return "PSAR";
   }
 }
 
@@ -37,6 +46,13 @@ export function defaultSpec(kind: IndicatorKind): IndicatorSpec {
     case "roc": return { kind: "roc", period: 12 };
     case "macd": return { kind: "macd", fast: 12, slow: 26, signal: 9 };
     case "bbands": return { kind: "bbands", period: 20, stdDev: 2 };
+    case "atr": return { kind: "atr", period: 14 };
+    case "adx": return { kind: "adx", period: 14 };
+    case "stoch": return { kind: "stoch", period: 14, signal: 3, smooth: 3 };
+    case "stochRsi": return { kind: "stochRsi", period: 14 };
+    case "williamsR": return { kind: "williamsR", period: 14 };
+    case "obv": return { kind: "obv" };
+    case "psar": return { kind: "psar", step: 0.02, max: 0.2 };
   }
 }
 
@@ -52,6 +68,13 @@ export function defaultColor(kind: IndicatorKind): IndicatorColor {
     case "roc": return "#a855f7";
     case "macd": return { kind: "macd", line: "#2563eb", signal: "#dc2626", hist: "#9ca3af" };
     case "bbands": return "#db2777";
+    case "atr": return "#f97316";
+    case "adx": return { kind: "adx", adx: "#1f2937", pdi: "#16a34a", mdi: "#dc2626" };
+    case "stoch": return { kind: "stoch", k: "#2563eb", d: "#dc2626" };
+    case "stochRsi": return "#9333ea";
+    case "williamsR": return "#0891b2";
+    case "obv": return "#64748b";
+    case "psar": return "#f43f5e";
   }
 }
 
@@ -77,6 +100,20 @@ export function kindDescription(kind: IndicatorKind): string {
       return "Moving Average Convergence Divergence — MACD line = EMA(fast) − EMA(slow), Signal = EMA of MACD, Histogram = MACD − Signal. Signal-line crossovers, zero-line crossings, and histogram divergences are the classic trade triggers. Defaults 12/26/9.";
     case "bbands":
       return "Bollinger Bands — middle SMA(N) with upper/lower bands at K standard deviations. Bands widen on volatility, narrow on calm (the 'squeeze' precedes breakouts); touches near the bands flag overextension. Defaults period 20, stdDev 2.";
+    case "atr":
+      return "Average True Range — Wilder's measure of volatility: average of the true range (high-low with gap adjustments) over N periods. Used for stop-loss sizing and position sizing, not direction. Default 14.";
+    case "adx":
+      return "Average Directional Index — trend strength (0–100) derived from +DI and −DI. ADX > 25 suggests a trending market; +DI above −DI = uptrend, reverse = downtrend. Great filter for moving-average crossovers. Default 14.";
+    case "stoch":
+      return "Stochastic Oscillator — compares current close to the high/low range over N periods. %K and %D lines bounded 0–100; >80 overbought, <20 oversold. %K/%D crossovers near extremes are the classic signal. Defaults 14/3/3.";
+    case "stochRsi":
+      return "Stochastic RSI — applies the Stochastic formula to RSI values instead of price. More sensitive than plain RSI, catching shorter overbought/oversold cycles. Range 0–1 (or 0–100). Default 14.";
+    case "williamsR":
+      return "Williams %R — momentum oscillator on an inverted −100 to 0 scale. Above −20 = overbought, below −80 = oversold. Mechanically similar to Stochastic %K but flipped. Default 14.";
+    case "obv":
+      return "On-Balance Volume — cumulative volume: adds volume on up days, subtracts on down days. Rising OBV confirms uptrends; divergence with price often precedes reversals. Direction matters more than absolute level.";
+    case "psar":
+      return "Parabolic SAR — trend-following stop-and-reverse dots that flip from below price (uptrend) to above (downtrend). Used as a trailing stop or trend filter. Defaults step 0.02, max 0.2.";
   }
 }
 
@@ -90,11 +127,21 @@ export function formatLabel(spec: IndicatorSpec): string {
     case "rsi":
     case "mom":
     case "roc":
+    case "atr":
+    case "adx":
+    case "stochRsi":
+    case "williamsR":
       return `${kindLabel(spec.kind)} ${spec.period}`;
     case "macd":
       return `MACD ${spec.fast}/${spec.slow}/${spec.signal}`;
     case "bbands":
       return `BBands ${spec.period}/${spec.stdDev}`;
+    case "stoch":
+      return `Stoch ${spec.period}/${spec.signal}/${spec.smooth}`;
+    case "obv":
+      return "OBV";
+    case "psar":
+      return `PSAR ${spec.step}/${spec.max}`;
   }
 }
 
