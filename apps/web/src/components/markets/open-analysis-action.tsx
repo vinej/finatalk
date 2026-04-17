@@ -5,19 +5,28 @@ import { Dialog } from "@/components/ui/dialog";
 import { AnalysisBrowser } from "@/components/markets/analysis-panel";
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
 
+export type AnalysisLoadData = {
+  items: ActiveIndicator[];
+  id: string;
+  symbol: string;
+  title: string;
+  description: string;
+  range: string;
+  interval: string;
+  convertTo: "CAD" | null;
+};
+
 export function OpenAnalysisAction({
-  symbol,
   indicators,
   loadedAnalysisId,
   loadedAnalysisTitle,
   onLoad,
   onLoadedChange,
 }: {
-  symbol: string;
   indicators: ActiveIndicator[];
   loadedAnalysisId: string | null;
   loadedAnalysisTitle: string | null;
-  onLoad: (items: ActiveIndicator[], id: string, title: string, description: string) => void;
+  onLoad: (data: AnalysisLoadData) => void;
   onLoadedChange: (id: string | null) => void;
 }) {
   const { t } = useTranslation();
@@ -28,14 +37,13 @@ export function OpenAnalysisAction({
       <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>
         {t("markets.openAnalyses")}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen} title={t("markets.analysesFor", { symbol })}>
+      <Dialog open={open} onOpenChange={setOpen} title={t("markets.allAnalyses")}>
         <AnalysisBrowser
-          symbol={symbol}
           indicators={indicators}
           loadedAnalysisId={loadedAnalysisId}
           loadedAnalysisTitle={loadedAnalysisTitle}
-          onLoad={(items, id, title, description) => {
-            onLoad(items, id, title, description);
+          onLoad={(data) => {
+            onLoad(data);
             setOpen(false);
           }}
           onLoadedChange={onLoadedChange}

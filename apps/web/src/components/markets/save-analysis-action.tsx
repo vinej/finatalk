@@ -9,11 +9,17 @@ import type { ActiveIndicator } from "@/lib/indicator-defaults";
 
 export function SaveAnalysisAction({
   symbol,
+  range,
+  interval,
+  convertTo,
   indicators,
   defaultTitle,
   defaultDescription,
 }: {
   symbol: string;
+  range: "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "max";
+  interval: "1d" | "1wk" | "1mo";
+  convertTo: "CAD" | null;
   indicators: ActiveIndicator[];
   defaultTitle?: string | null;
   defaultDescription?: string | null;
@@ -64,7 +70,7 @@ export function SaveAnalysisAction({
     e.preventDefault();
     const t2 = title.trim();
     if (!t2) return;
-    create.mutate({ symbol, title: t2, description: description.trim(), indicators });
+    create.mutate({ symbol, title: t2, description: description.trim(), range, interval, convertTo, indicators });
   }
 
   return (

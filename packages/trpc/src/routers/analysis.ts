@@ -52,6 +52,9 @@ export const analysisRouter = createTRPCRouter({
           symbol: analysis.symbol,
           title: analysis.title,
           description: analysis.description,
+          range: analysis.range,
+          interval: analysis.interval,
+          convertTo: analysis.convertTo,
           indicators: analysis.indicators,
           createdAt: analysis.createdAt,
           updatedAt: analysis.updatedAt,
@@ -66,6 +69,9 @@ export const analysisRouter = createTRPCRouter({
           symbol: r.symbol,
           title: r.title,
           description: r.description,
+          range: RangeSchema.catch("1y").parse(r.range),
+          interval: IntervalSchema.catch("1d").parse(r.interval),
+          convertTo: ConvertToSchema.catch(null).parse(r.convertTo),
           indicatorCount: items.length,
           createdAt: r.createdAt,
           updatedAt: r.updatedAt,
@@ -82,6 +88,9 @@ export const analysisRouter = createTRPCRouter({
         symbol: row.symbol,
         title: row.title,
         description: row.description,
+        range: RangeSchema.catch("1y").parse(row.range),
+        interval: IntervalSchema.catch("1d").parse(row.interval),
+        convertTo: ConvertToSchema.catch(null).parse(row.convertTo),
         indicators: parseIndicators(row.indicators),
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
@@ -93,6 +102,9 @@ export const analysisRouter = createTRPCRouter({
       symbol: SymbolSchema,
       title: TitleSchema,
       description: DescriptionSchema.default(""),
+      range: RangeSchema.optional(),
+      interval: IntervalSchema.optional(),
+      convertTo: ConvertToSchema.optional(),
       indicators: IndicatorsSchema,
       overwrite: z.boolean().optional(),
     }))
@@ -116,6 +128,9 @@ export const analysisRouter = createTRPCRouter({
           .update(analysis)
           .set({
             description: input.description,
+            range: input.range ?? "1y",
+            interval: input.interval ?? "1d",
+            convertTo: input.convertTo ?? null,
             indicators: input.indicators,
             updatedAt: new Date(),
           })
@@ -129,6 +144,9 @@ export const analysisRouter = createTRPCRouter({
         symbol: sym,
         title: input.title,
         description: input.description,
+        range: input.range ?? "1y",
+        interval: input.interval ?? "1d",
+        convertTo: input.convertTo ?? null,
         indicators: input.indicators,
       });
       return { id, overwritten: false };
@@ -139,6 +157,9 @@ export const analysisRouter = createTRPCRouter({
       id: z.string(),
       title: TitleSchema.optional(),
       description: DescriptionSchema.optional(),
+      range: RangeSchema.optional(),
+      interval: IntervalSchema.optional(),
+      convertTo: ConvertToSchema.optional(),
       indicators: IndicatorsSchema.optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -146,6 +167,9 @@ export const analysisRouter = createTRPCRouter({
       const values: Record<string, unknown> = { updatedAt: new Date() };
       if (input.title !== undefined) values.title = input.title;
       if (input.description !== undefined) values.description = input.description;
+      if (input.range !== undefined) values.range = input.range;
+      if (input.interval !== undefined) values.interval = input.interval;
+      if (input.convertTo !== undefined) values.convertTo = input.convertTo;
       if (input.indicators !== undefined) values.indicators = input.indicators;
       await ctx.db
         .update(analysis)

@@ -15,7 +15,6 @@ export type PersistedMarketsState = {
   loadedAnalysisId: string | null;
   loadedAnalysisTitle: string | null;
   loadedAnalysisDescription: string | null;
-  loadedChartTitle: string | null;
   controlsCollapsed?: boolean;
   indicatorsCollapsed?: boolean;
   assetTypeFilter?: "all" | "stock" | "etf";

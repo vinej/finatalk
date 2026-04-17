@@ -5,23 +5,21 @@ import { trpc } from "@/lib/trpc";
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
 
 export function AnalysisBrowser({
-  symbol,
   indicators,
   loadedAnalysisId,
   loadedAnalysisTitle,
   onLoad,
   onLoadedChange,
 }: {
-  symbol: string;
   indicators: ActiveIndicator[];
   loadedAnalysisId: string | null;
   loadedAnalysisTitle: string | null;
-  onLoad: (items: ActiveIndicator[], id: string, title: string, description: string) => void;
+  onLoad: (data: { items: ActiveIndicator[]; id: string; symbol: string; title: string; description: string; range: string; interval: string; convertTo: "CAD" | null }) => void;
   onLoadedChange: (id: string | null) => void;
 }) {
   const { t } = useTranslation();
   const utils = trpc.useUtils();
-  const list = trpc.analysis.listAnalyses.useQuery({ symbol });
+  const list = trpc.analysis.listAnalyses.useQuery();
 
   const update = trpc.analysis.updateAnalysis.useMutation({
     onSuccess: () => {
@@ -45,7 +43,16 @@ export function AnalysisBrowser({
   async function handleLoad(id: string, fallbackTitle: string) {
     try {
       const full = await getAnalysis.fetch({ id });
-      onLoad(full.indicators, full.id, full.title || fallbackTitle, full.description ?? "");
+      onLoad({
+        items: full.indicators,
+        id: full.id,
+        symbol: full.symbol,
+        title: full.title || fallbackTitle,
+        description: full.description ?? "",
+        range: full.range ?? "1y",
+        interval: full.interval ?? "1d",
+        convertTo: full.convertTo ?? null,
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("markets.loadFailed"));
     }
@@ -88,7 +95,7 @@ export function AnalysisBrowser({
               <div className="flex-1">
                 <div className="font-medium">{a.title}</div>
                 <div className="text-xs text-[var(--color-muted-fg)]">
-                  {t("markets.indicatorCount", { count: a.indicatorCount })}
+                  {a.symbol} · {t("markets.indicatorCount", { count: a.indicatorCount })}
                 </div>
               </div>
               <Button
@@ -112,7 +119,7 @@ export function AnalysisBrowser({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-[var(--color-muted-fg)]">{t("markets.noAnalysesForSymbol", { symbol })}</p>
+        <p className="text-sm text-[var(--color-muted-fg)]">{t("markets.noAnalyses")}</p>
       )}
     </div>
   );

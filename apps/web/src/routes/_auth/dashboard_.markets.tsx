@@ -8,10 +8,8 @@ import { ChatDrawer } from "@/components/ai/chat-drawer";
 import { MarketChart } from "@/components/market-chart";
 import { IndicatorLibrary } from "@/components/markets/indicator-library";
 import { IndicatorList } from "@/components/markets/indicator-list";
-import { OpenAnalysisAction } from "@/components/markets/open-analysis-action";
-import { OpenSavedChartsAction } from "@/components/markets/open-saved-charts-action";
+import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/markets/open-analysis-action";
 import { SaveAnalysisAction } from "@/components/markets/save-analysis-action";
-import { SaveChartAction } from "@/components/markets/save-chart-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,7 +56,6 @@ function MarketsPage() {
   const [loadedAnalysisId, setLoadedAnalysisId] = useState<string | null>(persisted?.loadedAnalysisId ?? null);
   const [loadedAnalysisTitle, setLoadedAnalysisTitle] = useState<string | null>(persisted?.loadedAnalysisTitle ?? null);
   const [loadedAnalysisDescription, setLoadedAnalysisDescription] = useState<string | null>(persisted?.loadedAnalysisDescription ?? null);
-  const [loadedChartTitle, setLoadedChartTitle] = useState<string | null>(persisted?.loadedChartTitle ?? null);
   const [controlsCollapsed, setControlsCollapsed] = useState<boolean>(persisted?.controlsCollapsed ?? false);
   const [indicatorsCollapsed, setIndicatorsCollapsed] = useState<boolean>(persisted?.indicatorsCollapsed ?? false);
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
@@ -75,7 +72,6 @@ function MarketsPage() {
       loadedAnalysisId,
       loadedAnalysisTitle,
       loadedAnalysisDescription,
-      loadedChartTitle,
       controlsCollapsed,
       indicatorsCollapsed,
       assetTypeFilter,
@@ -91,7 +87,6 @@ function MarketsPage() {
     loadedAnalysisId,
     loadedAnalysisTitle,
     loadedAnalysisDescription,
-    loadedChartTitle,
     controlsCollapsed,
     indicatorsCollapsed,
     assetTypeFilter,
@@ -115,7 +110,7 @@ function MarketsPage() {
 
   const query = trpc.market.analyze.useQuery(
     { symbol: submittedSymbol, range, interval, indicators, convertTo: convertToCad ? "CAD" : null },
-    { retry: false, staleTime: 60_000 },
+    { retry: false, staleTime: 60_000, enabled: submittedSymbol.length > 0 },
   );
 
   const utils = trpc.useUtils();
@@ -172,7 +167,9 @@ function MarketsPage() {
         setLoadedAnalysisId(data.id);
         setLoadedAnalysisTitle(data.title);
         setLoadedAnalysisDescription(data.description);
-        setLoadedChartTitle(null);
+        if (data.range) setRange(data.range as (typeof RANGES)[number]);
+        if (data.interval) setInterval(data.interval as (typeof INTERVALS)[number]);
+        setConvertToCad(data.convertTo === "CAD");
       } catch (err) {
         toast.error((err as Error).message ?? t("markets.loadFailed"));
       }
@@ -244,12 +241,31 @@ function MarketsPage() {
     );
   }
 
-  function loadAnalysis(items: ActiveIndicator[], id: string, title: string, description: string) {
-    setActiveIndicators(items);
+  function loadAnalysis(data: AnalysisLoadData) {
+    setSymbolInput(data.symbol);
+    setSubmittedSymbol(data.symbol);
+    setActiveIndicators(data.items);
     setHiddenIds(new Set());
-    setLoadedAnalysisId(id);
-    setLoadedAnalysisTitle(title);
-    setLoadedAnalysisDescription(description);
+    setLoadedAnalysisId(data.id);
+    setLoadedAnalysisTitle(data.title);
+    setLoadedAnalysisDescription(data.description);
+    setRange(data.range as (typeof RANGES)[number]);
+    setInterval(data.interval as (typeof INTERVALS)[number]);
+    setConvertToCad(data.convertTo === "CAD");
+  }
+
+  function newAnalysis() {
+    setSymbolInput("");
+    setSubmittedSymbol("");
+    setActiveIndicators([]);
+    setHiddenIds(new Set());
+    setLoadedAnalysisId(null);
+    setLoadedAnalysisTitle(null);
+    setLoadedAnalysisDescription(null);
+    setRange("6mo");
+    setInterval("1d");
+    setConvertToCad(false);
+    setAssetTypeFilter("all");
   }
 
   function onSymbolChange(next: string) {
@@ -259,27 +275,6 @@ function MarketsPage() {
       setLoadedAnalysisTitle(null);
       setLoadedAnalysisDescription(null);
     }
-  }
-
-  function loadSavedChart(chart: {
-    title: string;
-    symbol: string;
-    range: (typeof RANGES)[number];
-    interval: (typeof INTERVALS)[number];
-    convertTo: "CAD" | null;
-    indicators: ActiveIndicator[];
-  }) {
-    setSymbolInput(chart.symbol);
-    setSubmittedSymbol(chart.symbol);
-    setRange(chart.range);
-    setInterval(chart.interval);
-    setConvertToCad(chart.convertTo === "CAD");
-    setActiveIndicators(chart.indicators);
-    setHiddenIds(new Set());
-    setLoadedAnalysisId(null);
-    setLoadedAnalysisTitle(null);
-    setLoadedAnalysisDescription(null);
-    setLoadedChartTitle(chart.title);
   }
 
   function onSubmit(e: React.FormEvent) {
@@ -307,17 +302,31 @@ function MarketsPage() {
             <CardTitle>{t("markets.title")}</CardTitle>
           </button>
           <div className="flex flex-wrap items-center gap-2">
-            <SaveChartAction
-              current={{
-                symbol: submittedSymbol,
-                range,
-                interval,
-                convertTo: convertToCad ? "CAD" : null,
-                indicators: activeIndicators,
-              }}
-              defaultTitle={loadedChartTitle}
+            <Button type="button" size="sm" variant="outline" onClick={newAnalysis}>
+              {t("markets.newAnalysis")}
+            </Button>
+            <SaveAnalysisAction
+              symbol={submittedSymbol}
+              range={range}
+              interval={interval}
+              convertTo={convertToCad ? "CAD" : null}
+              indicators={activeIndicators}
+              defaultTitle={loadedAnalysisTitle}
+              defaultDescription={loadedAnalysisDescription}
             />
-            <OpenSavedChartsAction onLoad={loadSavedChart} />
+            <OpenAnalysisAction
+              indicators={activeIndicators}
+              loadedAnalysisId={loadedAnalysisId}
+              loadedAnalysisTitle={loadedAnalysisTitle}
+              onLoad={loadAnalysis}
+              onLoadedChange={(id) => {
+                setLoadedAnalysisId(id);
+                if (id === null) {
+                  setLoadedAnalysisTitle(null);
+                  setLoadedAnalysisDescription(null);
+                }
+              }}
+            />
           </div>
         </CardHeader>
         {!controlsCollapsed && (
@@ -437,28 +446,6 @@ function MarketsPage() {
               )}
               <CardTitle className="text-base">{t("markets.indicators")}</CardTitle>
             </button>
-            <div className="flex flex-wrap items-center gap-2">
-              <SaveAnalysisAction
-                symbol={submittedSymbol}
-                indicators={activeIndicators}
-                defaultTitle={loadedAnalysisTitle}
-                defaultDescription={loadedAnalysisDescription}
-              />
-              <OpenAnalysisAction
-                symbol={submittedSymbol}
-                indicators={activeIndicators}
-                loadedAnalysisId={loadedAnalysisId}
-                loadedAnalysisTitle={loadedAnalysisTitle}
-                onLoad={loadAnalysis}
-                onLoadedChange={(id) => {
-                  setLoadedAnalysisId(id);
-                  if (id === null) {
-                    setLoadedAnalysisTitle(null);
-                    setLoadedAnalysisDescription(null);
-                  }
-                }}
-              />
-            </div>
           </CardHeader>
           {!indicatorsCollapsed && (
             <CardContent className="flex flex-col gap-3">
