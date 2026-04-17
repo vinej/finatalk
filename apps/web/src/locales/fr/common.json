@@ -35,6 +35,7 @@
     "title": "Apprendre l'analyse technique",
     "intro": "Un guide de référence pour les indicateurs disponibles sur la page Marchés. Chaque section explique quand un indicateur est l'outil approprié, comment le configurer et comment lire ses signaux — avec des liens choisis pour aller plus loin.",
     "tableOfContents": "Indicateurs",
+    "indicators": "Indicateurs",
     "whenToUse": "Quand l'utiliser",
     "howToUse": "Comment l'utiliser",
     "howToAnalyse": "Comment l'analyser",
@@ -209,12 +210,13 @@
     "analysis": "Analyse",
     "linkAnalysis": "Lier une analyse",
     "linkAnalysisFor": "Lier une analyse pour {{symbol}}",
-    "selectAnalysis": "Modifier",
+    "changeAnalysis": "Changer l'analyse",
+    "selectAnalysis": "Sélectionner l'analyse",
     "generateAnalysis": "Générer avec l'IA",
     "generateAnalysisFor": "Générer une analyse pour {{symbol}}",
     "unlinkAnalysis": "Délier",
     "noAnalyses": "Aucune analyse enregistrée.",
-    "openInMarkets": "Ouvrir dans Marchés",
+    "openAnalysis": "Ouvrir l'analyse",
     "generatingAnalysis": "L'IA choisit les indicateurs pour {{symbol}}…",
     "generatedTitle": "Titre",
     "generatedDescription": "Description",
@@ -238,7 +240,12 @@
     "createPortfolio": "Créer le portefeuille",
     "performanceTitle": "Performance",
     "performanceHint": "Clôture de chaque titre normalisée à 100 en début de période.",
-    "performanceNoData": "Aucune donnée de prix pour l'instant."
+    "performanceNoData": "Aucune donnée de prix pour l'instant.",
+    "analysisInfo": "Description de l'analyse",
+    "noDescription": "Aucune description pour l'instant.",
+    "updateSummary": "Mettre à jour avec l'IA",
+    "summaryUpdated": "Résumé mis à jour.",
+    "summaryFailed": "Échec de la génération du résumé."
   },
   "ai": {
     "disclaimer": "Contenu éducatif généré par IA, ne constitue pas un conseil en investissement."

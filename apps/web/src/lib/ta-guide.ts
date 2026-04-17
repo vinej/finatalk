@@ -219,39 +219,39 @@ const TA_GUIDE_EN: Record<IndicatorKind, TaGuideEntry> = {
 
 const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
   sma: {
-    when: "Utilisez la moyenne mobile simple pour lisser le bruit et visualiser la tendance sous-jacente sur une fenêtre fixe. C'est le filtre de tendance de référence auquel la plupart des autres indicateurs sont comparés.",
+    when: "Utilisez la SMA pour lisser le bruit et visualiser la tendance sous-jacente sur une fenêtre fixe. C'est le filtre de tendance de référence auquel la plupart des autres indicateurs sont comparés.",
     how: "Choisissez une période adaptée à votre horizon : 20 pour le swing trading, 50 pour la tendance moyen terme, 200 pour la tendance institutionnelle long terme. Tracée en surimpression sur le prix, la ligne pondère également chaque clôture de la fenêtre.",
-    analyse: "Prix au-dessus d'une SMA ascendante = tendance haussière, sous une SMA descendante = tendance baissière. Les croisements entre deux SMA (p. ex. 50/200, « golden cross » / « death cross ») sont des signaux classiques de changement de régime. Comme chaque barre a le même poids, la SMA réagit lentement — en retard sur les retournements, mais résistante aux pics d'une seule barre.",
+    analyse: "Prix au-dessus d'une SMA ascendante = tendance haussière, sous une SMA descendante = tendance baissière. Les croisements entre deux SMA (p. ex. 50/200, « Golden Cross » / « Death Cross ») sont des signaux classiques de changement de régime. Comme chaque barre a le même poids, la SMA réagit lentement — en retard sur les retournements, mais résistante aux pics d'une seule barre.",
     links: [
       { title: "Investopedia — Simple Moving Average (SMA)", url: "https://www.investopedia.com/terms/s/sma.asp" },
-      { title: "Wikipédia — Moyenne mobile", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
+      { title: "Wikipédia — Simple Moving Average", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
     ],
   },
   ema: {
-    when: "Utilisez l'EMA quand vous voulez une moyenne mobile qui réagit plus vite que la SMA aux données récentes — utile pour le suivi de tendance court terme ou comme brique d'oscillateurs (le MACD utilise des EMA).",
+    when: "Utilisez l'EMA quand vous voulez une moving average qui réagit plus vite que la SMA aux données récentes — utile pour le suivi de tendance court terme ou comme brique d'oscillateurs (le MACD utilise des EMA).",
     how: "Choisissez la période comme pour une SMA. L'EMA applique des poids exponentiellement décroissants, la clôture la plus récente pesant le plus. Paires courantes : 12/26 (intraday/swing), 50/200 (tendance longue).",
     analyse: "Le croisement prix/EMA, ou le croisement entre deux EMA, signale un changement de tendance plus tôt que la SMA équivalente — au prix de plus de faux signaux en marché agité. La pente de l'EMA est en elle-même une lecture de momentum : une EMA plate signale l'essoufflement de la tendance.",
     links: [
       { title: "Investopedia — Exponential Moving Average (EMA)", url: "https://www.investopedia.com/terms/e/ema.asp" },
-      { title: "Wikipédia — Moyenne mobile exponentielle", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile#Moyenne_mobile_exponentielle" },
+      { title: "Wikipédia — Exponential Moving Average", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile#Moyenne_mobile_exponentielle" },
     ],
   },
   rma: {
-    when: "Utilisez la moyenne mobile de Wilder (RMA) quand vous voulez un lissage de type EMA qui réagit encore plus lentement — c'est le lissage intégré au RSI, à l'ATR et à l'ADX. Indiquée pour filtrer le bruit sans subir le retard d'une longue SMA.",
+    when: "Utilisez la RMA (Wilder) quand vous voulez un lissage de type EMA qui réagit encore plus lentement — c'est le lissage intégré au RSI, à l'ATR et à l'ADX. Indiquée pour filtrer le bruit sans subir le retard d'une longue SMA.",
     how: "La RMA utilise un alpha de 1/N (contre 2/(N+1) pour l'EMA), donc une RMA(14) lisse beaucoup plus qu'une EMA(14). Pour comparer, considérez la période comme équivalente à environ une EMA de 2N périodes.",
     analyse: "Lisez-la comme une EMA — pente et croisements prix/ligne — mais attendez-vous à moins de signaux et un retard plus long. Surtout utile comme lisseur dans un autre calcul, rarement comme signal autonome.",
     links: [
       { title: "Investopedia — Wilder's DMI/ADX (introduit le lissage de Wilder)", url: "https://www.investopedia.com/terms/w/wilders-dmi-adx.asp" },
-      { title: "Wikipédia — Moyenne mobile modifiée", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
+      { title: "Wikipédia — Running Moving Average", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
     ],
   },
   wma: {
-    when: "Utilisez la moyenne mobile pondérée (WMA) comme compromis entre SMA et EMA : plus rapide que la SMA, plus lisse que l'EMA, avec des poids décroissant linéairement au lieu d'une décroissance exponentielle.",
+    when: "Utilisez la WMA comme compromis entre SMA et EMA : plus rapide que la SMA, plus lisse que l'EMA, avec des poids décroissant linéairement au lieu d'une décroissance exponentielle.",
     how: "Chaque barre de la fenêtre reçoit un poids égal à sa position (la plus récente = N, la plus ancienne = 1), divisé par la somme des poids. Le choix de la période suit les mêmes règles que les autres moyennes mobiles.",
     analyse: "Utilisez les croisements prix/ligne et la pente comme pour la SMA ou l'EMA. La WMA suit le prix plus fidèlement que la SMA tout en restant moins hachée que l'EMA, ce qui la rend populaire pour les filtres de tendance courte où le retard est le principal reproche fait à la SMA.",
     links: [
       { title: "Investopedia — Weighted Average", url: "https://www.investopedia.com/terms/w/weightedaverage.asp" },
-      { title: "Wikipédia — Moyenne mobile pondérée", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
+      { title: "Wikipédia — Weighted Moving Average", url: "https://fr.wikipedia.org/wiki/Moyenne_mobile" },
     ],
   },
   dema: {
@@ -269,7 +269,7 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
     analyse: "Niveaux classiques : au-dessus de 70 = surachat, sous 30 = survente (utilisez 80/20 en tendance forte). Le signal le plus fiable est la divergence — le prix fait un nouveau sommet sans le RSI (baissière) ou un nouveau creux sans le RSI (haussière). Ne shortez pas un RSI élevé en tendance forte ; il peut rester en surachat plusieurs semaines.",
     links: [
       { title: "Investopedia — Relative Strength Index (RSI)", url: "https://www.investopedia.com/terms/r/rsi.asp" },
-      { title: "Wikipédia — Indice de force relative", url: "https://fr.wikipedia.org/wiki/Indice_de_force_relative" },
+      { title: "Wikipédia — Relative Strength Index", url: "https://fr.wikipedia.org/wiki/Indice_de_force_relative" },
     ],
   },
   mom: {
@@ -300,12 +300,12 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
     ],
   },
   bbands: {
-    when: "Utilisez les bandes de Bollinger pour lire la volatilité et repérer quand le prix est statistiquement tendu. Particulièrement utile sur les instruments qui oscillent dans une fourchette.",
+    when: "Utilisez les Bollinger Bands pour lire la volatilité et repérer quand le prix est statistiquement tendu. Particulièrement utile sur les instruments qui oscillent dans une fourchette.",
     how: "Bande médiane = SMA(N), bandes haute/basse = médiane ± K·écart-type(N). Valeurs par défaut : période 20, écart-type 2. La largeur des bandes s'adapte automatiquement à la volatilité récente.",
     analyse: "Un « squeeze » (bandes resserrées, faible volatilité) précède souvent une cassure — direction inconnue, mais un grand mouvement est statistiquement dû. Les touches sur les bandes signalent un excès mais ne sont pas des signaux de retournement isolés ; combinez avec le RSI ou un motif de chandelier. « Marcher la bande » (prix qui longe la bande haute) est une signature de tendance forte, pas un signal de sortie.",
     links: [
       { title: "Investopedia — Bollinger Bands", url: "https://www.investopedia.com/terms/b/bollingerbands.asp" },
-      { title: "Wikipédia — Bandes de Bollinger", url: "https://fr.wikipedia.org/wiki/Bandes_de_Bollinger" },
+      { title: "Wikipédia — Bollinger Bands", url: "https://fr.wikipedia.org/wiki/Bandes_de_Bollinger" },
       { title: "BollingerBands.com — site officiel de John Bollinger", url: "https://www.bollingerbands.com/" },
     ],
   },
@@ -328,27 +328,27 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
     ],
   },
   stoch: {
-    when: "Utilisez l'oscillateur stochastique dans les marchés en range ou cycliques pour chronométrer les entrées sur les extrêmes de surachat/survente. Il complète le RSI — il capte des retournements que le RSI rate sur les courts horizons.",
+    when: "Utilisez le Stochastic Oscillator dans les marchés en range ou cycliques pour chronométrer les entrées sur les extrêmes de surachat/survente. Il complète le RSI — il capte des retournements que le RSI rate sur les courts horizons.",
     how: "%K = 100·(clôture − plus bas N) / (plus haut N − plus bas N), lissé sur M périodes. %D = SMA(%K, P). Valeurs par défaut 14/3/3. Tracé sur 0–100 dans son panneau.",
-    analyse: "Au-dessus de 80 = surachat, sous 20 = survente. Le signal classique est un croisement %K/%D dans ces zones : %K qui coupe %D en dessous de 20 = achat, %K qui coupe %D au-dessus de 80 = vente. La divergence (prix nouveau sommet, stochastique non) est un avertissement fort de retournement. En tendance forte, le stochastique peut rester collé aux extrêmes — combinez avec l'ADX comme filtre de tendance.",
+    analyse: "Au-dessus de 80 = surachat, sous 20 = survente. Le signal classique est un croisement %K/%D dans ces zones : %K qui coupe %D en dessous de 20 = achat, %K qui coupe %D au-dessus de 80 = vente. La divergence (prix nouveau sommet, Stochastic non) est un avertissement fort de retournement. En tendance forte, le Stochastic peut rester collé aux extrêmes — combinez avec l'ADX comme filtre de tendance.",
     links: [
       { title: "Investopedia — Stochastic Oscillator", url: "https://www.investopedia.com/terms/s/stochasticoscillator.asp" },
-      { title: "Wikipédia — Oscillateur stochastique", url: "https://fr.wikipedia.org/wiki/Oscillateur_stochastique" },
+      { title: "Wikipédia — Stochastic Oscillator", url: "https://fr.wikipedia.org/wiki/Oscillateur_stochastique" },
     ],
   },
   stochRsi: {
     when: "Utilisez le Stochastic RSI quand le RSI classique est trop lent pour capter les retournements à cycle court. C'est l'amplificateur de sensibilité du RSI — plus rapide, plus bruité.",
-    how: "Applique la formule du stochastique aux valeurs du RSI au lieu du prix : (RSI − plus bas RSI N) / (plus haut RSI N − plus bas RSI N). Période par défaut 14. Sortie sur 0–1 (ou 0–100 selon la bibliothèque).",
-    analyse: "Traitez les extrêmes comme le stochastique — au-dessus de 0,8 surachat, sous 0,2 survente — mais attendez-vous à plus de faux signaux. Surtout utile en range ; en tendance, le StochRSI se colle aux extrêmes et devient peu fiable. Associez-le au RSI pour les divergences ou à l'ADX pour filtrer les tendances.",
+    how: "Applique la formule du Stochastic aux valeurs du RSI au lieu du prix : (RSI − plus bas RSI N) / (plus haut RSI N − plus bas RSI N). Période par défaut 14. Sortie sur 0–1 (ou 0–100 selon la bibliothèque).",
+    analyse: "Traitez les extrêmes comme le Stochastic — au-dessus de 0,8 surachat, sous 0,2 survente — mais attendez-vous à plus de faux signaux. Surtout utile en range ; en tendance, le StochRSI se colle aux extrêmes et devient peu fiable. Associez-le au RSI pour les divergences ou à l'ADX pour filtrer les tendances.",
     links: [
       { title: "Investopedia — Stochastic RSI (StochRSI)", url: "https://www.investopedia.com/terms/s/stochrsi.asp" },
       { title: "StockCharts — StochRSI (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/stochrsi" },
     ],
   },
   williamsR: {
-    when: "Utilisez le Williams %R comme oscillateur de momentum quand vous voulez une lecture surachat/survente de type stochastique, sans lissage %D. Populaire pour les retournements courts.",
+    when: "Utilisez le Williams %R comme oscillateur de momentum quand vous voulez une lecture surachat/survente de type Stochastic, sans lissage %D. Populaire pour les retournements courts.",
     how: "%R = −100·(plus haut N − clôture) / (plus haut N − plus bas N). Défaut 14. Tracé sur une échelle inversée −100 à 0 dans un panneau dédié.",
-    analyse: "Au-dessus de −20 = surachat, sous −80 = survente. Les mouvements sont mécaniquement le miroir du %K stochastique. En tendance forte il reste collé aux extrêmes, donc utilisez-le avec un filtre de tendance (ADX ou pente d'une moyenne mobile). La divergence avec le prix précède souvent les retournements, comme le RSI ou le stochastique.",
+    analyse: "Au-dessus de −20 = surachat, sous −80 = survente. Les mouvements sont mécaniquement le miroir du Stochastic %K. En tendance forte il reste collé aux extrêmes, donc utilisez-le avec un filtre de tendance (ADX ou pente d'une moving average). La divergence avec le prix précède souvent les retournements, comme le RSI ou le Stochastic.",
     links: [
       { title: "Investopedia — Williams %R", url: "https://www.investopedia.com/terms/w/williamsr.asp" },
       { title: "StockCharts — Williams %R (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/williams-r" },
@@ -373,9 +373,9 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
     ],
   },
   maCross: {
-    when: "Utilisez le MA Cross pour visualiser les changements de régime entre une moyenne mobile rapide et une lente sur le graphique. La paire classique SMA 50/200 produit le fameux Golden Cross (haussier) et le Death Cross (baissier) — utile comme filtre de tendance long terme. Des paires courtes (p. ex. EMA 9/21) fournissent des déclencheurs de swing trading.",
-    how: "Choisissez une période rapide et une lente (par défaut 50/200) et le type de MM (SMA pour des signaux plus lisses, EMA pour réagir plus vite). Deux lignes sont tracées sur le panneau de prix. À chaque croisement, un marqueur haussier (↑) ou baissier (↓) est posé sur la bougie correspondante.",
-    analyse: "Des marqueurs haussiers au-dessus d'un prix ascendant suggèrent un changement de régime à la hausse ; des marqueurs baissiers dans une structure descendante confirment la distribution. Les croisements près de MM plates ou enchevêtrées sont de faible qualité — plus l'écart s'élargit après le croisement, plus le signal est fort. Confirmez par un ADX qui monte ou un volume qui augmente avant d'agir sur un croisement isolé.",
+    when: "Utilisez le MA Cross pour visualiser les changements de régime entre une moving average rapide et une lente sur le graphique. La paire classique SMA 50/200 produit le fameux Golden Cross (haussier) et le Death Cross (baissier) — utile comme filtre de tendance long terme. Des paires courtes (p. ex. EMA 9/21) fournissent des déclencheurs de swing trading.",
+    how: "Choisissez une période rapide et une lente (par défaut 50/200) et le type (SMA pour des signaux plus lisses, EMA pour réagir plus vite). Deux lignes sont tracées sur le panneau de prix. À chaque croisement, un marqueur haussier (↑) ou baissier (↓) est posé sur la bougie correspondante.",
+    analyse: "Des marqueurs haussiers au-dessus d'un prix ascendant suggèrent un changement de régime à la hausse ; des marqueurs baissiers dans une structure descendante confirment la distribution. Les croisements près de moving averages plates ou enchevêtrées sont de faible qualité — plus l'écart s'élargit après le croisement, plus le signal est fort. Confirmez par un ADX qui monte ou un volume qui augmente avant d'agir sur un croisement isolé.",
     links: [
       { title: "Investopedia — Golden Cross", url: "https://www.investopedia.com/terms/g/goldencross.asp" },
       { title: "Investopedia — Death Cross", url: "https://www.investopedia.com/terms/d/deathcross.asp" },

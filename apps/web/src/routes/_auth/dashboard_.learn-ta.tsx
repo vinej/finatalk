@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { KINDS, kindDescription, kindLabel, type IndicatorKind } from "@/lib/indicator-defaults";
+import { KINDS, kindDescription, kindFullName, kindLabel, kindOneliner, type IndicatorKind } from "@/lib/indicator-defaults";
 import { pickLang, type Lang } from "@/lib/lang";
 import { TA_GENERAL_LINKS, TA_GUIDE, type TaLink } from "@/lib/ta-guide";
 
@@ -32,17 +32,25 @@ function LearnTAPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t("learnTa.tableOfContents")}</CardTitle>
+          <CardTitle className="text-base">{t("learnTa.indicators")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-col divide-y divide-[var(--color-border)]">
             {KINDS.map((kind) => (
-              <li key={kind}>
+              <li key={kind} className="py-2 first:pt-0 last:pb-0">
                 <a
                   href={`#${kind}`}
-                  className="rounded-md border border-[var(--color-border)] px-2.5 py-1 text-sm hover:bg-[var(--color-accent)]"
+                  className="group flex flex-col gap-0.5"
                 >
-                  {kindLabel(kind)}
+                  <span className="text-sm font-semibold group-hover:underline">
+                    {kindLabel(kind)}{" "}
+                    <span className="font-normal text-[var(--color-muted-fg)]">
+                      ({kindFullName(kind, lang)})
+                    </span>
+                  </span>
+                  <span className="text-sm text-[var(--color-muted-fg)]">
+                    {kindOneliner(kind, lang)}
+                  </span>
                 </a>
               </li>
             ))}
@@ -63,7 +71,7 @@ function IndicatorSection({ kind, lang }: { kind: IndicatorKind; lang: Lang }) {
   return (
     <Card id={kind} className="scroll-mt-4">
       <CardHeader>
-        <CardTitle>{kindLabel(kind)}</CardTitle>
+        <CardTitle>{kindLabel(kind)} ({kindFullName(kind, lang)})</CardTitle>
         <p className="text-sm text-[var(--color-muted-fg)]">{kindDescription(kind, lang)}</p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, LineChart, MessageSquare, Pencil, Plus, Replace, Sparkles, Trash2, X, Check } from "lucide-react";
+import { ArrowLeft, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, Replace, Sparkles, Trash2, X, Check } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -99,6 +99,11 @@ function PortfolioDetailPage() {
     currentAnalysisId: string | null;
   } | null>(null);
   const [generatingFor, setGeneratingFor] = useState<{ holdingId: string; symbol: string } | null>(null);
+  const [infoHolding, setInfoHolding] = useState<{
+    holdingId: string;
+    symbol: string;
+    analysisId: string;
+  } | null>(null);
 
   const analysesQuery = trpc.analysis.listAnalyses.useQuery(
     linking ? { symbol: linking.symbol } : undefined,
@@ -185,6 +190,12 @@ function PortfolioDetailPage() {
   const analysisTitleByHolding = useMemo(() => {
     const m = new Map<string, string | null>();
     for (const h of holdings) m.set(h.id, h.analysisTitle);
+    return m;
+  }, [holdings]);
+
+  const analysisDescByHolding = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const h of holdings) m.set(h.id, h.analysisDescription);
     return m;
   }, [holdings]);
 
@@ -658,8 +669,8 @@ function PortfolioDetailPage() {
                             analysisId={h.analysisId}
                             analysisTitle={analysisTitleByHolding.get(h.id) ?? null}
                             linkLabel={t("portfolio.linkAnalysis")}
-                            openLabel={t("portfolio.openInMarkets")}
-                            changeLabel={t("portfolio.selectAnalysis")}
+                            openLabel={t("portfolio.openAnalysis")}
+                            changeLabel={t("portfolio.changeAnalysis")}
                             onOpenLinkDialog={() =>
                               setLinking({
                                 holdingId: h.id,
@@ -671,9 +682,27 @@ function PortfolioDetailPage() {
                         </td>
                         <td className="px-2 py-2 text-right">
                           <div className="flex justify-end gap-1">
+                            {h.analysisId && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                title={t("portfolio.analysisInfo")}
+                                onClick={() =>
+                                  setInfoHolding({
+                                    holdingId: h.id,
+                                    symbol: h.symbol,
+                                    analysisId: h.analysisId!,
+                                  })
+                                }
+                                aria-label={t("portfolio.analysisInfo")}
+                              >
+                                <FileText className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
+                              title={t("portfolio.editHolding")}
                               onClick={() => startEditHolding(h)}
                               aria-label={t("portfolio.editHolding")}
                             >
@@ -682,6 +711,7 @@ function PortfolioDetailPage() {
                             <Button
                               size="sm"
                               variant="ghost"
+                              title={t("portfolio.removeHolding")}
                               onClick={() => {
                                 if (window.confirm(t("portfolio.confirmDeleteHolding", { symbol: h.symbol }))) {
                                   deleteHolding.mutate({ id: h.id });
@@ -917,7 +947,107 @@ function PortfolioDetailPage() {
           }}
         />
       )}
+
+      {infoHolding && (
+        <AnalysisInfoDialog
+          analysisId={infoHolding.analysisId}
+          symbol={infoHolding.symbol}
+          description={analysisDescByHolding.get(infoHolding.holdingId) ?? null}
+          title={analysisTitleByHolding.get(infoHolding.holdingId) ?? infoHolding.symbol}
+          onClose={() => setInfoHolding(null)}
+          onDescriptionUpdated={() => {
+            utils.portfolio.getPortfolio.invalidate({ id: portfolioId });
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function AnalysisInfoDialog({
+  analysisId,
+  symbol,
+  description,
+  title,
+  onClose,
+  onDescriptionUpdated,
+}: {
+  analysisId: string;
+  symbol: string;
+  description: string | null;
+  title: string | null;
+  onClose: () => void;
+  onDescriptionUpdated: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const [localDesc, setLocalDesc] = useState(description ?? "");
+  const [busy, setBusy] = useState(false);
+  const utils = trpc.useUtils();
+
+  const analysisQuery = trpc.analysis.getAnalysis.useQuery({ id: analysisId });
+
+  const summarizeMutation = trpc.ai.summarizeChart.useMutation({
+    onError: () => toast.error(t("portfolio.summaryFailed")),
+  });
+
+  const updateMutation = trpc.analysis.updateAnalysis.useMutation({
+    onSuccess: () => {
+      utils.analysis.getAnalysis.invalidate({ id: analysisId });
+      onDescriptionUpdated();
+      toast.success(t("portfolio.summaryUpdated"));
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  async function handleSummarize() {
+    const data = analysisQuery.data;
+    if (!data) return;
+    setBusy(true);
+    try {
+      const result = await summarizeMutation.mutateAsync({
+        symbol: data.symbol || symbol,
+        range: "1y",
+        interval: "1d",
+        indicators: data.indicators.map((ind) => ind.spec),
+        language: i18n.language,
+      });
+      setLocalDesc(result.summary);
+      await updateMutation.mutateAsync({ id: analysisId, description: result.summary });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(o) => { if (!o) onClose(); }}
+      title={title ?? t("portfolio.analysisInfo")}
+    >
+      <div className="flex flex-col gap-3">
+        <div className="min-h-[60px] whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-fg)]">
+          {localDesc || (
+            <span className="italic text-[var(--color-muted-fg)]">
+              {t("portfolio.noDescription")}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 border-t border-[var(--color-border)] pt-3">
+          <Button
+            size="sm"
+            onClick={handleSummarize}
+            disabled={busy || analysisQuery.isLoading}
+          >
+            {busy ? (
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1 h-3.5 w-3.5" />
+            )}
+            {t("portfolio.updateSummary")}
+          </Button>
+        </div>
+      </div>
+    </Dialog>
   );
 }
 
@@ -960,6 +1090,7 @@ function AnalysisCell({
       <Button
         size="sm"
         variant="ghost"
+        title={changeLabel}
         onClick={onOpenLinkDialog}
         aria-label={changeLabel}
       >

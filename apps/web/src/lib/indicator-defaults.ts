@@ -38,6 +38,57 @@ export function kindLabel(kind: IndicatorKind): string {
   }
 }
 
+const FULL_NAME_EN: Record<IndicatorKind, string> = {
+  sma: "Simple Moving Average",
+  ema: "Exponential Moving Average",
+  rma: "Running Moving Average",
+  wma: "Weighted Moving Average",
+  dema: "Double Exponential Moving Average",
+  rsi: "Relative Strength Index",
+  mom: "Momentum",
+  roc: "Rate of Change",
+  macd: "Moving Average Convergence Divergence",
+  bbands: "Bollinger Bands",
+  atr: "Average True Range",
+  adx: "Average Directional Index",
+  stoch: "Stochastic Oscillator",
+  stochRsi: "Stochastic RSI",
+  williamsR: "Williams Percent Range",
+  obv: "On-Balance Volume",
+  psar: "Parabolic Stop and Reverse",
+  maCross: "Moving Average Crossover",
+  macdCross: "MACD Signal Crossover",
+};
+
+const FULL_NAME_FR: Record<IndicatorKind, string> = {
+  sma: "Moyenne mobile simple",
+  ema: "Moyenne mobile exponentielle",
+  rma: "Moyenne mobile de Wilder",
+  wma: "Moyenne mobile pondérée",
+  dema: "Double moyenne mobile exponentielle",
+  rsi: "Indice de force relative",
+  mom: "Momentum",
+  roc: "Taux de variation",
+  macd: "Convergence-divergence de moyennes mobiles",
+  bbands: "Bandes de Bollinger",
+  atr: "Écart moyen réel",
+  adx: "Indice directionnel moyen",
+  stoch: "Oscillateur stochastique",
+  stochRsi: "Stochastique RSI",
+  williamsR: "Williams %R",
+  obv: "Volume d'équilibre",
+  psar: "SAR parabolique",
+  maCross: "Croisement de moyennes mobiles",
+  macdCross: "Croisement du signal MACD",
+};
+
+export function kindFullName(kind: IndicatorKind, lang: Lang = "en"): string {
+  if (lang === "fr") {
+    return `${FULL_NAME_EN[kind]}, ${FULL_NAME_FR[kind]}`;
+  }
+  return FULL_NAME_EN[kind];
+}
+
 export function defaultSpec(kind: IndicatorKind): IndicatorSpec {
   switch (kind) {
     case "sma": return { kind: "sma", period: 20 };
@@ -111,29 +162,77 @@ const KIND_DESCRIPTIONS_EN: Record<IndicatorKind, string> = {
 };
 
 const KIND_DESCRIPTIONS_FR: Record<IndicatorKind, string> = {
-  sma: "Moyenne mobile simple — moyenne équipondérée des N dernières clôtures. Lisse le prix pour révéler la direction de la tendance ; le franchissement du prix au-dessus/au-dessous de la MMS est un signal de tendance courant. Périodes typiques : 20 (courte), 50 (moyenne), 200 (longue).",
-  ema: "Moyenne mobile exponentielle — moyenne pondérée qui réagit plus vite aux prix récents que la MMS. Souvent utilisée pour les croisements en suivi de tendance (p. ex. MME 12 vs MME 26) et comme support/résistance dynamique.",
-  rma: "Moyenne mobile de Wilder (RMA) — lissage exponentiel à décroissance lente (alpha = 1/N). C'est le lissage utilisé à l'intérieur du RSI et de l'ATR ; plus lisse que la MME, moins réactive aux pics.",
-  wma: "Moyenne mobile pondérée — pondérations linéaires donnant le plus de poids à la clôture la plus récente. Réagit plus vite que la MMS tout en restant plus lisse que la MME. Utile pour détecter les tendances à court terme.",
-  dema: "Double moyenne mobile exponentielle — MME à deux passes conçue pour réduire le retard. Épouse le prix de plus près que la MME, utile pour capter plus tôt les changements de tendance (au prix d'un peu plus de bruit).",
+  sma: "Moyenne mobile simple — moyenne équipondérée des N dernières clôtures. Lisse le prix pour révéler la direction de la tendance ; le franchissement du prix au-dessus/au-dessous de la SMA est un signal de tendance courant. Périodes typiques : 20 (courte), 50 (moyenne), 200 (longue).",
+  ema: "Moyenne mobile exponentielle — moyenne pondérée qui réagit plus vite aux prix récents que la SMA. Souvent utilisée pour les croisements en suivi de tendance (p. ex. EMA 12 vs EMA 26) et comme support/résistance dynamique.",
+  rma: "Moyenne mobile de Wilder — lissage exponentiel à décroissance lente (alpha = 1/N). C'est le lissage utilisé à l'intérieur du RSI et de l'ATR ; plus lisse que l'EMA, moins réactive aux pics.",
+  wma: "Moyenne mobile pondérée — pondérations linéaires donnant le plus de poids à la clôture la plus récente. Réagit plus vite que la SMA tout en restant plus lisse que l'EMA. Utile pour détecter les tendances à court terme.",
+  dema: "Double moyenne mobile exponentielle — EMA à deux passes conçue pour réduire le retard. Épouse le prix de plus près que l'EMA, utile pour capter plus tôt les changements de tendance (au prix d'un peu plus de bruit).",
   rsi: "Indice de force relative — oscillateur de momentum borné 0–100 comparant les gains et pertes moyens sur N périodes. Au-dessus de 70 = suracheté, en dessous de 30 = survendu ; les divergences avec le prix signalent souvent des renversements. Défaut : 14.",
   mom: "Momentum — clôture actuelle moins clôture d'il y a N périodes. Positif = prix en hausse vs il y a N barres, négatif = en baisse. Les franchissements de zéro indiquent un changement de force directionnelle.",
   roc: "Taux de variation — variation en pourcentage par rapport à la clôture d'il y a N périodes. Semblable au Momentum mais normalisé, donc comparable entre niveaux de prix. Sert à repérer accélération, divergence et extrêmes de surachat/survente.",
-  macd: "Convergence-divergence de moyennes mobiles — ligne MACD = MME(rapide) − MME(lente), ligne de signal = MME de la MACD, histogramme = MACD − signal. Les croisements de la ligne de signal, les franchissements de zéro et les divergences d'histogramme sont les déclencheurs classiques. Défauts 12/26/9.",
-  bbands: "Bandes de Bollinger — MMS(N) centrale avec bandes supérieure/inférieure à K écarts-types. Les bandes s'élargissent en forte volatilité et se resserrent en calme (le « squeeze » précède les cassures) ; les touches près des bandes signalent un excès. Défauts : période 20, écart-type 2.",
-  atr: "Average True Range — mesure de volatilité de Wilder : moyenne du « true range » (haut-bas avec ajustement des gaps) sur N périodes. Sert au dimensionnement des stops et des positions, pas à la direction. Défaut : 14.",
+  macd: "Convergence-divergence de moyennes mobiles — ligne MACD = EMA(rapide) − EMA(lente), ligne de signal = EMA de la MACD, histogramme = MACD − signal. Les croisements de la ligne de signal, les franchissements de zéro et les divergences d'histogramme sont les déclencheurs classiques. Défauts 12/26/9.",
+  bbands: "Bandes de Bollinger — SMA(N) centrale avec bandes supérieure/inférieure à K écarts-types. Les bandes s'élargissent en forte volatilité et se resserrent en calme (le « squeeze » précède les cassures) ; les touches près des bandes signalent un excès. Défauts : période 20, écart-type 2.",
+  atr: "Écart moyen réel — mesure de volatilité de Wilder : moyenne du « true range » (haut-bas avec ajustement des gaps) sur N périodes. Sert au dimensionnement des stops et des positions, pas à la direction. Défaut : 14.",
   adx: "Indice directionnel moyen — force de la tendance (0–100) dérivée de +DI et −DI. ADX > 25 suggère un marché en tendance ; +DI au-dessus de −DI = tendance haussière, inverse = baissière. Excellent filtre pour les croisements de moyennes mobiles. Défaut : 14.",
   stoch: "Oscillateur stochastique — compare la clôture actuelle à l'intervalle haut/bas sur N périodes. Lignes %K et %D bornées 0–100 ; >80 suracheté, <20 survendu. Les croisements %K/%D près des extrêmes sont le signal classique. Défauts 14/3/3.",
-  stochRsi: "Stochastique RSI — applique la formule stochastique aux valeurs du RSI plutôt qu'au prix. Plus sensible que le RSI simple, capte des cycles surachat/survente plus courts. Plage 0–1 (ou 0–100). Défaut : 14.",
-  williamsR: "Williams %R — oscillateur de momentum sur une échelle inversée de −100 à 0. Au-dessus de −20 = suracheté, en dessous de −80 = survendu. Mécaniquement semblable au %K stochastique mais inversé. Défaut : 14.",
-  obv: "On-Balance Volume — volume cumulé : ajoute le volume des jours haussiers, retranche celui des jours baissiers. Un OBV haussier confirme les tendances ; les divergences avec le prix précèdent souvent les renversements. La direction compte plus que le niveau absolu.",
-  psar: "Parabolic SAR — points de « stop-and-reverse » en suivi de tendance qui basculent du dessous du prix (tendance haussière) au-dessus (tendance baissière). Utilisé comme stop suiveur ou filtre de tendance. Défauts : pas 0,02, max 0,2.",
-  maCross: "Croisement de MM — trace une moyenne mobile rapide et une lente sur le graphique des prix et marque chaque croisement. Le classique 50/200 en MMS donne le « Golden Cross » (la rapide franchit la lente à la hausse — régime haussier) et le « Death Cross » (franchissement à la baisse). Périodes et type (MMS/MME) configurables.",
+  stochRsi: "Stochastique RSI — applique la formule Stochastic aux valeurs du RSI plutôt qu'au prix. Plus sensible que le RSI simple, capte des cycles surachat/survente plus courts. Plage 0–1 (ou 0–100). Défaut : 14.",
+  williamsR: "Williams %R — oscillateur de momentum sur une échelle inversée de −100 à 0. Au-dessus de −20 = suracheté, en dessous de −80 = survendu. Mécaniquement semblable au Stochastic %K mais inversé. Défaut : 14.",
+  obv: "Volume d'équilibre — volume cumulé : ajoute le volume des jours haussiers, retranche celui des jours baissiers. Un OBV haussier confirme les tendances ; les divergences avec le prix précèdent souvent les renversements. La direction compte plus que le niveau absolu.",
+  psar: "SAR parabolique — points de « stop-and-reverse » en suivi de tendance qui basculent du dessous du prix (tendance haussière) au-dessus (tendance baissière). Utilisé comme stop suiveur ou filtre de tendance. Défauts : pas 0,02, max 0,2.",
+  maCross: "Croisement de moyennes mobiles — trace une moving average rapide et une lente sur le graphique des prix et marque chaque croisement. Le classique 50/200 en SMA donne le « Golden Cross » (la rapide franchit la lente à la hausse — régime haussier) et le « Death Cross » (franchissement à la baisse). Périodes et type (SMA/EMA) configurables.",
   macdCross: "Croisement du signal MACD — exécute la MACD et marque chaque franchissement de la ligne de signal : flèche haute = haussier, flèche basse = baissier. À utiliser avec un filtre de tendance pour éviter les faux signaux en marché chaotique. Défauts 12/26/9.",
 };
 
 export function kindDescription(kind: IndicatorKind, lang: Lang = "en"): string {
   return (lang === "fr" ? KIND_DESCRIPTIONS_FR : KIND_DESCRIPTIONS_EN)[kind];
+}
+
+const KIND_ONELINER_EN: Record<IndicatorKind, string> = {
+  sma: "Price above a rising SMA = uptrend, below a falling SMA = downtrend.",
+  ema: "Faster than SMA — EMA crossovers (e.g. 12/26) catch trend shifts earlier.",
+  rma: "Smoother than EMA — the internal smoothing behind RSI and ATR.",
+  wma: "Reacts faster than SMA, smoother than EMA — good for short-term trend detection.",
+  dema: "Reduced-lag EMA — catches trend changes earlier at the cost of more noise.",
+  rsi: "Classic levels: above 70 = overbought, below 30 = oversold (use 80/20 in strong trends).",
+  mom: "Close minus close N bars ago — zero-line crossings flag directional shifts.",
+  roc: "Percent change vs N bars ago — spot acceleration and divergences across any price level.",
+  macd: "Signal-line crossovers, zero-line crossings, histogram divergences — triple trigger system.",
+  bbands: "Bands widen on volatility, narrow before breakouts (the 'squeeze'); touches flag overextension.",
+  atr: "Measures volatility, not direction — use for stop-loss and position sizing.",
+  adx: "ADX > 25 = trending market; +DI above −DI = up, reverse = down.",
+  stoch: "%K/%D crossovers near 80 (overbought) or 20 (oversold) are the classic signals.",
+  stochRsi: "More sensitive than plain RSI — catches shorter overbought/oversold cycles.",
+  williamsR: "Above −20 = overbought, below −80 = oversold — inverted Stochastic %K.",
+  obv: "Rising OBV confirms uptrends; divergence with price often precedes reversals.",
+  psar: "Dots below price = uptrend, above = downtrend — acts as a trailing stop.",
+  maCross: "Golden Cross (50 above 200) = bullish regime, Death Cross = bearish.",
+  macdCross: "Flags every MACD/signal crossover — use with a trend filter to avoid whipsaws.",
+};
+
+const KIND_ONELINER_FR: Record<IndicatorKind, string> = {
+  sma: "Prix au-dessus d'une SMA haussière = tendance haussière, en dessous = baissière.",
+  ema: "Plus rapide que la SMA — les croisements EMA (ex. 12/26) captent plus tôt les retournements.",
+  rma: "Plus lisse que l'EMA — le lissage interne du RSI et de l'ATR.",
+  wma: "Réagit plus vite que la SMA, plus lisse que l'EMA — idéale pour les tendances court terme.",
+  dema: "EMA à retard réduit — capte les changements de tendance plus tôt, avec un peu plus de bruit.",
+  rsi: "Niveaux classiques : au-dessus de 70 = suracheté, en dessous de 30 = survendu (80/20 en forte tendance).",
+  mom: "Clôture moins clôture il y a N barres — les franchissements de zéro signalent un changement directionnel.",
+  roc: "Variation en % vs N barres — repère accélération et divergences quel que soit le niveau de prix.",
+  macd: "Croisements du signal, franchissements de zéro, divergences de l'histogramme — triple déclencheur.",
+  bbands: "Les bandes s'élargissent en volatilité, se resserrent avant les cassures ; les touches signalent un excès.",
+  atr: "Mesure la volatilité, pas la direction — utilisé pour dimensionner stops et positions.",
+  adx: "ADX > 25 = marché en tendance ; +DI au-dessus de −DI = hausse, inverse = baisse.",
+  stoch: "Croisements %K/%D près de 80 (suracheté) ou 20 (survendu) : les signaux classiques.",
+  stochRsi: "Plus sensible que le RSI simple — capte des cycles surachat/survente plus courts.",
+  williamsR: "Au-dessus de −20 = suracheté, en dessous de −80 = survendu — Stochastic %K inversé.",
+  obv: "Un OBV haussier confirme la tendance ; les divergences avec le prix précèdent souvent les renversements.",
+  psar: "Points sous le prix = tendance haussière, au-dessus = baissière — sert de stop suiveur.",
+  maCross: "Golden Cross (50 au-dessus de 200) = régime haussier, Death Cross = baissier.",
+  macdCross: "Signale chaque croisement MACD/signal — à combiner avec un filtre de tendance.",
+};
+
+export function kindOneliner(kind: IndicatorKind, lang: Lang = "en"): string {
+  return (lang === "fr" ? KIND_ONELINER_FR : KIND_ONELINER_EN)[kind];
 }
 
 export function formatLabel(spec: IndicatorSpec): string {

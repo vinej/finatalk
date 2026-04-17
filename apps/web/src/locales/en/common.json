@@ -35,6 +35,7 @@
     "title": "Learn technical analysis",
     "intro": "A reference for the indicators on the markets page. Each section explains when an indicator is the right tool, how to configure it, and how to read its signals — with curated links to dig deeper.",
     "tableOfContents": "Indicators",
+    "indicators": "Indicators",
     "whenToUse": "When to use it",
     "howToUse": "How to use it",
     "howToAnalyse": "How to analyse it",
@@ -209,12 +210,13 @@
     "analysis": "Analysis",
     "linkAnalysis": "Link analysis",
     "linkAnalysisFor": "Link analysis for {{symbol}}",
-    "selectAnalysis": "Change",
+    "changeAnalysis": "Change analysis",
+    "selectAnalysis": "Select analysis",
     "generateAnalysis": "Generate with AI",
     "generateAnalysisFor": "Generate analysis for {{symbol}}",
     "unlinkAnalysis": "Unlink",
     "noAnalyses": "No saved analyses yet.",
-    "openInMarkets": "Open in Markets",
+    "openAnalysis": "Open analysis",
     "generatingAnalysis": "AI is picking indicators for {{symbol}}…",
     "generatedTitle": "Title",
     "generatedDescription": "Description",
@@ -238,7 +240,12 @@
     "createPortfolio": "Create portfolio",
     "performanceTitle": "Performance",
     "performanceHint": "Each stock's close normalized to 100 at the start of the range.",
-    "performanceNoData": "No price data yet."
+    "performanceNoData": "No price data yet.",
+    "analysisInfo": "Analysis description",
+    "noDescription": "No description yet.",
+    "updateSummary": "Update summary with AI",
+    "summaryUpdated": "Summary updated.",
+    "summaryFailed": "Couldn't generate summary."
   },
   "ai": {
     "disclaimer": "AI-generated educational content, not investment advice."

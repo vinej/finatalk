@@ -80,7 +80,7 @@ export const portfolioRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const p = await findOwnedPortfolio(ctx, input.id);
       const rows = await ctx.db
-        .select({ h: holding, analysisTitle: analysis.title })
+        .select({ h: holding, analysisTitle: analysis.title, analysisDescription: analysis.description })
         .from(holding)
         .leftJoin(analysis, eq(analysis.id, holding.analysisId))
         .where(eq(holding.portfolioId, p.id))
@@ -92,6 +92,7 @@ export const portfolioRouter = createTRPCRouter({
         holdings: rows.map((r) => ({
           ...serializeHolding(r.h),
           analysisTitle: r.analysisTitle ?? null,
+          analysisDescription: r.analysisDescription ?? null,
         })),
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
