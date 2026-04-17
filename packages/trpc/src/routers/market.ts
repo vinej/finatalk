@@ -530,6 +530,81 @@ export const marketRouter = createTRPCRouter({
       convertTo: input.convertTo ?? null,
     })),
 
+  compareSymbols: protectedProcedure
+    .input(z.object({
+      symbols: z.array(SymbolSchema).min(2).max(5),
+      range: RangeSchema,
+      interval: IntervalSchema,
+      convertTo: z.enum(["CAD"]).nullable().optional(),
+    }))
+    .query(async ({ input }) => {
+      const results = await Promise.all(
+        input.symbols.map(async (sym) => {
+          const symbol = sym.toUpperCase();
+          const { candles, nativeCurrency, displayCurrency } = await fetchCandlesWithCurrency(
+            symbol, input.range, input.interval, input.convertTo ?? null,
+          );
+
+          const first = candles[0];
+          const last = candles[candles.length - 1];
+          const periodReturn = first && last && first.close !== 0
+            ? ((last.close - first.close) / first.close) * 100
+            : null;
+
+          let volatility: number | null = null;
+          if (candles.length >= 2) {
+            const returns: number[] = [];
+            for (let i = 1; i < candles.length; i++) {
+              const prev = candles[i - 1]!.close;
+              if (prev !== 0) returns.push((candles[i]!.close - prev) / prev);
+            }
+            if (returns.length > 1) {
+              const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+              const variance = returns.reduce((a, r) => a + (r - mean) ** 2, 0) / (returns.length - 1);
+              volatility = Math.sqrt(variance) * Math.sqrt(252) * 100;
+            }
+          }
+
+          let rsi14: number | null = null;
+          const rsiInd = new RSI(14);
+          for (const c of candles) {
+            const v = rsiInd.update(c.close, false);
+            if (v != null) rsi14 = Number(v);
+          }
+
+          let sma50: number | null = null;
+          const sma50Ind = new SMA(50);
+          for (const c of candles) {
+            const v = sma50Ind.update(c.close, false);
+            if (v != null) sma50 = Number(v);
+          }
+
+          let sma200: number | null = null;
+          if (candles.length >= 200) {
+            const sma200Ind = new SMA(200);
+            for (const c of candles) {
+              const v = sma200Ind.update(c.close, false);
+              if (v != null) sma200 = Number(v);
+            }
+          }
+
+          return {
+            symbol,
+            candles,
+            nativeCurrency,
+            displayCurrency,
+            periodReturn,
+            volatility,
+            rsi14,
+            sma50,
+            sma200,
+            lastClose: last?.close ?? null,
+          };
+        }),
+      );
+      return results;
+    }),
+
   getDividendInfo: protectedProcedure
     .input(z.object({ symbols: z.array(SymbolSchema).min(1).max(50) }))
     .query(async ({ input }) => {

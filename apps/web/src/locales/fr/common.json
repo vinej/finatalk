@@ -30,6 +30,7 @@
     "learnTa": "Apprendre l'AT",
     "learnInvestment": "Apprendre l'investissement",
     "strategies": "Stratégies",
+    "comparison": "Comparer",
     "research": "Recherche",
     "settings": "Paramètres"
   },
@@ -364,6 +365,26 @@
     "feature2": "Sécurisé dès la conception — 2FA, chiffrement et contrôles stricts",
     "feature3": "Vos données, vos règles — exportez ou supprimez à tout moment",
     "footer": "© Finatalk"
+  },
+  "comparison": {
+    "title": "Comparer des symboles",
+    "addSymbol": "Ajouter un symbole",
+    "removeSymbol": "Retirer",
+    "placeholder": "AAPL",
+    "max5": "Maximum 5 symboles",
+    "min2": "Ajoutez au moins 2 symboles pour comparer.",
+    "compare": "Comparer",
+    "normalized": "Performance normalisée à 100",
+    "metrics": "Métriques de comparaison",
+    "periodReturn": "Rendement de la période",
+    "volatility": "Volatilité (ann.)",
+    "rsi14": "RSI (14)",
+    "sma50": "MMS 50",
+    "sma200": "MMS 200",
+    "lastClose": "Dernière clôture",
+    "loading": "Chargement de la comparaison…",
+    "loadFailed": "Impossible de charger les données de comparaison.",
+    "noData": "Aucune donnée disponible pour un ou plusieurs symboles."
   },
   "language": "Langue",
   "theme": { "light": "Clair", "dark": "Sombre", "system": "Système" }

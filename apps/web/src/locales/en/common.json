@@ -30,6 +30,7 @@
     "learnTa": "Learn TA",
     "learnInvestment": "Learn Investment",
     "strategies": "Strategies",
+    "comparison": "Compare",
     "research": "Research",
     "settings": "Settings"
   },
@@ -364,6 +365,26 @@
     "feature2": "Secure by design — 2FA, encryption and strict data controls",
     "feature3": "Your data, your rules — export or delete any time",
     "footer": "© Finatalk"
+  },
+  "comparison": {
+    "title": "Compare symbols",
+    "addSymbol": "Add symbol",
+    "removeSymbol": "Remove",
+    "placeholder": "AAPL",
+    "max5": "Maximum 5 symbols",
+    "min2": "Add at least 2 symbols to compare.",
+    "compare": "Compare",
+    "normalized": "Performance normalized to 100",
+    "metrics": "Comparison metrics",
+    "periodReturn": "Period return",
+    "volatility": "Volatility (ann.)",
+    "rsi14": "RSI (14)",
+    "sma50": "SMA 50",
+    "sma200": "SMA 200",
+    "lastClose": "Last close",
+    "loading": "Loading comparison…",
+    "loadFailed": "Couldn't load comparison data.",
+    "noData": "No data available for one or more symbols."
   },
   "language": "Language",
   "theme": { "light": "Light", "dark": "Dark", "system": "System" }

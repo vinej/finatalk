@@ -24,6 +24,7 @@ import { Route as AuthDashboardResearchRouteImport } from './routes/_auth/dashbo
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
 import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth/dashboard_.learn-investment'
+import { Route as AuthDashboardComparisonRouteImport } from './routes/_auth/dashboard_.comparison'
 import { Route as AuthDashboardAnalysisRouteImport } from './routes/_auth/dashboard_.analysis'
 import { Route as AuthDashboardPortfoliosPortfolioIdRouteImport } from './routes/_auth/dashboard_.portfolios_.$portfolioId'
 
@@ -102,6 +103,11 @@ const AuthDashboardLearnInvestmentRoute =
     path: '/dashboard/learn-investment',
     getParentRoute: () => AuthRoute,
   } as any)
+const AuthDashboardComparisonRoute = AuthDashboardComparisonRouteImport.update({
+  id: '/dashboard_/comparison',
+  path: '/dashboard/comparison',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardAnalysisRoute = AuthDashboardAnalysisRouteImport.update({
   id: '/dashboard_/analysis',
   path: '/dashboard/analysis',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
+  '/dashboard/comparison': typeof AuthDashboardComparisonRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
+  '/dashboard/comparison': typeof AuthDashboardComparisonRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dashboard_/analysis': typeof AuthDashboardAnalysisRoute
+  '/_auth/dashboard_/comparison': typeof AuthDashboardComparisonRoute
   '/_auth/dashboard_/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/dashboard/analysis'
+    | '/dashboard/comparison'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
     | '/dashboard/portfolios'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/dashboard/analysis'
+    | '/dashboard/comparison'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
     | '/dashboard/portfolios'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_auth/dashboard'
     | '/_auth/dashboard_/analysis'
+    | '/_auth/dashboard_/comparison'
     | '/_auth/dashboard_/learn-investment'
     | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/portfolios'
@@ -345,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardLearnInvestmentRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/comparison': {
+      id: '/_auth/dashboard_/comparison'
+      path: '/dashboard/comparison'
+      fullPath: '/dashboard/comparison'
+      preLoaderRoute: typeof AuthDashboardComparisonRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/analysis': {
       id: '/_auth/dashboard_/analysis'
       path: '/dashboard/analysis'
@@ -365,6 +384,7 @@ declare module '@tanstack/react-router' {
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDashboardAnalysisRoute: typeof AuthDashboardAnalysisRoute
+  AuthDashboardComparisonRoute: typeof AuthDashboardComparisonRoute
   AuthDashboardLearnInvestmentRoute: typeof AuthDashboardLearnInvestmentRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
@@ -378,6 +398,7 @@ interface AuthRouteChildren {
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDashboardAnalysisRoute: AuthDashboardAnalysisRoute,
+  AuthDashboardComparisonRoute: AuthDashboardComparisonRoute,
   AuthDashboardLearnInvestmentRoute: AuthDashboardLearnInvestmentRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
