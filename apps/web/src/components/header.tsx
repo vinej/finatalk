@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
@@ -23,6 +24,7 @@ export function Header() {
         <Logo />
       </Link>
       <div className="flex items-center gap-1">
+        <NotificationBell />
         <LanguageSwitcher />
         <ThemeToggle />
         <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">

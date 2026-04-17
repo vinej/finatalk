@@ -57,6 +57,20 @@
       "when": 1776436142205,
       "tag": "0007_dapper_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776466777174,
+      "tag": "0008_tense_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776467296065,
+      "tag": "0009_nifty_warpath",
+      "breakpoints": true
     }
   ]
 }

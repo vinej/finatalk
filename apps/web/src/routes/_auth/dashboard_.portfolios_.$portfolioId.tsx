@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X, Check } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ChevronRight, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -79,8 +79,8 @@ function PortfolioDetailPage() {
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("marketValue");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("symbol");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [chatOpen, setChatOpen] = useState(false);
   const [editingHoldingId, setEditingHoldingId] = useState<string | null>(null);
   const [holdingDraft, setHoldingDraft] = useState({
@@ -448,7 +448,7 @@ function PortfolioDetailPage() {
   const p = portfolioQuery.data;
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted-fg)]">
         <Link to="/dashboard/portfolios" className="flex items-center gap-1 hover:text-[var(--color-fg)]">
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -575,6 +575,8 @@ function PortfolioDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <DividendSection symbols={[...new Set(holdings.map((h) => h.symbol.toUpperCase()))]} holdings={holdings} currency={currency} />
 
       <div>
         <Card>
@@ -1244,5 +1246,148 @@ function Th({
         {active && <span className="text-[10px]">{dir === "asc" ? "▲" : "▼"}</span>}
       </button>
     </th>
+  );
+}
+
+const DIVIDEND_COLLAPSED_KEY = "finatalk:dividend-collapsed";
+
+function loadDividendCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(DIVIDEND_COLLAPSED_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
+function saveDividendCollapsed(collapsed: boolean): void {
+  try {
+    window.localStorage.setItem(DIVIDEND_COLLAPSED_KEY, String(collapsed));
+  } catch { /* ignore */ }
+}
+
+function DividendSection({
+  symbols,
+  holdings,
+  currency,
+}: {
+  symbols: string[];
+  holdings: Array<{ symbol: string; quantity: number }>;
+  currency: string;
+}) {
+  const { t } = useTranslation();
+  const [collapsed, setCollapsed] = useState(loadDividendCollapsed);
+
+  function toggle() {
+    setCollapsed((v) => {
+      saveDividendCollapsed(!v);
+      return !v;
+    });
+  }
+
+  const dividendQuery = trpc.market.getDividendInfo.useQuery(
+    { symbols },
+    { enabled: symbols.length > 0 && !collapsed, staleTime: 300_000, retry: false },
+  );
+
+  const data = dividendQuery.data ?? [];
+  const withDividends = data
+    .filter((d) => d.dividendRate != null && d.dividendRate > 0)
+    .sort((a, b) => a.symbol.localeCompare(b.symbol));
+
+  if (symbols.length === 0) return null;
+  if (!collapsed && dividendQuery.isSuccess && withDividends.length === 0) return null;
+
+  const qtyBySymbol = new Map<string, number>();
+  for (const h of holdings) {
+    const sym = h.symbol.toUpperCase();
+    qtyBySymbol.set(sym, (qtyBySymbol.get(sym) ?? 0) + h.quantity);
+  }
+
+  const totalAnnual = withDividends.reduce((sum, d) => {
+    const qty = qtyBySymbol.get(d.symbol) ?? 0;
+    return sum + qty * (d.dividendRate ?? 0);
+  }, 0);
+
+  return (
+    <Card>
+      <CardHeader className="cursor-pointer select-none" onClick={toggle}>
+        <div className="flex items-center gap-2">
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+          )}
+          <CardTitle className="text-sm font-semibold">{t("dividend.title")}</CardTitle>
+        </div>
+      </CardHeader>
+      {!collapsed && (
+        <CardContent>
+          {dividendQuery.isPending ? (
+            <div className="flex items-center gap-2 py-4 text-xs text-[var(--color-muted-fg)]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {t("portfolio.loading")}
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 flex flex-wrap gap-4">
+                <div>
+                  <p className="text-xs text-[var(--color-muted-fg)]">{t("dividend.annualIncome")}</p>
+                  <p className="text-lg font-semibold tabular-nums text-[#10b981]">
+                    {formatCurrency(totalAnnual, currency)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--color-muted-fg)]">{t("dividend.monthlyEstimate")}</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {formatCurrency(totalAnnual / 12, currency)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-muted-fg)]">
+                      <th className="px-2 py-2 font-medium">{t("portfolio.symbol")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("dividend.yield")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("dividend.rate")}</th>
+                      <th className="px-2 py-2 font-medium">{t("dividend.exDate")}</th>
+                      <th className="px-2 py-2 font-medium">{t("dividend.payDate")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("dividend.annualEst")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {withDividends.map((d) => {
+                      const qty = qtyBySymbol.get(d.symbol) ?? 0;
+                      const annual = qty * (d.dividendRate ?? 0);
+                      return (
+                        <tr key={d.symbol} className="border-b border-[var(--color-border)]">
+                          <td className="px-2 py-2 font-medium">{d.symbol}</td>
+                          <td className="px-2 py-2 text-right tabular-nums">
+                            {d.dividendYield != null ? `${(d.dividendYield * 100).toFixed(2)}%` : "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right tabular-nums">
+                          {d.dividendRate != null ? `$${d.dividendRate.toFixed(2)}` : "—"}
+                        </td>
+                        <td className="px-2 py-2 text-xs text-[var(--color-muted-fg)]">
+                          {d.exDividendDate ?? "—"}
+                        </td>
+                        <td className="px-2 py-2 text-xs text-[var(--color-muted-fg)]">
+                          {d.dividendDate ?? "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right tabular-nums font-medium text-[#10b981]">
+                          {formatCurrency(annual, currency)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            </>
+          )}
+        </CardContent>
+      )}
+    </Card>
   );
 }

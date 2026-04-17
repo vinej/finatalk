@@ -1,37 +1,196 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Briefcase, LineChart, Loader2, Microscope, TrendingDown, TrendingUp } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
 });
 
+function formatCurrency(value: number, currency: string) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${currency} ${value.toFixed(2)}`;
+  }
+}
+
+function formatPct(value: number | null | undefined) {
+  if (value == null || !Number.isFinite(value)) return "—";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}%`;
+}
+
 function DashboardPage() {
   const { t } = useTranslation();
-  const { data } = trpc.user.me.useQuery();
-  const name = data?.name ?? "";
-  const verified = data?.emailVerified ?? false;
+  const { data: user } = trpc.user.me.useQuery();
+  const portfoliosQuery = trpc.portfolio.listPortfolios.useQuery();
+  const portfolios = portfoliosQuery.data ?? [];
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("dashboard.welcome", { name })}</CardTitle>
-          <CardDescription>{t("dashboard.subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <span
-            className={
-              verified
-                ? "inline-flex items-center rounded-full bg-[var(--color-accent)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-fg)]"
-                : "inline-flex items-center rounded-full bg-[var(--color-destructive)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--color-destructive)]"
-            }
-          >
-            {verified ? t("dashboard.verifiedBadge") : t("dashboard.unverifiedBadge")}
-          </span>
-        </CardContent>
-      </Card>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div>
+        <h1 className="text-lg font-semibold">{t("dashboard.welcome", { name: user?.name ?? "" })}</h1>
+        <p className="text-sm text-[var(--color-muted-fg)]">{t("dashboard.subtitle")}</p>
+      </div>
+
+      {portfoliosQuery.isPending ? (
+        <div className="flex items-center gap-2 py-8 text-sm text-[var(--color-muted-fg)]">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {t("portfolio.loading")}
+        </div>
+      ) : portfolios.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-sm text-[var(--color-muted-fg)]">{t("dashboard.noPortfolios")}</p>
+            <Link
+              to="/dashboard/portfolios"
+              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary)] hover:underline"
+            >
+              <Briefcase className="h-4 w-4" />
+              {t("dashboard.createFirst")}
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {portfolios.map((p) => (
+            <PortfolioSummaryCard key={p.id} portfolioId={p.id} title={p.title} currency={p.currency} holdingCount={p.holdingCount} />
+          ))}
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <QuickLink to="/dashboard/analysis" icon={LineChart} label={t("dashboard.goAnalysis")} />
+        <QuickLink to="/dashboard/research" icon={Microscope} label={t("dashboard.goResearch")} />
+        <QuickLink to="/dashboard/portfolios" icon={Briefcase} label={t("dashboard.goPortfolios")} />
+      </div>
     </div>
+  );
+}
+
+function PortfolioSummaryCard({
+  portfolioId,
+  title,
+  currency,
+  holdingCount,
+}: {
+  portfolioId: string;
+  title: string;
+  currency: string;
+  holdingCount: number;
+}) {
+  const { t } = useTranslation();
+  const valuationQuery = trpc.portfolio.getValuation.useQuery(
+    { id: portfolioId },
+    { staleTime: 60_000, retry: false },
+  );
+
+  const totals = valuationQuery.data?.totals;
+  const rows = valuationQuery.data?.rows ?? [];
+
+  const segments: DonutSegment[] = useMemo(() => {
+    const valued = rows.filter((r) => r.marketValue != null && r.marketValue > 0);
+    return valued.map((r, i) => ({
+      label: r.holding.symbol,
+      value: r.marketValue!,
+      color: colorFor(r.holding.symbol, i),
+    }));
+  }, [rows]);
+
+  const topMovers = useMemo(() => {
+    const withPl = rows
+      .filter((r) => r.unrealizedPct != null)
+      .map((r) => ({ symbol: r.holding.symbol, pct: r.unrealizedPct! }));
+    withPl.sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+    return withPl.slice(0, 3);
+  }, [rows]);
+
+  const plTone = totals?.unrealizedAbs == null ? "neutral" : totals.unrealizedAbs >= 0 ? "pos" : "neg";
+
+  return (
+    <Link
+      to="/dashboard/portfolios/$portfolioId"
+      params={{ portfolioId }}
+      className="block rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-4 transition-colors hover:bg-[var(--color-accent)]/40"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <span className="text-xs text-[var(--color-muted-fg)]">
+            {t("portfolio.holdingsCount", { count: holdingCount })} · {currency}
+          </span>
+        </div>
+        {valuationQuery.isPending && <Loader2 className="h-4 w-4 animate-spin text-[var(--color-muted-fg)]" />}
+      </div>
+
+      {totals && (
+        <div className="mt-3 flex items-start gap-4">
+          <div className="flex-1 space-y-2">
+            <div>
+              <p className="text-xs text-[var(--color-muted-fg)]">{t("dashboard.totalValue")}</p>
+              <p className="text-lg font-semibold tabular-nums">{formatCurrency(totals.marketValue, currency)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--color-muted-fg)]">{t("dashboard.unrealizedPl")}</p>
+              <p
+                className={
+                  "text-sm font-medium tabular-nums " +
+                  (plTone === "pos" ? "text-[#10b981]" : plTone === "neg" ? "text-[#ef4444]" : "")
+                }
+              >
+                {formatCurrency(totals.unrealizedAbs, currency)} ({formatPct(totals.unrealizedPct)})
+              </p>
+            </div>
+
+            {topMovers.length > 0 && (
+              <div>
+                <p className="text-xs text-[var(--color-muted-fg)]">{t("dashboard.topMovers")}</p>
+                <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                  {topMovers.map((m) => (
+                    <span key={m.symbol} className="flex items-center gap-0.5 text-xs tabular-nums">
+                      <span className="font-medium">{m.symbol}</span>
+                      {m.pct >= 0 ? (
+                        <TrendingUp className="h-3 w-3 text-[#10b981]" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 text-[#ef4444]" />
+                      )}
+                      <span className={m.pct >= 0 ? "text-[#10b981]" : "text-[#ef4444]"}>
+                        {formatPct(m.pct)}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {segments.length > 0 && (
+            <div className="shrink-0">
+              <AllocationDonut segments={segments} size={100} thickness={14} />
+            </div>
+          )}
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function QuickLink({ to, icon: Icon, label }: { to: string; icon: typeof LineChart; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-sm font-medium text-[var(--color-muted-fg)] transition-colors hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)]"
+    >
+      <Icon className="h-5 w-5" />
+      {label}
+    </Link>
   );
 }

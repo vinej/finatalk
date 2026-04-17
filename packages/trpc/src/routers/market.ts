@@ -529,4 +529,41 @@ export const marketRouter = createTRPCRouter({
       indicators: input.indicators,
       convertTo: input.convertTo ?? null,
     })),
+
+  getDividendInfo: protectedProcedure
+    .input(z.object({ symbols: z.array(SymbolSchema).min(1).max(50) }))
+    .query(async ({ input }) => {
+      const results = await Promise.all(
+        input.symbols.map(async (sym) => {
+          const symbol = sym.toUpperCase();
+          try {
+            const summary = await yf.quoteSummary(symbol, {
+              modules: ["summaryDetail", "calendarEvents"],
+            });
+            const sd = summary.summaryDetail;
+            const ce = summary.calendarEvents;
+            const rate = sd?.dividendRate ?? sd?.trailingAnnualDividendRate ?? null;
+            const yld = sd?.dividendYield ?? sd?.trailingAnnualDividendYield ?? sd?.yield ?? null;
+            return {
+              symbol,
+              dividendRate: rate ?? null,
+              dividendYield: yld ?? null,
+              exDividendDate: sd?.exDividendDate?.toISOString().slice(0, 10) ?? null,
+              dividendDate: ce?.dividendDate?.toISOString().slice(0, 10) ?? null,
+              error: null as string | null,
+            };
+          } catch {
+            return {
+              symbol,
+              dividendRate: null,
+              dividendYield: null,
+              exDividendDate: null,
+              dividendDate: null,
+              error: "fetch failed" as string | null,
+            };
+          }
+        }),
+      );
+      return results;
+    }),
 });

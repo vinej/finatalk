@@ -5,6 +5,8 @@ import { analysisRouter } from "./routers/analysis";
 import { aiRouter } from "./routers/ai";
 import { portfolioRouter } from "./routers/portfolio";
 import { researchRouter } from "./routers/research";
+import { notificationRouter } from "./routers/notification";
+import { watchlistRouter } from "./routers/watchlist";
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -13,6 +15,8 @@ export const appRouter = createTRPCRouter({
   ai: aiRouter,
   portfolio: portfolioRouter,
   research: researchRouter,
+  notification: notificationRouter,
+  watchlist: watchlistRouter,
 });
 
 export type AppRouter = typeof appRouter;
