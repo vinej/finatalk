@@ -43,6 +43,7 @@ function serializeHolding(row: Holding) {
     costBasis: Number(row.costBasis),
     purchaseDate: row.purchaseDate,
     analysisId: row.analysisId ?? null,
+    confidence: (row.confidence as "high" | "medium" | "low") ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -361,6 +362,29 @@ export const portfolioRouter = createTRPCRouter({
         .set({ updatedAt: new Date() })
         .where(eq(portfolio.id, p.id));
       return { holdingId: input.holdingId, analysisId: input.analysisId };
+    }),
+
+  updateHoldingConfidence: protectedProcedure
+    .input(z.object({
+      portfolioId: z.string(),
+      symbol: z.string().trim().min(1).max(20),
+      confidence: z.enum(["high", "medium", "low"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const p = await findOwnedPortfolio(ctx, input.portfolioId);
+      const sym = input.symbol.toUpperCase();
+      const rows = await ctx.db.query.holding.findMany({
+        where: and(eq(holding.portfolioId, p.id)),
+      });
+      const matched = rows.filter((r) => r.symbol.toUpperCase() === sym);
+      if (matched.length === 0) throw new TRPCError({ code: "NOT_FOUND" });
+      for (const h of matched) {
+        await ctx.db
+          .update(holding)
+          .set({ confidence: input.confidence, updatedAt: new Date() })
+          .where(eq(holding.id, h.id));
+      }
+      return { symbol: sym, confidence: input.confidence };
     }),
 
   generateAnalysisForSymbol: protectedProcedure

@@ -50,6 +50,13 @@
       "when": 1776427515709,
       "tag": "0006_happy_the_professor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776436142205,
+      "tag": "0007_dapper_catseye",
+      "breakpoints": true
     }
   ]
 }

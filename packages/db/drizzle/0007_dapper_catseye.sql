@@ -1,0 +1,1 @@
+ALTER TABLE "finatalk_holding" ADD COLUMN "confidence" text;

@@ -28,6 +28,7 @@
     "portfolios": "Portfolios",
     "learnTa": "Learn TA",
     "learnInvestment": "Learn Investment",
+    "strategies": "Strategies",
     "research": "Research",
     "settings": "Settings"
   },
@@ -51,6 +52,17 @@
     "whenToBuy": "When to buy",
     "whyBuy": "Why buy it",
     "profitsQuebec": "How profits are paid (Québec / Canada)",
+    "furtherReading": "Further reading",
+    "generalResources": "General resources"
+  },
+  "learnStrategies": {
+    "title": "Investment strategies",
+    "intro": "A reference guide to well-known investment strategies for buying, holding, and selling stocks, bonds, and funds. Each section explains how the strategy works, when to use it, and its strengths and weaknesses — with a Canadian/Quebec perspective where applicable.",
+    "disclaimer": "Educational content — not investment, tax, or legal advice. Past performance of any strategy does not guarantee future results. Consult a qualified advisor for your personal situation.",
+    "tableOfContents": "Strategies",
+    "description": "How it works",
+    "whenToUse": "When to use it",
+    "prosAndCons": "Pros and cons",
     "furtherReading": "Further reading",
     "generalResources": "General resources"
   },
@@ -154,7 +166,8 @@
     "chatThinking": "Thinking…",
     "chatFailed": "Couldn't reach the advisor.",
     "collapse": "Collapse",
-    "expand": "Expand"
+    "expand": "Expand",
+    "refreshConfidence": "Refresh AI confidence"
   },
   "portfolio": {
     "newPortfolio": "New portfolio",
@@ -247,7 +260,10 @@
     "noDescription": "No description yet.",
     "updateSummary": "Update summary with AI",
     "summaryUpdated": "Summary updated.",
-    "summaryFailed": "Couldn't generate summary."
+    "summaryFailed": "Couldn't generate summary.",
+    "refreshConfidence": "Refresh AI confidence",
+    "refreshAllConfidence": "Refresh all confidence levels",
+    "confidence": "Confidence"
   },
   "ai": {
     "disclaimer": "AI-generated educational content, not investment advice."

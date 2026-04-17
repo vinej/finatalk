@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Briefcase, GraduationCap, Home, LineChart, Microscope, Settings } from "lucide-react";
+import { BookOpen, Briefcase, GraduationCap, Home, Lightbulb, LineChart, Microscope, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useLastPortfolioId } from "@/lib/portfolio-persistence";
@@ -22,6 +22,7 @@ export function Sidebar() {
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
     { key: "learn-ta", to: "/dashboard/learn-ta", label: t("nav.learnTa"), icon: BookOpen },
     { key: "learn-investment", to: "/dashboard/learn-investment", label: t("nav.learnInvestment"), icon: GraduationCap },
+    { key: "strategies", to: "/dashboard/strategies", label: t("nav.strategies"), icon: Lightbulb },
     { key: "settings", to: "/dashboard/settings", label: t("nav.settings"), icon: Settings },
   ] as const;
 

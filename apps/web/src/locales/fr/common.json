@@ -28,6 +28,7 @@
     "portfolios": "Portefeuilles",
     "learnTa": "Apprendre l'AT",
     "learnInvestment": "Apprendre l'investissement",
+    "strategies": "Stratégies",
     "research": "Recherche",
     "settings": "Paramètres"
   },
@@ -51,6 +52,17 @@
     "whenToBuy": "Quand l'acheter",
     "whyBuy": "Pourquoi l'acheter",
     "profitsQuebec": "Comment les profits sont versés (Québec / Canada)",
+    "furtherReading": "Pour aller plus loin",
+    "generalResources": "Ressources générales"
+  },
+  "learnStrategies": {
+    "title": "Stratégies d'investissement",
+    "intro": "Un guide de référence des stratégies d'investissement reconnues pour l'achat, la détention et la vente d'actions, d'obligations et de fonds. Chaque section explique le fonctionnement de la stratégie, quand l'utiliser et ses forces et faiblesses — avec une perspective canadienne et québécoise lorsque pertinent.",
+    "disclaimer": "Contenu éducatif — ne constitue pas un conseil en placement, fiscal ou juridique. Les rendements passés d'une stratégie ne garantissent pas les résultats futurs. Consultez un professionnel qualifié pour votre situation personnelle.",
+    "tableOfContents": "Stratégies",
+    "description": "Comment ça fonctionne",
+    "whenToUse": "Quand l'utiliser",
+    "prosAndCons": "Avantages et inconvénients",
     "furtherReading": "Pour aller plus loin",
     "generalResources": "Ressources générales"
   },
@@ -154,7 +166,8 @@
     "chatThinking": "Réflexion…",
     "chatFailed": "Impossible de joindre le conseiller.",
     "collapse": "Réduire",
-    "expand": "Développer"
+    "expand": "Développer",
+    "refreshConfidence": "Actualiser la confiance IA"
   },
   "portfolio": {
     "newPortfolio": "Nouveau portefeuille",
@@ -247,7 +260,10 @@
     "noDescription": "Aucune description pour l'instant.",
     "updateSummary": "Mettre à jour avec l'IA",
     "summaryUpdated": "Résumé mis à jour.",
-    "summaryFailed": "Échec de la génération du résumé."
+    "summaryFailed": "Échec de la génération du résumé.",
+    "refreshConfidence": "Actualiser la confiance IA",
+    "refreshAllConfidence": "Actualiser tous les niveaux de confiance",
+    "confidence": "Confiance"
   },
   "ai": {
     "disclaimer": "Contenu éducatif généré par IA, ne constitue pas un conseil en investissement."

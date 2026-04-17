@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { IndicatorLibrary } from "@/components/analysis/indicator-library";
 import { IndicatorList } from "@/components/analysis/indicator-list";
 import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/analysis/open-analysis-action";
 import { SaveAnalysisAction } from "@/components/analysis/save-analysis-action";
+import { ConfidenceBadge } from "@/components/confidence-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,17 @@ function AnalysisPage() {
   const [controlsCollapsed, setControlsCollapsed] = useState<boolean>(persisted?.controlsCollapsed ?? false);
   const [indicatorsCollapsed, setIndicatorsCollapsed] = useState<boolean>(persisted?.indicatorsCollapsed ?? false);
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
+  const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
+
+  const confidenceMutation = trpc.research.getConfidence.useMutation({
+    onSuccess: (data) => setConfidence(data.confidence),
+    onError: (e) => toast.error(e.message),
+  });
+
+  function refreshConfidence() {
+    if (!submittedSymbol) return;
+    confidenceMutation.mutate({ symbol: submittedSymbol, language: i18n.language });
+  }
 
   useEffect(() => {
     saveAnalysisState({
@@ -252,6 +264,7 @@ function AnalysisPage() {
     setRange(data.range as (typeof RANGES)[number]);
     setInterval(data.interval as (typeof INTERVALS)[number]);
     setConvertToCad(data.convertTo === "CAD");
+    setConfidence(null);
   }
 
   function newAnalysis() {
@@ -266,6 +279,7 @@ function AnalysisPage() {
     setInterval("1d");
     setConvertToCad(false);
     setAssetTypeFilter("all");
+    setConfidence(null);
   }
 
   function onSymbolChange(next: string) {
@@ -304,9 +318,21 @@ function AnalysisPage() {
               {loadedAnalysisTitle && (
                 <span className="ml-2 text-sm font-normal text-[var(--color-muted-fg)]">— {loadedAnalysisTitle}</span>
               )}
+              {confidence && (
+                <ConfidenceBadge level={confidence} className="ml-2 align-middle" />
+              )}
             </CardTitle>
           </button>
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={refreshConfidence}
+              disabled={confidenceMutation.isPending || !submittedSymbol}
+              title={t("analysis.refreshConfidence")}
+              className="rounded p-1.5 text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)] disabled:opacity-50"
+            >
+              <RefreshCw className={"h-4 w-4" + (confidenceMutation.isPending ? " animate-spin" : "")} aria-hidden />
+            </button>
             <Button type="button" size="sm" variant="outline" onClick={newAnalysis}>
               {t("analysis.newAnalysis")}
             </Button>

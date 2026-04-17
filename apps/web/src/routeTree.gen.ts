@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
+import { Route as AuthDashboardStrategiesRouteImport } from './routes/_auth/dashboard_.strategies'
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
 import { Route as AuthDashboardResearchRouteImport } from './routes/_auth/dashboard_.research'
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
@@ -62,6 +63,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthDashboardStrategiesRoute = AuthDashboardStrategiesRouteImport.update({
+  id: '/dashboard_/strategies',
+  path: '/dashboard/strategies',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthDashboardSettingsRoute = AuthDashboardSettingsRouteImport.update({
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
+  '/dashboard/strategies': typeof AuthDashboardStrategiesRoute
   '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 export interface FileRoutesByTo {
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
+  '/dashboard/strategies': typeof AuthDashboardStrategiesRoute
   '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 export interface FileRoutesById {
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
   '/_auth/dashboard_/research': typeof AuthDashboardResearchRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
+  '/_auth/dashboard_/strategies': typeof AuthDashboardStrategiesRoute
   '/_auth/dashboard_/portfolios_/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 export interface FileRouteTypes {
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/dashboard/portfolios'
     | '/dashboard/research'
     | '/dashboard/settings'
+    | '/dashboard/strategies'
     | '/dashboard/portfolios/$portfolioId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/dashboard/portfolios'
     | '/dashboard/research'
     | '/dashboard/settings'
+    | '/dashboard/strategies'
     | '/dashboard/portfolios/$portfolioId'
   id:
     | '__root__'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/portfolios'
     | '/_auth/dashboard_/research'
     | '/_auth/dashboard_/settings'
+    | '/_auth/dashboard_/strategies'
     | '/_auth/dashboard_/portfolios_/$portfolioId'
   fileRoutesById: FileRoutesById
 }
@@ -272,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/strategies': {
+      id: '/_auth/dashboard_/strategies'
+      path: '/dashboard/strategies'
+      fullPath: '/dashboard/strategies'
+      preLoaderRoute: typeof AuthDashboardStrategiesRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/settings': {
       id: '/_auth/dashboard_/settings'
       path: '/dashboard/settings'
@@ -332,6 +351,7 @@ interface AuthRouteChildren {
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
   AuthDashboardResearchRoute: typeof AuthDashboardResearchRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
+  AuthDashboardStrategiesRoute: typeof AuthDashboardStrategiesRoute
   AuthDashboardPortfoliosPortfolioIdRoute: typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
 
@@ -343,6 +363,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
   AuthDashboardResearchRoute: AuthDashboardResearchRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
+  AuthDashboardStrategiesRoute: AuthDashboardStrategiesRoute,
   AuthDashboardPortfoliosPortfolioIdRoute:
     AuthDashboardPortfoliosPortfolioIdRoute,
 }

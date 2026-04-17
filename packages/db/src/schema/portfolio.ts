@@ -31,6 +31,7 @@ export const holding = createTable(
     costBasis: numeric("cost_basis", { precision: 24, scale: 8 }).notNull(),
     purchaseDate: date("purchase_date").notNull(),
     analysisId: text("analysis_id").references(() => analysis.id, { onDelete: "set null" }),
+    confidence: text("confidence"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

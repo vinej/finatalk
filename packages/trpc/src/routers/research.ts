@@ -38,4 +38,32 @@ export const researchRouter = createTRPCRouter({
         ...(input.language ? { language: input.language } : {}),
       });
     }),
+
+  getConfidence: protectedProcedure
+    .input(
+      z.object({
+        symbol: z.string().trim().min(1).max(20),
+        language: z.string().min(2).max(10).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const fn = ctx.services.chatWithResearch;
+      if (!fn) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "AI research is not configured on this server.",
+        });
+      }
+      const result = await fn({
+        messages: [
+          {
+            role: "user",
+            content: `Give a brief overall investment confidence assessment for ${input.symbol}. Consider recent SEC filings, financial health, and market position. Keep your answer to 2-3 sentences.`,
+          },
+        ],
+        context: { symbol: input.symbol },
+        ...(input.language ? { language: input.language } : {}),
+      });
+      return { symbol: input.symbol, confidence: result.confidence };
+    }),
 });

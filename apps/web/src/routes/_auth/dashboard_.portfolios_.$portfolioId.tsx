@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, Replace, Sparkles, Trash2, X, Check } from "lucide-react";
+import { ArrowLeft, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X, Check } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portf
 import { GenerateAnalysisDialog } from "@/components/portfolio/generate-analysis-dialog";
 import { PortfolioChatDrawer } from "@/components/portfolio/portfolio-chat-drawer";
 import { PortfolioPerformanceChart } from "@/components/portfolio/portfolio-performance-chart";
+import { ConfidenceBadge } from "@/components/confidence-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
@@ -54,7 +55,7 @@ function formatQty(q: number) {
 
 function PortfolioDetailPage() {
   const { portfolioId } = Route.useParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const utils = trpc.useUtils();
 
@@ -104,6 +105,55 @@ function PortfolioDetailPage() {
     symbol: string;
     analysisId: string;
   } | null>(null);
+
+  const [confidenceMap, setConfidenceMap] = useState<Map<string, "high" | "medium" | "low">>(new Map());
+  const [refreshingConfidence, setRefreshingConfidence] = useState(false);
+  const [confidenceProgress, setConfidenceProgress] = useState("");
+  const confidenceAbortRef = useRef(false);
+  const confidenceInitRef = useRef(false);
+
+  const confidenceMutation = trpc.research.getConfidence.useMutation();
+  const saveConfidence = trpc.portfolio.updateHoldingConfidence.useMutation();
+
+  async function refreshAllConfidence() {
+    const symbols = [...new Set(holdings.map((h) => h.symbol.toUpperCase()))];
+    if (symbols.length === 0) return;
+    const total = symbols.length;
+    const delayMs = 60_000;
+    setRefreshingConfidence(true);
+    confidenceAbortRef.current = false;
+    for (let i = 0; i < total; i++) {
+      if (confidenceAbortRef.current) break;
+      const remaining = (total - i - 1) * 60;
+      setConfidenceProgress(
+        `${i + 1}/${total}` + (remaining > 0 ? ` · ~${Math.ceil(remaining / 60)} min` : ""),
+      );
+      try {
+        const result = await confidenceMutation.mutateAsync({ symbol: symbols[i], language: i18n.language });
+        setConfidenceMap((prev) => {
+          const next = new Map(prev);
+          next.set(result.symbol.toUpperCase(), result.confidence);
+          return next;
+        });
+        await saveConfidence.mutateAsync({
+          portfolioId,
+          symbol: result.symbol,
+          confidence: result.confidence,
+        });
+      } catch {
+        // continue with next symbol
+      }
+      if (i < total - 1 && !confidenceAbortRef.current) {
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+    setRefreshingConfidence(false);
+    setConfidenceProgress("");
+  }
+
+  function cancelConfidenceRefresh() {
+    confidenceAbortRef.current = true;
+  }
 
   const analysesQuery = trpc.analysis.listAnalyses.useQuery(
     linking ? { symbol: linking.symbol } : undefined,
@@ -186,6 +236,16 @@ function PortfolioDetailPage() {
   const holdings = portfolioQuery.data?.holdings ?? [];
   const currency = portfolioQuery.data?.currency ?? "USD";
   const totals = valuationQuery.data?.totals;
+
+  useEffect(() => {
+    if (confidenceInitRef.current || holdings.length === 0) return;
+    confidenceInitRef.current = true;
+    const m = new Map<string, "high" | "medium" | "low">();
+    for (const h of holdings) {
+      if (h.confidence) m.set(h.symbol.toUpperCase(), h.confidence);
+    }
+    if (m.size > 0) setConfidenceMap(m);
+  }, [holdings]);
 
   const analysisTitleByHolding = useMemo(() => {
     const m = new Map<string, string | null>();
@@ -518,8 +578,36 @@ function PortfolioDetailPage() {
 
       <div>
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold">{t("portfolio.holdings")}</CardTitle>
+            <div className="flex items-center gap-2">
+              {confidenceProgress && (
+                <span className="text-xs text-[var(--color-muted-fg)]">{confidenceProgress}</span>
+              )}
+              {refreshingConfidence ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin text-[var(--color-muted-fg)]" aria-hidden />
+                  <button
+                    type="button"
+                    onClick={cancelConfidenceRefresh}
+                    title={t("portfolio.cancel")}
+                    className="rounded p-1.5 text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)]"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={refreshAllConfidence}
+                  disabled={holdings.length === 0}
+                  title={t("portfolio.refreshAllConfidence")}
+                  className="rounded p-1.5 text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)] disabled:opacity-50"
+                >
+                  <RefreshCw className="h-4 w-4" aria-hidden />
+                </button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -549,13 +637,16 @@ function PortfolioDetailPage() {
                   <th className="px-2 py-2 text-xs font-medium uppercase text-[var(--color-muted-fg)]">
                     {t("portfolio.analysis")}
                   </th>
+                  <th className="px-2 py-2 text-xs font-medium uppercase text-[var(--color-muted-fg)]">
+                    {t("portfolio.confidence")}
+                  </th>
                   <th className="px-2 py-2" />
                 </tr>
               </thead>
               <tbody>
                 {sortedRows.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-2 py-6 text-center text-xs text-[var(--color-muted-fg)]">
+                    <td colSpan={10} className="px-2 py-6 text-center text-xs text-[var(--color-muted-fg)]">
                       {t("portfolio.noHoldings")}
                     </td>
                   </tr>
@@ -603,7 +694,7 @@ function PortfolioDetailPage() {
                               className="h-8 w-36"
                             />
                           </td>
-                          <td className="px-2 py-1.5" colSpan={5}>
+                          <td className="px-2 py-1.5" colSpan={6}>
                             <div className="flex items-center gap-1">
                               <Button size="sm" onClick={submitEditHolding} disabled={updateHolding.isPending}>
                                 <Check className="mr-1 h-3.5 w-3.5" />
@@ -680,6 +771,13 @@ function PortfolioDetailPage() {
                             }
                           />
                         </td>
+                        <td className="px-2 py-2">
+                          {confidenceMap.get(h.symbol.toUpperCase()) ? (
+                            <ConfidenceBadge level={confidenceMap.get(h.symbol.toUpperCase())!} />
+                          ) : (
+                            <span className="text-xs text-[var(--color-muted-fg)]">—</span>
+                          )}
+                        </td>
                         <td className="px-2 py-2 text-right">
                           <div className="flex justify-end gap-1">
                             {h.analysisId && (
@@ -729,7 +827,7 @@ function PortfolioDetailPage() {
                 )}
 
                 <tr className="bg-[var(--color-accent)]/40">
-                  <td colSpan={9} className="px-2 py-2">
+                  <td colSpan={10} className="px-2 py-2">
                     <form onSubmit={submitAdd} className="flex flex-wrap items-end gap-2">
                       <div className="flex flex-col gap-1">
                         <Label htmlFor="new-asset-type" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
@@ -1081,11 +1179,10 @@ function AnalysisCell({
       <Link
         to="/dashboard/analysis"
         search={{ analysisId, symbol }}
-        className="inline-flex items-center gap-1 rounded border border-[var(--color-border)] bg-[var(--color-accent)]/50 px-2 py-1 text-xs font-medium hover:bg-[var(--color-accent)]"
-        title={openLabel}
+        className="inline-flex items-center justify-center rounded border border-[var(--color-border)] bg-[var(--color-accent)]/50 p-1.5 hover:bg-[var(--color-accent)]"
+        title={analysisTitle ?? openLabel}
       >
-        <LineChart className="h-3 w-3" />
-        <span className="max-w-[160px] truncate">{analysisTitle ?? analysisId}</span>
+        <LineChart className="h-3.5 w-3.5" />
       </Link>
       <Button
         size="sm"
