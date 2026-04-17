@@ -38,7 +38,7 @@
     "indicators": "Indicators",
     "whenToUse": "When to use it",
     "howToUse": "How to use it",
-    "howToAnalyse": "How to analyse it",
+    "howToAnalyze": "How to analyze it",
     "furtherReading": "Further reading",
     "generalResources": "General resources"
   },
@@ -148,7 +148,7 @@
     "chatTitle": "Chart advisor",
     "chatShortcutHint": "Open chart advisor (Ctrl/Cmd+K)",
     "chatEmpty": "Ask the advisor anything about this chart.",
-    "chatExample": "e.g. \"Given my active indicators, what else would help me analyse this stock?\"",
+    "chatExample": "e.g. \"Given my active indicators, what else would help me analyze this stock?\"",
     "chatPlaceholder": "Ask about this chart…",
     "chatSend": "Send",
     "chatThinking": "Thinking…",

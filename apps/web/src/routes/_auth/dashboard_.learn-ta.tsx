@@ -77,7 +77,7 @@ function IndicatorSection({ kind, lang }: { kind: IndicatorKind; lang: Lang }) {
       <CardContent className="flex flex-col gap-4">
         <Block label={t("learnTa.whenToUse")} text={entry.when} />
         <Block label={t("learnTa.howToUse")} text={entry.how} />
-        <Block label={t("learnTa.howToAnalyse")} text={entry.analyse} />
+        <Block label={t("learnTa.howToAnalyze")} text={entry.analyse} />
         <div>
           <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
             {t("learnTa.furtherReading")}
