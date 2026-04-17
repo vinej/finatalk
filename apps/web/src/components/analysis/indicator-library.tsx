@@ -15,7 +15,7 @@ export function IndicatorLibrary({ onAdd }: { onAdd: (item: ActiveIndicator) => 
   const lang = pickLang(i18n.language);
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-[var(--color-muted-fg)]">{t("markets.add")}</span>
+      <span className="text-xs text-[var(--color-muted-fg)]">{t("analysis.add")}</span>
       {KINDS.map((kind: IndicatorKind) => (
         <Button
           key={kind}

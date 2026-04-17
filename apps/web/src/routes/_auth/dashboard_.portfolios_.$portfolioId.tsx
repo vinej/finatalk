@@ -733,7 +733,7 @@ function PortfolioDetailPage() {
                     <form onSubmit={submitAdd} className="flex flex-wrap items-end gap-2">
                       <div className="flex flex-col gap-1">
                         <Label htmlFor="new-asset-type" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
-                          {t("markets.assetType")}
+                          {t("analysis.assetType")}
                         </Label>
                         <select
                           id="new-asset-type"
@@ -741,9 +741,9 @@ function PortfolioDetailPage() {
                           onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf")}
                           className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
                         >
-                          <option value="all">{t("markets.assetAll")}</option>
-                          <option value="stock">{t("markets.assetStock")}</option>
-                          <option value="etf">{t("markets.assetEtf")}</option>
+                          <option value="all">{t("analysis.assetAll")}</option>
+                          <option value="stock">{t("analysis.assetStock")}</option>
+                          <option value="etf">{t("analysis.assetEtf")}</option>
                         </select>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -759,7 +759,7 @@ function PortfolioDetailPage() {
                           className="h-8 w-28 uppercase"
                           placeholder={
                             symbolsQuery.isPending
-                              ? t("markets.loadingSymbols")
+                              ? t("analysis.loadingSymbols")
                               : "AAPL"
                           }
                           maxLength={20}
@@ -908,7 +908,7 @@ function PortfolioDetailPage() {
                             <p className="truncate text-xs text-[var(--color-muted-fg)]">{a.description}</p>
                           )}
                           <p className="text-[10px] text-[var(--color-muted-fg)]">
-                            {t("markets.indicatorCount", { count: a.indicatorCount })}
+                            {t("analysis.indicatorCount", { count: a.indicatorCount })}
                           </p>
                         </div>
                         <Button
@@ -1079,7 +1079,7 @@ function AnalysisCell({
   return (
     <div className="flex items-center gap-1">
       <Link
-        to="/dashboard/markets"
+        to="/dashboard/analysis"
         search={{ analysisId, symbol }}
         className="inline-flex items-center gap-1 rounded border border-[var(--color-border)] bg-[var(--color-accent)]/50 px-2 py-1 text-xs font-medium hover:bg-[var(--color-accent)]"
         title={openLabel}

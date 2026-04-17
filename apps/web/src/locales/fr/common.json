@@ -24,7 +24,7 @@
   },
   "nav": {
     "home": "Accueil",
-    "markets": "Analyse",
+    "analysis": "Analyse",
     "portfolios": "Portefeuilles",
     "learnTa": "Apprendre l'AT",
     "learnInvestment": "Apprendre l'investissement",
@@ -54,7 +54,7 @@
     "furtherReading": "Pour aller plus loin",
     "generalResources": "Ressources générales"
   },
-  "markets": {
+  "analysis": {
     "title": "Analyse technique",
     "symbol": "Symbole",
     "assetType": "Type",
@@ -89,6 +89,8 @@
     "save": "Enregistrer",
     "saving": "Enregistrement…",
     "delete": "Supprimer",
+    "rename": "Renommer",
+    "analysisRenamed": "Analyse renommée.",
     "period": "Période",
     "fast": "Rapide",
     "slow": "Lente",

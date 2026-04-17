@@ -97,7 +97,7 @@ export function GenerateAnalysisDialog({ open, symbol, onClose, onLinked }: Prop
     } catch (e) {
       const err = e as { data?: { code?: string }; message?: string };
       if (err.data?.code === "CONFLICT") {
-        if (window.confirm(t("markets.analysisOverwriteConfirm", { title: tt }))) {
+        if (window.confirm(t("analysis.analysisOverwriteConfirm", { title: tt }))) {
           await save(true);
         }
         return;
@@ -155,7 +155,7 @@ export function GenerateAnalysisDialog({ open, symbol, onClose, onLinked }: Prop
             </div>
             <div className="flex flex-col gap-1">
               <p className="text-xs uppercase text-[var(--color-muted-fg)]">
-                {t("markets.indicators")}
+                {t("analysis.indicators")}
               </p>
               <ul className="flex flex-col divide-y divide-[var(--color-border)] rounded border border-[var(--color-border)]">
                 {indicators.map((ind) => (
@@ -165,7 +165,7 @@ export function GenerateAnalysisDialog({ open, symbol, onClose, onLinked }: Prop
                       size="sm"
                       variant="ghost"
                       onClick={() => removeIndicator(ind.localId)}
-                      aria-label={t("markets.remove")}
+                      aria-label={t("analysis.remove")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -204,10 +204,10 @@ export function GenerateAnalysisDialog({ open, symbol, onClose, onLinked }: Prop
             {previewQuery.isLoading ? (
               <div className="flex flex-1 items-center justify-center text-xs text-[var(--color-muted-fg)]">
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                {t("markets.loading")}
+                {t("analysis.loading")}
               </div>
             ) : previewQuery.isError || !analyzeData ? (
-              <p className="text-xs text-[var(--color-muted-fg)]">{t("markets.fetchFailed")}</p>
+              <p className="text-xs text-[var(--color-muted-fg)]">{t("analysis.fetchFailed")}</p>
             ) : (
               <div className="h-[320px]">
                 <MarketChart

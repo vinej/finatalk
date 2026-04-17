@@ -20,9 +20,9 @@ import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
 import { Route as AuthDashboardResearchRouteImport } from './routes/_auth/dashboard_.research'
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
-import { Route as AuthDashboardMarketsRouteImport } from './routes/_auth/dashboard_.markets'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
 import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth/dashboard_.learn-investment'
+import { Route as AuthDashboardAnalysisRouteImport } from './routes/_auth/dashboard_.analysis'
 import { Route as AuthDashboardPortfoliosPortfolioIdRouteImport } from './routes/_auth/dashboard_.portfolios_.$portfolioId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -79,11 +79,6 @@ const AuthDashboardPortfoliosRoute = AuthDashboardPortfoliosRouteImport.update({
   path: '/dashboard/portfolios',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthDashboardMarketsRoute = AuthDashboardMarketsRouteImport.update({
-  id: '/dashboard_/markets',
-  path: '/dashboard/markets',
-  getParentRoute: () => AuthRoute,
-} as any)
 const AuthDashboardLearnTaRoute = AuthDashboardLearnTaRouteImport.update({
   id: '/dashboard_/learn-ta',
   path: '/dashboard/learn-ta',
@@ -95,6 +90,11 @@ const AuthDashboardLearnInvestmentRoute =
     path: '/dashboard/learn-investment',
     getParentRoute: () => AuthRoute,
   } as any)
+const AuthDashboardAnalysisRoute = AuthDashboardAnalysisRouteImport.update({
+  id: '/dashboard_/analysis',
+  path: '/dashboard/analysis',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardPortfoliosPortfolioIdRoute =
   AuthDashboardPortfoliosPortfolioIdRouteImport.update({
     id: '/dashboard_/portfolios_/$portfolioId',
@@ -110,9 +110,9 @@ export interface FileRoutesByFullPath {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
-  '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
@@ -126,9 +126,9 @@ export interface FileRoutesByTo {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
-  '/dashboard/markets': typeof AuthDashboardMarketsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
@@ -144,9 +144,9 @@ export interface FileRoutesById {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/dashboard_/analysis': typeof AuthDashboardAnalysisRoute
   '/_auth/dashboard_/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
-  '/_auth/dashboard_/markets': typeof AuthDashboardMarketsRoute
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
   '/_auth/dashboard_/research': typeof AuthDashboardResearchRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
@@ -162,9 +162,9 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/analysis'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
-    | '/dashboard/markets'
     | '/dashboard/portfolios'
     | '/dashboard/research'
     | '/dashboard/settings'
@@ -178,9 +178,9 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/analysis'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
-    | '/dashboard/markets'
     | '/dashboard/portfolios'
     | '/dashboard/research'
     | '/dashboard/settings'
@@ -195,9 +195,9 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/_auth/dashboard'
+    | '/_auth/dashboard_/analysis'
     | '/_auth/dashboard_/learn-investment'
     | '/_auth/dashboard_/learn-ta'
-    | '/_auth/dashboard_/markets'
     | '/_auth/dashboard_/portfolios'
     | '/_auth/dashboard_/research'
     | '/_auth/dashboard_/settings'
@@ -293,13 +293,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardPortfoliosRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/dashboard_/markets': {
-      id: '/_auth/dashboard_/markets'
-      path: '/dashboard/markets'
-      fullPath: '/dashboard/markets'
-      preLoaderRoute: typeof AuthDashboardMarketsRouteImport
-      parentRoute: typeof AuthRoute
-    }
     '/_auth/dashboard_/learn-ta': {
       id: '/_auth/dashboard_/learn-ta'
       path: '/dashboard/learn-ta'
@@ -314,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardLearnInvestmentRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/analysis': {
+      id: '/_auth/dashboard_/analysis'
+      path: '/dashboard/analysis'
+      fullPath: '/dashboard/analysis'
+      preLoaderRoute: typeof AuthDashboardAnalysisRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/portfolios_/$portfolioId': {
       id: '/_auth/dashboard_/portfolios_/$portfolioId'
       path: '/dashboard/portfolios/$portfolioId'
@@ -326,9 +326,9 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthDashboardAnalysisRoute: typeof AuthDashboardAnalysisRoute
   AuthDashboardLearnInvestmentRoute: typeof AuthDashboardLearnInvestmentRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
-  AuthDashboardMarketsRoute: typeof AuthDashboardMarketsRoute
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
   AuthDashboardResearchRoute: typeof AuthDashboardResearchRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
@@ -337,9 +337,9 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthDashboardAnalysisRoute: AuthDashboardAnalysisRoute,
   AuthDashboardLearnInvestmentRoute: AuthDashboardLearnInvestmentRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
-  AuthDashboardMarketsRoute: AuthDashboardMarketsRoute,
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
   AuthDashboardResearchRoute: AuthDashboardResearchRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,

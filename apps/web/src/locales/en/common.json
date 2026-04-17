@@ -24,7 +24,7 @@
   },
   "nav": {
     "home": "Home",
-    "markets": "Analysis",
+    "analysis": "Analysis",
     "portfolios": "Portfolios",
     "learnTa": "Learn TA",
     "learnInvestment": "Learn Investment",
@@ -54,7 +54,7 @@
     "furtherReading": "Further reading",
     "generalResources": "General resources"
   },
-  "markets": {
+  "analysis": {
     "title": "Technical analysis",
     "symbol": "Symbol",
     "assetType": "Type",
@@ -89,6 +89,8 @@
     "save": "Save",
     "saving": "Saving…",
     "delete": "Delete",
+    "rename": "Rename",
+    "analysisRenamed": "Analysis renamed.",
     "period": "Period",
     "fast": "Fast",
     "slow": "Slow",

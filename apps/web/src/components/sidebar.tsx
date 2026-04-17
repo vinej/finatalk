@@ -17,7 +17,7 @@ export function Sidebar() {
 
   const items = [
     { key: "home", to: "/dashboard", label: t("nav.home"), icon: Home },
-    { key: "markets", to: "/dashboard/markets", label: t("nav.markets"), icon: LineChart },
+    { key: "analysis", to: "/dashboard/analysis", label: t("nav.analysis"), icon: LineChart },
     { key: "portfolios", label: t("nav.portfolios"), icon: Briefcase, link: portfolioLink, matchPrefix: "/dashboard/portfolios" },
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
     { key: "learn-ta", to: "/dashboard/learn-ta", label: t("nav.learnTa"), icon: BookOpen },

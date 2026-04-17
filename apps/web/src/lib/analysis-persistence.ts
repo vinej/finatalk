@@ -1,9 +1,9 @@
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
 
-const STORAGE_KEY = "finatalk:markets-workspace";
+const STORAGE_KEY = "finatalk:analysis-workspace";
 const VERSION = 1;
 
-export type PersistedMarketsState = {
+export type PersistedAnalysisState = {
   v: typeof VERSION;
   symbolInput: string;
   submittedSymbol: string;
@@ -20,12 +20,12 @@ export type PersistedMarketsState = {
   assetTypeFilter?: "all" | "stock" | "etf";
 };
 
-export function loadMarketsState(): PersistedMarketsState | null {
+export function loadAnalysisState(): PersistedAnalysisState | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as PersistedMarketsState;
+    const parsed = JSON.parse(raw) as PersistedAnalysisState;
     if (parsed?.v !== VERSION) return null;
     return parsed;
   } catch {
@@ -33,7 +33,7 @@ export function loadMarketsState(): PersistedMarketsState | null {
   }
 }
 
-export function saveMarketsState(state: Omit<PersistedMarketsState, "v">): void {
+export function saveAnalysisState(state: Omit<PersistedAnalysisState, "v">): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: VERSION, ...state }));

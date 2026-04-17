@@ -6,10 +6,10 @@ import { toast } from "sonner";
 import { AiDisclaimer } from "@/components/ai/disclaimer";
 import { ChatDrawer } from "@/components/ai/chat-drawer";
 import { MarketChart } from "@/components/market-chart";
-import { IndicatorLibrary } from "@/components/markets/indicator-library";
-import { IndicatorList } from "@/components/markets/indicator-list";
-import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/markets/open-analysis-action";
-import { SaveAnalysisAction } from "@/components/markets/save-analysis-action";
+import { IndicatorLibrary } from "@/components/analysis/indicator-library";
+import { IndicatorList } from "@/components/analysis/indicator-list";
+import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/analysis/open-analysis-action";
+import { SaveAnalysisAction } from "@/components/analysis/save-analysis-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,18 +20,18 @@ import {
   type IndicatorColor,
   type IndicatorSpec,
 } from "@/lib/indicator-defaults";
-import { loadMarketsState, saveMarketsState } from "@/lib/markets-persistence";
+import { loadAnalysisState, saveAnalysisState } from "@/lib/analysis-persistence";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
-type MarketsSearch = {
+type AnalysisSearch = {
   analysisId?: string;
   symbol?: string;
 };
 
-export const Route = createFileRoute("/_auth/dashboard_/markets")({
-  component: MarketsPage,
-  validateSearch: (raw: Record<string, unknown>): MarketsSearch => ({
+export const Route = createFileRoute("/_auth/dashboard_/analysis")({
+  component: AnalysisPage,
+  validateSearch: (raw: Record<string, unknown>): AnalysisSearch => ({
     analysisId: typeof raw.analysisId === "string" ? raw.analysisId : undefined,
     symbol: typeof raw.symbol === "string" ? raw.symbol : undefined,
   }),
@@ -42,10 +42,10 @@ type AnalyzeResult = RouterOutputs["market"]["analyze"]["results"][number];
 const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
 const INTERVALS = ["1d", "1wk", "1mo"] as const;
 
-function MarketsPage() {
+function AnalysisPage() {
   const { t, i18n } = useTranslation();
   const search = Route.useSearch();
-  const persisted = useMemo(() => loadMarketsState(), []);
+  const persisted = useMemo(() => loadAnalysisState(), []);
   const [symbolInput, setSymbolInput] = useState(persisted?.symbolInput ?? "AAPL");
   const [submittedSymbol, setSubmittedSymbol] = useState(persisted?.submittedSymbol ?? "AAPL");
   const [range, setRange] = useState<(typeof RANGES)[number]>(persisted?.range ?? "6mo");
@@ -61,7 +61,7 @@ function MarketsPage() {
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
 
   useEffect(() => {
-    saveMarketsState({
+    saveAnalysisState({
       symbolInput,
       submittedSymbol,
       range,
@@ -132,7 +132,7 @@ function MarketsPage() {
         updateAnalysisMutation.mutate({ id: loadedAnalysisId, description: data.summary });
       }
     },
-    onError: (err) => toast.error(err.message ?? t("markets.summarizeFailed")),
+    onError: (err) => toast.error(err.message ?? t("analysis.summarizeFailed")),
   });
 
   const [chatOpen, setChatOpen] = useState(false);
@@ -171,7 +171,7 @@ function MarketsPage() {
         if (data.interval) setInterval(data.interval as (typeof INTERVALS)[number]);
         setConvertToCad(data.convertTo === "CAD");
       } catch (err) {
-        toast.error((err as Error).message ?? t("markets.loadFailed"));
+        toast.error((err as Error).message ?? t("analysis.loadFailed"));
       }
     })();
   }, [search.analysisId, search.symbol, utils, t]);
@@ -196,9 +196,9 @@ function MarketsPage() {
     try {
       const fresh = await utils.client.market.symbols.query({ force: true });
       utils.market.symbols.setData(undefined, fresh);
-      toast.success(t("markets.symbolsRefreshed", { count: fresh.symbols.length }));
+      toast.success(t("analysis.symbolsRefreshed", { count: fresh.symbols.length }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("markets.symbolsRefreshFailed"));
+      toast.error(err instanceof Error ? err.message : t("analysis.symbolsRefreshFailed"));
     } finally {
       setRefreshingSymbols(false);
     }
@@ -220,7 +220,7 @@ function MarketsPage() {
   }, [symbolsQuery.data, symbolInput, assetTypeFilter]);
 
   useEffect(() => {
-    if (query.error) toast.error(query.error.message ?? t("markets.fetchFailed"));
+    if (query.error) toast.error(query.error.message ?? t("analysis.fetchFailed"));
   }, [query.error, t]);
 
   function addIndicator(item: ActiveIndicator) {
@@ -292,18 +292,23 @@ function MarketsPage() {
             onClick={() => setControlsCollapsed((c) => !c)}
             className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-[var(--color-accent)]"
             aria-expanded={!controlsCollapsed}
-            title={controlsCollapsed ? t("markets.expand") : t("markets.collapse")}
+            title={controlsCollapsed ? t("analysis.expand") : t("analysis.collapse")}
           >
             {controlsCollapsed ? (
               <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
             ) : (
               <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
             )}
-            <CardTitle>{t("markets.title")}</CardTitle>
+            <CardTitle>
+              {t("analysis.title")}
+              {loadedAnalysisTitle && (
+                <span className="ml-2 text-sm font-normal text-[var(--color-muted-fg)]">— {loadedAnalysisTitle}</span>
+              )}
+            </CardTitle>
           </button>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" variant="outline" onClick={newAnalysis}>
-              {t("markets.newAnalysis")}
+              {t("analysis.newAnalysis")}
             </Button>
             <SaveAnalysisAction
               symbol={submittedSymbol}
@@ -326,6 +331,9 @@ function MarketsPage() {
                   setLoadedAnalysisDescription(null);
                 }
               }}
+              onTitleChange={(id, title) => {
+                if (id === loadedAnalysisId) setLoadedAnalysisTitle(title);
+              }}
             />
           </div>
         </CardHeader>
@@ -333,20 +341,20 @@ function MarketsPage() {
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="assetType">{t("markets.assetType")}</Label>
+              <Label htmlFor="assetType">{t("analysis.assetType")}</Label>
               <select
                 id="assetType"
                 value={assetTypeFilter}
                 onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf")}
                 className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
               >
-                <option value="all">{t("markets.assetAll")}</option>
-                <option value="stock">{t("markets.assetStock")}</option>
-                <option value="etf">{t("markets.assetEtf")}</option>
+                <option value="all">{t("analysis.assetAll")}</option>
+                <option value="stock">{t("analysis.assetStock")}</option>
+                <option value="etf">{t("analysis.assetEtf")}</option>
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="symbol">{t("markets.symbol")}</Label>
+              <Label htmlFor="symbol">{t("analysis.symbol")}</Label>
               <Input
                 id="symbol"
                 list="symbol-suggestions"
@@ -354,7 +362,7 @@ function MarketsPage() {
                 value={symbolInput}
                 onChange={(e) => onSymbolChange(e.target.value)}
                 className="w-48"
-                placeholder={symbolsQuery.isPending ? t("markets.loadingSymbols") : "AAPL"}
+                placeholder={symbolsQuery.isPending ? t("analysis.loadingSymbols") : "AAPL"}
               />
               <datalist id="symbol-suggestions">
                 {suggestions.map((s) => (
@@ -365,7 +373,7 @@ function MarketsPage() {
               </datalist>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="range">{t("markets.range")}</Label>
+              <Label htmlFor="range">{t("analysis.range")}</Label>
               <select
                 id="range"
                 value={range}
@@ -378,7 +386,7 @@ function MarketsPage() {
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="interval">{t("markets.interval")}</Label>
+              <Label htmlFor="interval">{t("analysis.interval")}</Label>
               <select
                 id="interval"
                 value={interval}
@@ -397,24 +405,24 @@ function MarketsPage() {
                 onChange={(e) => setConvertToCad(e.target.checked)}
                 className="h-4 w-4"
               />
-              {t("markets.showInCad")}
+              {t("analysis.showInCad")}
             </label>
-            <Button type="submit">{t("markets.loadData")}</Button>
+            <Button type="submit">{t("analysis.loadData")}</Button>
             <Button
               type="button"
               variant="outline"
               onClick={refreshSymbols}
               disabled={refreshingSymbols}
-              title={symbolsQuery.data ? t("markets.symbolsFetchedAt", { date: new Date(symbolsQuery.data.fetchedAt).toLocaleString() }) : ""}
+              title={symbolsQuery.data ? t("analysis.symbolsFetchedAt", { date: new Date(symbolsQuery.data.fetchedAt).toLocaleString() }) : ""}
             >
-              {refreshingSymbols ? "…" : t("markets.refreshSymbols")}
+              {refreshingSymbols ? "…" : t("analysis.refreshSymbols")}
             </Button>
           </form>
           {query.data && (
             <p className="mt-2 text-xs text-[var(--color-muted-fg)]">
               {query.data.nativeCurrency === query.data.displayCurrency
-                ? t("markets.currency", { code: query.data.displayCurrency })
-                : t("markets.currencyConverted", {
+                ? t("analysis.currency", { code: query.data.displayCurrency })
+                : t("analysis.currencyConverted", {
                     from: query.data.nativeCurrency,
                     to: query.data.displayCurrency,
                   })}
@@ -422,7 +430,7 @@ function MarketsPage() {
           )}
           {symbolsQuery.data && (
             <p className="mt-2 text-xs text-[var(--color-muted-fg)]">
-              {t("markets.symbolsCount", { count: symbolsQuery.data.symbols.length })}
+              {t("analysis.symbolsCount", { count: symbolsQuery.data.symbols.length })}
             </p>
           )}
         </CardContent>
@@ -437,14 +445,14 @@ function MarketsPage() {
               onClick={() => setIndicatorsCollapsed((c) => !c)}
               className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-[var(--color-accent)]"
               aria-expanded={!indicatorsCollapsed}
-              title={indicatorsCollapsed ? t("markets.expand") : t("markets.collapse")}
+              title={indicatorsCollapsed ? t("analysis.expand") : t("analysis.collapse")}
             >
               {indicatorsCollapsed ? (
                 <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
               ) : (
                 <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
               )}
-              <CardTitle className="text-base">{t("markets.indicators")}</CardTitle>
+              <CardTitle className="text-base">{t("analysis.indicators")}</CardTitle>
             </button>
           </CardHeader>
           {!indicatorsCollapsed && (
@@ -465,7 +473,7 @@ function MarketsPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
-                {loadedAnalysisTitle ?? t("markets.analyses")}
+                {loadedAnalysisTitle ?? t("analysis.analyses")}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
@@ -475,7 +483,7 @@ function MarketsPage() {
                 </p>
               ) : (
                 <p className="text-xs text-[var(--color-muted-fg)]">
-                  {t("markets.analysisDescription")}
+                  {t("analysis.analysisDescription")}
                 </p>
               )}
               <AiDisclaimer />
@@ -492,9 +500,9 @@ function MarketsPage() {
               type="button"
               variant="outline"
               onClick={() => setChatOpen(true)}
-              title={t("markets.chatShortcutHint")}
+              title={t("analysis.chatShortcutHint")}
             >
-              {t("markets.chatOpen")}
+              {t("analysis.chatOpen")}
             </Button>
             <Button
               type="button"
@@ -502,18 +510,18 @@ function MarketsPage() {
               onClick={onSummarize}
               disabled={summarizeMutation.isPending || !query.data}
             >
-              {summarizeMutation.isPending ? t("markets.summarizing") : t("markets.summarize")}
+              {summarizeMutation.isPending ? t("analysis.summarizing") : t("analysis.summarize")}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           {query.isPending ? (
             <div className="flex h-[560px] items-center justify-center text-sm text-[var(--color-muted-fg)]">
-              {t("markets.loading")}
+              {t("analysis.loading")}
             </div>
           ) : query.isError || !query.data ? (
             <div className="flex h-[560px] items-center justify-center text-sm text-[var(--color-destructive)]">
-              {query.error?.message ?? t("markets.fetchFailed")}
+              {query.error?.message ?? t("analysis.fetchFailed")}
             </div>
           ) : (
             <MarketChart
@@ -530,7 +538,7 @@ function MarketsPage() {
       {query.data && query.data.results.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{t("markets.latest")}</CardTitle>
+            <CardTitle className="text-base">{t("analysis.latest")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 md:grid-cols-4">

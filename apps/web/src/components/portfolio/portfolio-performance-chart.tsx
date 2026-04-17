@@ -107,7 +107,7 @@ export function PortfolioPerformanceChart({
         </div>
         <div className="flex items-center gap-2">
           <label htmlFor="perf-range" className="text-xs text-[var(--color-muted-fg)]">
-            {t("markets.range")}
+            {t("analysis.range")}
           </label>
           <select
             id="perf-range"

@@ -40,14 +40,14 @@ export function SaveAnalysisAction({
   const create = trpc.analysis.createAnalysis.useMutation({
     onSuccess: (data) => {
       utils.analysis.listAnalyses.invalidate();
-      toast.success(data.overwritten ? t("markets.analysisOverwritten") : t("markets.analysisSaved"));
+      toast.success(data.overwritten ? t("analysis.analysisOverwritten") : t("analysis.analysisSaved"));
       setOpen(false);
       setTitle("");
       setDescription("");
     },
     onError: (e, variables) => {
       if (e.data?.code === "CONFLICT") {
-        const confirmed = window.confirm(t("markets.analysisOverwriteConfirm", { title: variables.title }));
+        const confirmed = window.confirm(t("analysis.analysisOverwriteConfirm", { title: variables.title }));
         if (confirmed) {
           create.mutate({ ...variables, overwrite: true });
         }
@@ -81,7 +81,7 @@ export function SaveAnalysisAction({
         onClick={() => (open ? setOpen(false) : openPanel())}
         disabled={indicators.length === 0}
       >
-        {t("markets.saveAsNew")}
+        {t("analysis.saveAsNew")}
       </Button>
       {open && (
         <form
@@ -90,7 +90,7 @@ export function SaveAnalysisAction({
         >
           <div className="grid gap-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="analysis-title">{t("markets.analysisTitle")}</Label>
+              <Label htmlFor="analysis-title">{t("analysis.analysisTitle")}</Label>
               <Input
                 id="analysis-title"
                 value={title}
@@ -101,7 +101,7 @@ export function SaveAnalysisAction({
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="analysis-desc">{t("markets.analysisDescription")}</Label>
+              <Label htmlFor="analysis-desc">{t("analysis.analysisDescription")}</Label>
               <textarea
                 id="analysis-desc"
                 value={description}
@@ -113,10 +113,10 @@ export function SaveAnalysisAction({
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" size="sm" variant="outline" onClick={() => setOpen(false)}>
-                {t("markets.cancel")}
+                {t("analysis.cancel")}
               </Button>
               <Button type="submit" size="sm" disabled={create.isPending || !title.trim()}>
-                {create.isPending ? t("markets.saving") : t("markets.save")}
+                {create.isPending ? t("analysis.saving") : t("analysis.save")}
               </Button>
             </div>
           </div>

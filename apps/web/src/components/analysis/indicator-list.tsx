@@ -77,7 +77,7 @@ export function IndicatorList({
 
   if (items.length === 0) {
     return (
-      <p className="text-sm text-[var(--color-muted-fg)]">{t("markets.noIndicators")}</p>
+      <p className="text-sm text-[var(--color-muted-fg)]">{t("analysis.noIndicators")}</p>
     );
   }
 
@@ -89,7 +89,7 @@ export function IndicatorList({
         {items.map((it) => {
           const hidden = hiddenIds.has(it.localId);
           const label = formatLabel(it.spec);
-          const toggleTitle = hidden ? t("markets.show") : t("markets.hide");
+          const toggleTitle = hidden ? t("analysis.show") : t("analysis.hide");
           return (
             <li
               key={it.localId}
@@ -115,8 +115,8 @@ export function IndicatorList({
               <button
                 type="button"
                 onClick={() => setEditingId(it.localId)}
-                title={t("markets.edit")}
-                aria-label={t("markets.edit")}
+                title={t("analysis.edit")}
+                aria-label={t("analysis.edit")}
                 className="rounded p-1 text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)]"
               >
                 <Pencil className="h-3.5 w-3.5" aria-hidden />
@@ -124,8 +124,8 @@ export function IndicatorList({
               <button
                 type="button"
                 onClick={() => onRemove(it.localId)}
-                title={t("markets.remove")}
-                aria-label={t("markets.remove")}
+                title={t("analysis.remove")}
+                aria-label={t("analysis.remove")}
                 className="rounded p-1 text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-destructive)]"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -137,7 +137,7 @@ export function IndicatorList({
       <Dialog
         open={editingItem !== null}
         onOpenChange={(o) => { if (!o) setEditingId(null); }}
-        title={editingItem ? `${t("markets.edit")} — ${formatLabel(editingItem.spec)}` : ""}
+        title={editingItem ? `${t("analysis.edit")} — ${formatLabel(editingItem.spec)}` : ""}
       >
         {editingItem && (
           <EditForm
@@ -184,7 +184,7 @@ function EditForm({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {isSinglePeriod && (
           <NumberField
-            label={t("markets.period")}
+            label={t("analysis.period")}
             value={spec.period}
             min={spec.kind === "mom" || spec.kind === "roc" ? 1 : 2}
             max={500}
@@ -193,48 +193,48 @@ function EditForm({
         )}
         {spec.kind === "macd" && (
           <>
-            <NumberField label={t("markets.fast")} value={spec.fast} min={2} max={200}
+            <NumberField label={t("analysis.fast")} value={spec.fast} min={2} max={200}
               onChange={(v) => setSpec({ ...spec, fast: v })} />
-            <NumberField label={t("markets.slow")} value={spec.slow} min={2} max={500}
+            <NumberField label={t("analysis.slow")} value={spec.slow} min={2} max={500}
               onChange={(v) => setSpec({ ...spec, slow: v })} />
-            <NumberField label={t("markets.signal")} value={spec.signal} min={1} max={200}
+            <NumberField label={t("analysis.signal")} value={spec.signal} min={1} max={200}
               onChange={(v) => setSpec({ ...spec, signal: v })} />
           </>
         )}
         {spec.kind === "bbands" && (
           <>
-            <NumberField label={t("markets.period")} value={spec.period} min={2} max={500}
+            <NumberField label={t("analysis.period")} value={spec.period} min={2} max={500}
               onChange={(v) => setSpec({ ...spec, period: v })} />
-            <NumberField label={t("markets.stdDev")} value={spec.stdDev} min={0.1} max={10} step={0.1}
+            <NumberField label={t("analysis.stdDev")} value={spec.stdDev} min={0.1} max={10} step={0.1}
               onChange={(v) => setSpec({ ...spec, stdDev: v })} />
           </>
         )}
         {spec.kind === "stoch" && (
           <>
-            <NumberField label={t("markets.period")} value={spec.period} min={2} max={500}
+            <NumberField label={t("analysis.period")} value={spec.period} min={2} max={500}
               onChange={(v) => setSpec({ ...spec, period: v })} />
-            <NumberField label={t("markets.signal")} value={spec.signal} min={1} max={200}
+            <NumberField label={t("analysis.signal")} value={spec.signal} min={1} max={200}
               onChange={(v) => setSpec({ ...spec, signal: v })} />
-            <NumberField label={t("markets.smooth")} value={spec.smooth} min={1} max={200}
+            <NumberField label={t("analysis.smooth")} value={spec.smooth} min={1} max={200}
               onChange={(v) => setSpec({ ...spec, smooth: v })} />
           </>
         )}
         {spec.kind === "psar" && (
           <>
-            <NumberField label={t("markets.step")} value={spec.step} min={0.001} max={0.5} step={0.01}
+            <NumberField label={t("analysis.step")} value={spec.step} min={0.001} max={0.5} step={0.01}
               onChange={(v) => setSpec({ ...spec, step: v })} />
-            <NumberField label={t("markets.max")} value={spec.max} min={0.01} max={1} step={0.01}
+            <NumberField label={t("analysis.max")} value={spec.max} min={0.01} max={1} step={0.01}
               onChange={(v) => setSpec({ ...spec, max: v })} />
           </>
         )}
         {spec.kind === "maCross" && (
           <>
-            <NumberField label={t("markets.fast")} value={spec.fastPeriod} min={2} max={500}
+            <NumberField label={t("analysis.fast")} value={spec.fastPeriod} min={2} max={500}
               onChange={(v) => setSpec({ ...spec, fastPeriod: v })} />
-            <NumberField label={t("markets.slow")} value={spec.slowPeriod} min={2} max={500}
+            <NumberField label={t("analysis.slow")} value={spec.slowPeriod} min={2} max={500}
               onChange={(v) => setSpec({ ...spec, slowPeriod: v })} />
             <div className="grid gap-1.5">
-              <Label>{t("markets.maType")}</Label>
+              <Label>{t("analysis.maType")}</Label>
               <select
                 value={spec.maType}
                 onChange={(e) =>
@@ -250,11 +250,11 @@ function EditForm({
         )}
         {spec.kind === "macdCross" && (
           <>
-            <NumberField label={t("markets.fast")} value={spec.fast} min={2} max={200}
+            <NumberField label={t("analysis.fast")} value={spec.fast} min={2} max={200}
               onChange={(v) => setSpec({ ...spec, fast: v })} />
-            <NumberField label={t("markets.slow")} value={spec.slow} min={2} max={500}
+            <NumberField label={t("analysis.slow")} value={spec.slow} min={2} max={500}
               onChange={(v) => setSpec({ ...spec, slow: v })} />
-            <NumberField label={t("markets.signal")} value={spec.signal} min={1} max={200}
+            <NumberField label={t("analysis.signal")} value={spec.signal} min={1} max={200}
               onChange={(v) => setSpec({ ...spec, signal: v })} />
           </>
         )}
@@ -263,50 +263,50 @@ function EditForm({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {typeof color === "object" && color.kind === "macd" ? (
           <>
-            <ColorField label={t("markets.colorLine")} value={color.line}
+            <ColorField label={t("analysis.colorLine")} value={color.line}
               onChange={(v) => setColor({ kind: "macd", line: v, signal: color.signal, hist: color.hist })} />
-            <ColorField label={t("markets.colorSignal")} value={color.signal}
+            <ColorField label={t("analysis.colorSignal")} value={color.signal}
               onChange={(v) => setColor({ kind: "macd", line: color.line, signal: v, hist: color.hist })} />
-            <ColorField label={t("markets.colorHist")} value={color.hist}
+            <ColorField label={t("analysis.colorHist")} value={color.hist}
               onChange={(v) => setColor({ kind: "macd", line: color.line, signal: color.signal, hist: v })} />
           </>
         ) : typeof color === "object" && color.kind === "stoch" ? (
           <>
-            <ColorField label={t("markets.colorK")} value={color.k}
+            <ColorField label={t("analysis.colorK")} value={color.k}
               onChange={(v) => setColor({ kind: "stoch", k: v, d: color.d })} />
-            <ColorField label={t("markets.colorD")} value={color.d}
+            <ColorField label={t("analysis.colorD")} value={color.d}
               onChange={(v) => setColor({ kind: "stoch", k: color.k, d: v })} />
           </>
         ) : typeof color === "object" && color.kind === "adx" ? (
           <>
-            <ColorField label={t("markets.colorAdx")} value={color.adx}
+            <ColorField label={t("analysis.colorAdx")} value={color.adx}
               onChange={(v) => setColor({ kind: "adx", adx: v, pdi: color.pdi, mdi: color.mdi })} />
-            <ColorField label={t("markets.colorPdi")} value={color.pdi}
+            <ColorField label={t("analysis.colorPdi")} value={color.pdi}
               onChange={(v) => setColor({ kind: "adx", adx: color.adx, pdi: v, mdi: color.mdi })} />
-            <ColorField label={t("markets.colorMdi")} value={color.mdi}
+            <ColorField label={t("analysis.colorMdi")} value={color.mdi}
               onChange={(v) => setColor({ kind: "adx", adx: color.adx, pdi: color.pdi, mdi: v })} />
           </>
         ) : typeof color === "object" && color.kind === "maCross" ? (
           <>
-            <ColorField label={t("markets.colorFast")} value={color.fast}
+            <ColorField label={t("analysis.colorFast")} value={color.fast}
               onChange={(v) => setColor({ ...color, fast: v })} />
-            <ColorField label={t("markets.colorSlow")} value={color.slow}
+            <ColorField label={t("analysis.colorSlow")} value={color.slow}
               onChange={(v) => setColor({ ...color, slow: v })} />
-            <ColorField label={t("markets.colorBull")} value={color.bull}
+            <ColorField label={t("analysis.colorBull")} value={color.bull}
               onChange={(v) => setColor({ ...color, bull: v })} />
-            <ColorField label={t("markets.colorBear")} value={color.bear}
+            <ColorField label={t("analysis.colorBear")} value={color.bear}
               onChange={(v) => setColor({ ...color, bear: v })} />
           </>
         ) : typeof color === "object" && color.kind === "macdCross" ? (
           <>
-            <ColorField label={t("markets.colorBull")} value={color.bull}
+            <ColorField label={t("analysis.colorBull")} value={color.bull}
               onChange={(v) => setColor({ ...color, bull: v })} />
-            <ColorField label={t("markets.colorBear")} value={color.bear}
+            <ColorField label={t("analysis.colorBear")} value={color.bear}
               onChange={(v) => setColor({ ...color, bear: v })} />
           </>
         ) : (
           <ColorField
-            label={t("markets.color")}
+            label={t("analysis.color")}
             value={typeof color === "string" ? color : "#2563eb"}
             onChange={(v) => setColor(v)}
           />
@@ -315,10 +315,10 @@ function EditForm({
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-          {t("markets.cancel")}
+          {t("analysis.cancel")}
         </Button>
         <Button type="submit" size="sm">
-          {t("markets.apply")}
+          {t("analysis.apply")}
         </Button>
       </div>
     </form>
