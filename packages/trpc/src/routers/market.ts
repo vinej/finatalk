@@ -34,6 +34,10 @@ import {
   rangeToPeriod1,
   type Candle,
 } from "../lib/market-provider";
+import {
+  fetchIndexConstituentsFromWikipedia,
+  fetchTsxCompositeSymbols,
+} from "../lib/wikipedia-constituents";
 
 const yf = new YahooFinance();
 
@@ -409,7 +413,7 @@ function parseOtherListed(text: string): SymbolEntry[] {
 }
 
 async function fetchSymbolUniverse(): Promise<SymbolEntry[]> {
-  const [a, b] = await Promise.all([
+  const [a, b, tsx] = await Promise.all([
     fetch(NASDAQ_URL).then((r) => {
       if (!r.ok) throw new Error(`Nasdaq list HTTP ${r.status}`);
       return r.text();
@@ -418,8 +422,15 @@ async function fetchSymbolUniverse(): Promise<SymbolEntry[]> {
       if (!r.ok) throw new Error(`Other list HTTP ${r.status}`);
       return r.text();
     }),
+    fetchTsxCompositeSymbols().catch(() => []),
   ]);
-  const merged = [...parseNasdaqListed(a), ...parseOtherListed(b)];
+  const tsxEntries: SymbolEntry[] = tsx.map((t) => ({
+    symbol: `${t.symbol.replace(/\./g, "-")}.TO`,
+    name: t.name,
+    exchange: "TSX",
+    assetType: "stock",
+  }));
+  const merged = [...parseNasdaqListed(a), ...parseOtherListed(b), ...tsxEntries];
   merged.sort((x, y) => x.symbol.localeCompare(y.symbol));
   return merged;
 }
@@ -766,6 +777,28 @@ export const marketRouter = createTRPCRouter({
         startDate: input.startDate,
         endDate: input.endDate,
       });
+    }),
+
+  getIndexConstituents: protectedProcedure
+    .input(z.object({
+      indexSymbol: z.enum(["sp500", "nasdaq", "dowjones", "tsx", "tsx60"]),
+      provider: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const isCanadian = input.indexSymbol === "tsx" || input.indexSymbol === "tsx60";
+      if (isOpenBBEnabled() && !isCanadian) {
+        try {
+          const result = await getOpenBBClient().getIndexConstituents(input.indexSymbol, input.provider);
+          if (result.length > 0) return result;
+        } catch {
+          // fall through to Wikipedia
+        }
+      }
+      try {
+        return await fetchIndexConstituentsFromWikipedia(input.indexSymbol);
+      } catch {
+        return [];
+      }
     }),
 
   getEtfInfo: protectedProcedure

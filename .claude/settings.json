@@ -27,7 +27,20 @@
       "Bash(find /c/SanoTalk/finatalk -name \"package.json\" -path \"*/apps/web/*\" -exec cat {} \\\\;)",
       "Read(//c/SanoTalk/finatalk/apps/web/src/routes/_auth/**)",
       "Bash(npx tsr *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(docker exec *)",
+      "Bash(docker compose *)",
+      "Bash(curl -s \"http://127.0.0.1:6900/openapi.json\")",
+      "Bash(python -c ' *)",
+      "Bash(curl -s \"http://127.0.0.1:6900/openapi.json\" -o /tmp/openapi.json)",
+      "Bash(docker cp *)",
+      "Bash(curl -s \"http://127.0.0.1:6900/api/v1/index/constituents?symbol=dowjones&provider=cboe\")",
+      "Bash(curl -s \"http://127.0.0.1:6900/api/v1/index/constituents?symbol=sp500&provider=cboe\")",
+      "Bash(curl -s \"http://127.0.0.1:6900/api/v1/etf/holdings?symbol=SPY&provider=yfinance\")",
+      "Bash(curl -s \"http://127.0.0.1:6900/api/v1/etf/holdings?symbol=DIA&provider=yfinance\")",
+      "Bash(curl -s \"http://127.0.0.1:6900/api/v1/etf/holdings?symbol=SPY&provider=fmp\")",
+      "Bash(pnpm exec *)",
+      "Bash(node --experimental-strip-types -e ' *)"
     ]
   }
 }

@@ -28,6 +28,7 @@ import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dash
 import { Route as AuthDashboardNewsRouteImport } from './routes/_auth/dashboard_.news'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
 import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth/dashboard_.learn-investment'
+import { Route as AuthDashboardIndicesRouteImport } from './routes/_auth/dashboard_.indices'
 import { Route as AuthDashboardComparisonRouteImport } from './routes/_auth/dashboard_.comparison'
 import { Route as AuthDashboardCalendarRouteImport } from './routes/_auth/dashboard_.calendar'
 import { Route as AuthDashboardAnalysisRouteImport } from './routes/_auth/dashboard_.analysis'
@@ -128,6 +129,11 @@ const AuthDashboardLearnInvestmentRoute =
     path: '/dashboard/learn-investment',
     getParentRoute: () => AuthRoute,
   } as any)
+const AuthDashboardIndicesRoute = AuthDashboardIndicesRouteImport.update({
+  id: '/dashboard_/indices',
+  path: '/dashboard/indices',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardComparisonRoute = AuthDashboardComparisonRouteImport.update({
   id: '/dashboard_/comparison',
   path: '/dashboard/comparison',
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
+  '/dashboard/indices': typeof AuthDashboardIndicesRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/news': typeof AuthDashboardNewsRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
+  '/dashboard/indices': typeof AuthDashboardIndicesRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/news': typeof AuthDashboardNewsRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/_auth/dashboard_/analysis': typeof AuthDashboardAnalysisRoute
   '/_auth/dashboard_/calendar': typeof AuthDashboardCalendarRoute
   '/_auth/dashboard_/comparison': typeof AuthDashboardComparisonRoute
+  '/_auth/dashboard_/indices': typeof AuthDashboardIndicesRoute
   '/_auth/dashboard_/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/news': typeof AuthDashboardNewsRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/dashboard/analysis'
     | '/dashboard/calendar'
     | '/dashboard/comparison'
+    | '/dashboard/indices'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
     | '/dashboard/news'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/dashboard/analysis'
     | '/dashboard/calendar'
     | '/dashboard/comparison'
+    | '/dashboard/indices'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-ta'
     | '/dashboard/news'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/analysis'
     | '/_auth/dashboard_/calendar'
     | '/_auth/dashboard_/comparison'
+    | '/_auth/dashboard_/indices'
     | '/_auth/dashboard_/learn-investment'
     | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/news'
@@ -445,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardLearnInvestmentRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/indices': {
+      id: '/_auth/dashboard_/indices'
+      path: '/dashboard/indices'
+      fullPath: '/dashboard/indices'
+      preLoaderRoute: typeof AuthDashboardIndicesRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/comparison': {
       id: '/_auth/dashboard_/comparison'
       path: '/dashboard/comparison'
@@ -481,6 +500,7 @@ interface AuthRouteChildren {
   AuthDashboardAnalysisRoute: typeof AuthDashboardAnalysisRoute
   AuthDashboardCalendarRoute: typeof AuthDashboardCalendarRoute
   AuthDashboardComparisonRoute: typeof AuthDashboardComparisonRoute
+  AuthDashboardIndicesRoute: typeof AuthDashboardIndicesRoute
   AuthDashboardLearnInvestmentRoute: typeof AuthDashboardLearnInvestmentRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardNewsRoute: typeof AuthDashboardNewsRoute
@@ -500,6 +520,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardAnalysisRoute: AuthDashboardAnalysisRoute,
   AuthDashboardCalendarRoute: AuthDashboardCalendarRoute,
   AuthDashboardComparisonRoute: AuthDashboardComparisonRoute,
+  AuthDashboardIndicesRoute: AuthDashboardIndicesRoute,
   AuthDashboardLearnInvestmentRoute: AuthDashboardLearnInvestmentRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardNewsRoute: AuthDashboardNewsRoute,

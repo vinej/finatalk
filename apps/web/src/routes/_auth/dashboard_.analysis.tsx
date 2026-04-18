@@ -63,6 +63,7 @@ function AnalysisPage() {
   const [latestCollapsed, setLatestCollapsed] = useState<boolean>(persisted?.latestCollapsed ?? false);
   const [etfCollapsed, setEtfCollapsed] = useState<boolean>(persisted?.etfCollapsed ?? false);
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
+  const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
 
   const confidenceMutation = trpc.research.getConfidence.useMutation({
@@ -92,6 +93,7 @@ function AnalysisPage() {
       latestCollapsed,
       etfCollapsed,
       assetTypeFilter,
+      exchangeFilter,
     });
   }, [
     symbolInput,
@@ -109,6 +111,7 @@ function AnalysisPage() {
     latestCollapsed,
     etfCollapsed,
     assetTypeFilter,
+    exchangeFilter,
   ]);
 
   const indicators = useMemo(() => activeIndicators.map((a) => a.spec), [activeIndicators]);
@@ -167,6 +170,19 @@ function AnalysisPage() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  const appliedSymbolRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (search.analysisId) return;
+    const sym = search.symbol?.toUpperCase();
+    if (!sym || appliedSymbolRef.current === sym) return;
+    appliedSymbolRef.current = sym;
+    setSymbolInput(sym);
+    setSubmittedSymbol(sym);
+    setLoadedAnalysisId(null);
+    setLoadedAnalysisTitle(null);
+    setLoadedAnalysisDescription(null);
+  }, [search.analysisId, search.symbol]);
+
   const appliedSearchRef = useRef<string | null>(null);
   useEffect(() => {
     if (!search.analysisId) return;
@@ -223,9 +239,23 @@ function AnalysisPage() {
     }
   }
 
+  const submittedSymbolMeta = useMemo(() => {
+    const raw = symbolsQuery.data?.symbols ?? [];
+    const match = raw.find((s) => s.symbol === submittedSymbol);
+    return match ?? null;
+  }, [symbolsQuery.data, submittedSymbol]);
+
+  const availableExchanges = useMemo(() => {
+    const raw = symbolsQuery.data?.symbols ?? [];
+    const set = new Set<string>();
+    for (const s of raw) if (s.exchange) set.add(s.exchange);
+    return [...set].sort();
+  }, [symbolsQuery.data]);
+
   const suggestions = useMemo(() => {
     const raw = symbolsQuery.data?.symbols ?? [];
-    const all = assetTypeFilter === "all" ? raw : raw.filter((s) => s.assetType === assetTypeFilter);
+    const byType = assetTypeFilter === "all" ? raw : raw.filter((s) => s.assetType === assetTypeFilter);
+    const all = exchangeFilter === "all" ? byType : byType.filter((s) => s.exchange === exchangeFilter);
     const q = symbolInput.trim().toUpperCase();
     if (!q) return all.slice(0, 200);
     const starts: typeof all = [];
@@ -236,7 +266,7 @@ function AnalysisPage() {
       if (starts.length >= 200) break;
     }
     return [...starts, ...contains].slice(0, 200);
-  }, [symbolsQuery.data, symbolInput, assetTypeFilter]);
+  }, [symbolsQuery.data, symbolInput, assetTypeFilter, exchangeFilter]);
 
   useEffect(() => {
     if (query.error) toast.error(query.error.message ?? t("analysis.fetchFailed"));
@@ -384,6 +414,20 @@ function AnalysisPage() {
                 <option value="all">{t("analysis.assetAll")}</option>
                 <option value="stock">{t("analysis.assetStock")}</option>
                 <option value="etf">{t("analysis.assetEtf")}</option>
+              </select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="exchange">{t("analysis.exchange")}</Label>
+              <select
+                id="exchange"
+                value={exchangeFilter}
+                onChange={(e) => setExchangeFilter(e.target.value)}
+                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
+              >
+                <option value="all">{t("analysis.exchangeAll")}</option>
+                {availableExchanges.map((ex) => (
+                  <option key={ex} value={ex}>{ex}</option>
+                ))}
               </select>
             </div>
             <div className="grid gap-1.5">
@@ -565,7 +609,15 @@ function AnalysisPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-          <CardTitle className="text-base">{submittedSymbol}</CardTitle>
+          <CardTitle className="text-base">
+            <span className="font-mono">{submittedSymbol}</span>
+            {submittedSymbolMeta?.name && (
+              <span className="ml-2 font-normal text-[var(--color-muted-fg)]">
+                {submittedSymbolMeta.name}
+                {submittedSymbolMeta.exchange && ` (${submittedSymbolMeta.exchange})`}
+              </span>
+            )}
+          </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"

@@ -12,6 +12,7 @@ import type {
   EtfHolding,
   EtfInfo,
   EtfSectorWeight,
+  IndexConstituent,
   NewsArticle,
   NewsOpts,
   FredDataPoint,
@@ -358,6 +359,25 @@ export class OpenBBClient {
       close: Number(r.close ?? 0),
       volume: Number(r.volume ?? 0),
     }));
+  }
+
+  // ── Index ─────────────────────────────────────────────────────────────
+
+  async getIndexConstituents(indexSymbol: string, provider?: string): Promise<IndexConstituent[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/index/constituents", {
+      symbol: indexSymbol,
+      provider: provider ?? "fmp",
+    });
+    return raw.map((r) => ({
+      symbol: String(r.symbol ?? ""),
+      name: String(r.name ?? r.security ?? ""),
+      sector: r.sector != null ? String(r.sector) : null,
+      subSector: r.sub_sector != null ? String(r.sub_sector) : (r.sub_industry != null ? String(r.sub_industry) : null),
+      headquarters: r.headquarters != null ? String(r.headquarters) : (r.headquarter != null ? String(r.headquarter) : null),
+      dateFirstAdded: r.date_first_added != null ? String(r.date_first_added) : null,
+      cik: r.cik != null ? String(r.cik) : null,
+      founded: r.founded != null ? String(r.founded) : null,
+    })).filter((r) => r.symbol);
   }
 
   // ── News ──────────────────────────────────────────────────────────────

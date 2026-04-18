@@ -20,6 +20,7 @@ export type {
   EtfHolding,
   EtfSectorWeight,
   EtfCountryWeight,
+  IndexConstituent,
   NewsArticle,
   NewsOpts,
   HistoricalPriceOpts,

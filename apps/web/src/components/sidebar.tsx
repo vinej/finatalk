@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Copy, Eye, GitCompareArrows, GraduationCap, Home, Lightbulb, LineChart, Microscope, Newspaper, Receipt, ScanSearch, Settings } from "lucide-react";
+import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Receipt, ScanSearch, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ export function Sidebar() {
     { key: "portfolios", label: t("nav.portfolios"), icon: Briefcase, link: portfolioLink, matchPrefix: "/dashboard/portfolios" },
     { key: "comparison", to: "/dashboard/comparison", label: t("nav.comparison"), icon: GitCompareArrows },
     { key: "screener", to: "/dashboard/screener", label: t("nav.screener"), icon: ScanSearch },
+    { key: "indices", to: "/dashboard/indices", label: t("nav.indices"), icon: Landmark },
     { key: "calendar", to: "/dashboard/calendar", label: t("nav.calendar"), icon: CalendarDays },
     { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },

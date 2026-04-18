@@ -20,6 +20,7 @@ export type PersistedAnalysisState = {
   latestCollapsed?: boolean;
   etfCollapsed?: boolean;
   assetTypeFilter?: "all" | "stock" | "etf";
+  exchangeFilter?: string;
 };
 
 export function loadAnalysisState(): PersistedAnalysisState | null {

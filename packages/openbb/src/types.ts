@@ -207,3 +207,14 @@ export type NewsOpts = {
   endDate?: string | undefined;
   provider?: string | undefined;
 };
+
+export type IndexConstituent = {
+  symbol: string;
+  name: string;
+  sector: string | null;
+  subSector: string | null;
+  headquarters: string | null;
+  dateFirstAdded: string | null;
+  cik: string | null;
+  founded: string | null;
+};

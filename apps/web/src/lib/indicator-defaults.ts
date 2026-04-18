@@ -283,7 +283,8 @@ export function createActive(kind: IndicatorKind): ActiveIndicator {
 }
 
 export const DEFAULT_SEED: ActiveIndicator[] = [
-  createActive("sma"),
-  createActive("rsi"),
-  createActive("macd"),
+  { localId: newId(), spec: { kind: "sma", period: 50 }, color: defaultColor("sma") },
+  { localId: newId(), spec: { kind: "rsi", period: 14 }, color: defaultColor("rsi") },
+  { localId: newId(), spec: { kind: "macd", fast: 12, slow: 26, signal: 9 }, color: defaultColor("macd") },
+  { localId: newId(), spec: { kind: "bbands", period: 20, stdDev: 2 }, color: defaultColor("bbands") },
 ];
