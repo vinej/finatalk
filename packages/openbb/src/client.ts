@@ -15,6 +15,9 @@ import type {
   IndexConstituent,
   AnalystConsensus,
   PriceTarget,
+  InsiderTrade,
+  InstitutionalHolder,
+  ShortInterestRecord,
   NewsArticle,
   NewsOpts,
   FredDataPoint,
@@ -446,6 +449,138 @@ export class OpenBBClient {
         : r.url_analyst != null
           ? String(r.url_analyst)
           : null,
+    }));
+  }
+
+  // ── Ownership ─────────────────────────────────────────────────────────
+
+  async getInsiderTrading(
+    symbol: string,
+    opts?: { limit?: number; provider?: string },
+  ): Promise<InsiderTrade[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/ownership/insider_trading", {
+      symbol,
+      limit: opts?.limit ?? 50,
+      provider: opts?.provider ?? "sec",
+    });
+    const num = (r: Record<string, unknown>, k: string): number | null => {
+      const v = r[k];
+      if (v == null) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const bool = (r: Record<string, unknown>, k: string): boolean | null => {
+      const v = r[k];
+      if (v == null) return null;
+      if (typeof v === "boolean") return v;
+      const s = String(v).toLowerCase();
+      if (s === "true" || s === "1") return true;
+      if (s === "false" || s === "0") return false;
+      return null;
+    };
+    return raw.map((r) => {
+      const price = num(r, "transaction_price");
+      const shares = num(r, "securities_transacted");
+      return {
+        symbol: String(r.symbol ?? symbol),
+        filingDate: r.filing_date != null ? String(r.filing_date) : null,
+        transactionDate: r.transaction_date != null ? String(r.transaction_date) : null,
+        ownerName: r.owner_name != null ? String(r.owner_name) : null,
+        ownerTitle: r.owner_title != null ? String(r.owner_title) : null,
+        officer: bool(r, "officer"),
+        transactionType: r.transaction_type != null ? String(r.transaction_type) : null,
+        acquisitionOrDisposition:
+          r.acquisition_or_disposition != null ? String(r.acquisition_or_disposition) : null,
+        securitiesOwned: num(r, "securities_owned"),
+        securitiesTransacted: shares,
+        transactionPrice: price,
+        transactionValue:
+          num(r, "transaction_value") ??
+          (price != null && shares != null ? price * shares : null),
+        filingUrl: r.filing_url != null ? String(r.filing_url) : null,
+      };
+    });
+  }
+
+  async getInstitutionalHolders(
+    symbol: string,
+    opts?: { limit?: number; provider?: string },
+  ): Promise<InstitutionalHolder[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/ownership/institutional", {
+      symbol,
+      limit: opts?.limit ?? 50,
+      provider: opts?.provider ?? "fmp",
+    });
+    const num = (r: Record<string, unknown>, k: string): number | null => {
+      const v = r[k];
+      if (v == null) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    return raw.map((r) => ({
+      symbol: String(r.symbol ?? symbol),
+      holderName:
+        r.investor_name != null
+          ? String(r.investor_name)
+          : r.holder != null
+            ? String(r.holder)
+            : r.institution_name != null
+              ? String(r.institution_name)
+              : null,
+      dateReported:
+        r.date_reported != null
+          ? String(r.date_reported)
+          : r.date != null
+            ? String(r.date)
+            : null,
+      sharesHeld:
+        num(r, "shares_held") ??
+        num(r, "shares") ??
+        num(r, "current_shares"),
+      sharesChange: num(r, "change_in_shares") ?? num(r, "shares_change"),
+      sharesChangePercent:
+        num(r, "change_in_shares_percentage") ??
+        num(r, "shares_change_percent"),
+      marketValue: num(r, "market_value") ?? num(r, "value"),
+      percentHeld: num(r, "weight") ?? num(r, "percent_of_portfolio"),
+    }));
+  }
+
+  // ── Shorts ────────────────────────────────────────────────────────────
+
+  async getShortInterest(
+    symbol: string,
+    provider?: string,
+  ): Promise<ShortInterestRecord[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/shorts/short_interest", {
+      symbol,
+      provider: provider ?? "finra",
+    });
+    const num = (r: Record<string, unknown>, k: string): number | null => {
+      const v = r[k];
+      if (v == null) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    return raw.map((r) => ({
+      symbol: String(r.symbol ?? symbol),
+      settlementDate:
+        r.settlement_date != null
+          ? String(r.settlement_date)
+          : r.report_date != null
+            ? String(r.report_date)
+            : r.date != null
+              ? String(r.date)
+              : null,
+      shortInterest:
+        num(r, "short_interest") ??
+        num(r, "current_short_position") ??
+        num(r, "short_volume"),
+      averageDailyVolume:
+        num(r, "average_daily_volume") ?? num(r, "avg_daily_share_volume"),
+      daysToCover:
+        num(r, "days_to_cover") ?? num(r, "days_to_cover_quantity"),
+      changePercent: num(r, "change_percent") ?? num(r, "short_interest_change_percent"),
     }));
   }
 

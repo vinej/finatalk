@@ -345,7 +345,7 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
   }
 }
 
-export type AssetType = "stock" | "etf";
+export type AssetType = "stock" | "etf" | "commodity";
 export type SymbolEntry = { symbol: string; name: string; exchange: string; assetType: AssetType };
 
 let cachedSymbols: { data: SymbolEntry[]; fetchedAt: number } | null = null;
@@ -836,6 +836,74 @@ export const marketRouter = createTRPCRouter({
             limit: input.limit,
             provider,
           });
+          if (result.length > 0) return result;
+        } catch {
+          // try next
+        }
+      }
+      return [];
+    }),
+
+  getInsiderTrading: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      limit: z.number().int().min(1).max(200).default(50),
+      provider: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const providers = input.provider ? [input.provider] : ["sec", "fmp"];
+      for (const provider of providers) {
+        try {
+          const result = await getOpenBBClient().getInsiderTrading(input.symbol, {
+            limit: input.limit,
+            provider,
+          });
+          if (result.length > 0) return result;
+        } catch {
+          // try next
+        }
+      }
+      return [];
+    }),
+
+  getInstitutionalHolders: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      limit: z.number().int().min(1).max(200).default(25),
+      provider: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const providers = input.provider ? [input.provider] : ["fmp"];
+      for (const provider of providers) {
+        try {
+          const result = await getOpenBBClient().getInstitutionalHolders(input.symbol, {
+            limit: input.limit,
+            provider,
+          });
+          if (result.length > 0) return result;
+        } catch {
+          // try next
+        }
+      }
+      return [];
+    }),
+
+  getShortInterest: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const providers = input.provider ? [input.provider] : ["finra"];
+      for (const provider of providers) {
+        try {
+          const result = await getOpenBBClient().getShortInterest(input.symbol, provider);
           if (result.length > 0) return result;
         } catch {
           // try next

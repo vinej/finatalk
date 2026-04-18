@@ -245,3 +245,39 @@ export type PriceTarget = {
   currency: string | null;
   url: string | null;
 };
+
+export type InsiderTrade = {
+  symbol: string;
+  filingDate: string | null;
+  transactionDate: string | null;
+  ownerName: string | null;
+  ownerTitle: string | null;
+  officer: boolean | null;
+  transactionType: string | null;
+  acquisitionOrDisposition: string | null;
+  securitiesOwned: number | null;
+  securitiesTransacted: number | null;
+  transactionPrice: number | null;
+  transactionValue: number | null;
+  filingUrl: string | null;
+};
+
+export type ShortInterestRecord = {
+  symbol: string;
+  settlementDate: string | null;
+  shortInterest: number | null;
+  averageDailyVolume: number | null;
+  daysToCover: number | null;
+  changePercent: number | null;
+};
+
+export type InstitutionalHolder = {
+  symbol: string;
+  holderName: string | null;
+  dateReported: string | null;
+  sharesHeld: number | null;
+  sharesChange: number | null;
+  sharesChangePercent: number | null;
+  marketValue: number | null;
+  percentHeld: number | null;
+};

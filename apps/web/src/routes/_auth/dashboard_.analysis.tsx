@@ -10,6 +10,8 @@ import { IndicatorLibrary } from "@/components/analysis/indicator-library";
 import { IndicatorList } from "@/components/analysis/indicator-list";
 import { EtfSection } from "@/components/analysis/etf-section";
 import { AnalystSection } from "@/components/analysis/analyst-section";
+import { OwnershipSection } from "@/components/analysis/ownership-section";
+import { ShortInterestSection } from "@/components/analysis/short-interest-section";
 import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/analysis/open-analysis-action";
 import { SaveAnalysisAction } from "@/components/analysis/save-analysis-action";
 import { ConfidenceBadge } from "@/components/confidence-badge";
@@ -24,6 +26,7 @@ import {
   type IndicatorSpec,
 } from "@/lib/indicator-defaults";
 import { loadAnalysisState, saveAnalysisState } from "@/lib/analysis-persistence";
+import { COMMODITIES, COMMODITY_EXCHANGE_BY_CATEGORY } from "@/lib/commodities";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
@@ -64,7 +67,9 @@ function AnalysisPage() {
   const [latestCollapsed, setLatestCollapsed] = useState<boolean>(persisted?.latestCollapsed ?? false);
   const [etfCollapsed, setEtfCollapsed] = useState<boolean>(persisted?.etfCollapsed ?? false);
   const [analystCollapsed, setAnalystCollapsed] = useState<boolean>(persisted?.analystCollapsed ?? false);
-  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
+  const [ownershipCollapsed, setOwnershipCollapsed] = useState<boolean>(persisted?.ownershipCollapsed ?? false);
+  const [shortInterestCollapsed, setShortInterestCollapsed] = useState<boolean>(persisted?.shortInterestCollapsed ?? false);
+  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf" | "commodity">(persisted?.assetTypeFilter ?? "all");
   const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
 
@@ -95,6 +100,8 @@ function AnalysisPage() {
       latestCollapsed,
       etfCollapsed,
       analystCollapsed,
+      ownershipCollapsed,
+      shortInterestCollapsed,
       assetTypeFilter,
       exchangeFilter,
     });
@@ -114,6 +121,8 @@ function AnalysisPage() {
     latestCollapsed,
     etfCollapsed,
     analystCollapsed,
+    ownershipCollapsed,
+    shortInterestCollapsed,
     assetTypeFilter,
     exchangeFilter,
   ]);
@@ -243,22 +252,38 @@ function AnalysisPage() {
     }
   }
 
-  const submittedSymbolMeta = useMemo(() => {
+  const commodityEntries = useMemo(
+    () =>
+      COMMODITIES.map((c) => ({
+        symbol: c.symbol,
+        name: t(c.nameKey),
+        exchange: COMMODITY_EXCHANGE_BY_CATEGORY[c.category],
+        assetType: "commodity" as const,
+      })),
+    [t],
+  );
+
+  const mergedSymbols = useMemo(() => {
     const raw = symbolsQuery.data?.symbols ?? [];
-    const match = raw.find((s) => s.symbol === submittedSymbol);
+    return [...raw, ...commodityEntries];
+  }, [symbolsQuery.data, commodityEntries]);
+
+  const submittedSymbolMeta = useMemo(() => {
+    const match = mergedSymbols.find((s) => s.symbol === submittedSymbol);
     return match ?? null;
-  }, [symbolsQuery.data, submittedSymbol]);
+  }, [mergedSymbols, submittedSymbol]);
 
   const availableExchanges = useMemo(() => {
-    const raw = symbolsQuery.data?.symbols ?? [];
     const set = new Set<string>();
-    for (const s of raw) if (s.exchange) set.add(s.exchange);
+    for (const s of mergedSymbols) if (s.exchange) set.add(s.exchange);
     return [...set].sort();
-  }, [symbolsQuery.data]);
+  }, [mergedSymbols]);
 
   const suggestions = useMemo(() => {
-    const raw = symbolsQuery.data?.symbols ?? [];
-    const byType = assetTypeFilter === "all" ? raw : raw.filter((s) => s.assetType === assetTypeFilter);
+    const byType =
+      assetTypeFilter === "all"
+        ? mergedSymbols
+        : mergedSymbols.filter((s) => s.assetType === assetTypeFilter);
     const all = exchangeFilter === "all" ? byType : byType.filter((s) => s.exchange === exchangeFilter);
     const q = symbolInput.trim().toUpperCase();
     if (!q) return all.slice(0, 200);
@@ -270,7 +295,7 @@ function AnalysisPage() {
       if (starts.length >= 200) break;
     }
     return [...starts, ...contains].slice(0, 200);
-  }, [symbolsQuery.data, symbolInput, assetTypeFilter, exchangeFilter]);
+  }, [mergedSymbols, symbolInput, assetTypeFilter, exchangeFilter]);
 
   useEffect(() => {
     if (query.error) toast.error(query.error.message ?? t("analysis.fetchFailed"));
@@ -412,12 +437,13 @@ function AnalysisPage() {
               <select
                 id="assetType"
                 value={assetTypeFilter}
-                onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf")}
+                onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf" | "commodity")}
                 className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
               >
                 <option value="all">{t("analysis.assetAll")}</option>
                 <option value="stock">{t("analysis.assetStock")}</option>
                 <option value="etf">{t("analysis.assetEtf")}</option>
+                <option value="commodity">{t("analysis.assetCommodity")}</option>
               </select>
             </div>
             <div className="grid gap-1.5">
@@ -448,7 +474,7 @@ function AnalysisPage() {
               <datalist id="symbol-suggestions">
                 {suggestions.map((s) => (
                   <option key={s.symbol} value={s.symbol}>
-                    {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : ""}
+                    {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : s.assetType === "commodity" ? " · Futures" : ""}
                   </option>
                 ))}
               </datalist>
@@ -531,6 +557,22 @@ function AnalysisPage() {
           symbol={submittedSymbol}
           collapsed={analystCollapsed}
           onToggleCollapsed={() => setAnalystCollapsed((c) => !c)}
+        />
+      )}
+
+      {submittedSymbol && (
+        <OwnershipSection
+          symbol={submittedSymbol}
+          collapsed={ownershipCollapsed}
+          onToggleCollapsed={() => setOwnershipCollapsed((c) => !c)}
+        />
+      )}
+
+      {submittedSymbol && (
+        <ShortInterestSection
+          symbol={submittedSymbol}
+          collapsed={shortInterestCollapsed}
+          onToggleCollapsed={() => setShortInterestCollapsed((c) => !c)}
         />
       )}
 

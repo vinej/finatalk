@@ -8,6 +8,7 @@ dependencies = [
   "openbb-yfinance",
   "openbb-fmp",
   "openbb-sec",
+  "openbb-finra",
   "openbb-fred",
   "openbb-cboe",
   "openbb-ecb",
