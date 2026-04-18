@@ -13,6 +13,8 @@ import type {
   EtfInfo,
   EtfSectorWeight,
   IndexConstituent,
+  AnalystConsensus,
+  PriceTarget,
   NewsArticle,
   NewsOpts,
   FredDataPoint,
@@ -378,6 +380,73 @@ export class OpenBBClient {
       cik: r.cik != null ? String(r.cik) : null,
       founded: r.founded != null ? String(r.founded) : null,
     })).filter((r) => r.symbol);
+  }
+
+  // ── Analyst estimates ─────────────────────────────────────────────────
+
+  async getAnalystConsensus(symbol: string, provider?: string): Promise<AnalystConsensus | null> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/estimates/consensus", {
+      symbol,
+      provider: provider ?? "yfinance",
+    });
+    const r = raw[0];
+    if (!r) return null;
+    const num = (k: string): number | null => {
+      const v = r[k];
+      if (v == null) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    return {
+      symbol: String(r.symbol ?? symbol),
+      targetHigh: num("target_high"),
+      targetLow: num("target_low"),
+      targetMean: num("target_consensus") ?? num("target_mean"),
+      targetMedian: num("target_median"),
+      recommendation: r.recommendation != null ? String(r.recommendation) : null,
+      recommendationMean: num("recommendation_mean"),
+      numberOfAnalysts: num("number_of_analysts"),
+      currentPrice: num("current_price"),
+      currency: r.currency != null ? String(r.currency) : null,
+    };
+  }
+
+  async getPriceTargets(
+    symbol: string,
+    opts?: { limit?: number; provider?: string },
+  ): Promise<PriceTarget[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/estimates/price_target", {
+      symbol,
+      limit: opts?.limit ?? 25,
+      provider: opts?.provider ?? "benzinga",
+    });
+    const num = (r: Record<string, unknown>, k: string): number | null => {
+      const v = r[k];
+      if (v == null) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    return raw.map((r) => ({
+      symbol: String(r.symbol ?? symbol),
+      publishedDate: r.published_date != null ? String(r.published_date) : null,
+      analystName: r.analyst_name != null ? String(r.analyst_name) : null,
+      analystFirm: r.analyst_firm != null
+        ? String(r.analyst_firm)
+        : r.analyst_company != null
+          ? String(r.analyst_company)
+          : null,
+      priceTarget: num(r, "price_target") ?? num(r, "adj_price_target"),
+      priceTargetPrevious: num(r, "price_target_previous") ?? num(r, "previous_adj_price_target"),
+      ratingCurrent: r.rating_current != null ? String(r.rating_current) : null,
+      ratingPrevious: r.rating_previous != null ? String(r.rating_previous) : null,
+      action: r.action != null ? String(r.action) : null,
+      currency: r.currency != null ? String(r.currency) : null,
+      url: r.url_news != null
+        ? String(r.url_news)
+        : r.url_analyst != null
+          ? String(r.url_analyst)
+          : null,
+    }));
   }
 
   // ── News ──────────────────────────────────────────────────────────────

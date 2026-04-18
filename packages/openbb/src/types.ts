@@ -218,3 +218,30 @@ export type IndexConstituent = {
   cik: string | null;
   founded: string | null;
 };
+
+export type AnalystConsensus = {
+  symbol: string;
+  targetHigh: number | null;
+  targetLow: number | null;
+  targetMean: number | null;
+  targetMedian: number | null;
+  recommendation: string | null;
+  recommendationMean: number | null;
+  numberOfAnalysts: number | null;
+  currentPrice: number | null;
+  currency: string | null;
+};
+
+export type PriceTarget = {
+  symbol: string;
+  publishedDate: string | null;
+  analystName: string | null;
+  analystFirm: string | null;
+  priceTarget: number | null;
+  priceTargetPrevious: number | null;
+  ratingCurrent: string | null;
+  ratingPrevious: string | null;
+  action: string | null;
+  currency: string | null;
+  url: string | null;
+};

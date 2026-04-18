@@ -36,6 +36,7 @@
     "calendar": "Calendar",
     "news": "News",
     "learning": "Learning",
+    "symbols": "Symbols",
     "research": "Research",
     "tax": "Tax Advisor",
     "templates": "Templates",
@@ -115,6 +116,20 @@
     "inception": "Inception",
     "topHoldings": "Top holdings",
     "sectorBreakdown": "Sector breakdown"
+  },
+  "analyst": {
+    "title": "Analyst ratings & price targets",
+    "targetMean": "Mean target",
+    "targetRange": "Target range",
+    "consensus": "Consensus",
+    "numAnalysts": "# analysts",
+    "recentTargets": "Recent analyst actions",
+    "colDate": "Date",
+    "colFirm": "Firm",
+    "colAction": "Action",
+    "colRating": "Rating",
+    "colTarget": "Target",
+    "openLink": "Open source"
   },
   "analysis": {
     "title": "Technical analysis",

@@ -19,6 +19,7 @@ export type PersistedAnalysisState = {
   indicatorsCollapsed?: boolean;
   latestCollapsed?: boolean;
   etfCollapsed?: boolean;
+  analystCollapsed?: boolean;
   assetTypeFilter?: "all" | "stock" | "etf";
   exchangeFilter?: string;
 };

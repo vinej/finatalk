@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useLastPortfolioId } from "@/lib/portfolio-persistence";
 
 const LEARNING_COLLAPSED_KEY = "finatalk:sidebar-learning-collapsed";
+const SYMBOLS_COLLAPSED_KEY = "finatalk:sidebar-symbols-collapsed";
 
 export function Sidebar() {
   const { t } = useTranslation();
@@ -16,10 +17,20 @@ export function Sidebar() {
     return window.localStorage.getItem(LEARNING_COLLAPSED_KEY) === "1";
   });
 
+  const [symbolsCollapsed, setSymbolsCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(SYMBOLS_COLLAPSED_KEY) === "1";
+  });
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(LEARNING_COLLAPSED_KEY, learningCollapsed ? "1" : "0");
   }, [learningCollapsed]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(SYMBOLS_COLLAPSED_KEY, symbolsCollapsed ? "1" : "0");
+  }, [symbolsCollapsed]);
 
   const portfolioLink = lastPortfolioId
     ? ({
@@ -31,16 +42,19 @@ export function Sidebar() {
   const topItems = [
     { key: "home", to: "/dashboard", label: t("nav.home"), icon: Home },
     { key: "analysis", to: "/dashboard/analysis", label: t("nav.analysis"), icon: LineChart },
-    { key: "watchlist", to: "/dashboard/watchlist", label: t("nav.watchlist"), icon: Eye },
     { key: "portfolios", label: t("nav.portfolios"), icon: Briefcase, link: portfolioLink, matchPrefix: "/dashboard/portfolios" },
-    { key: "comparison", to: "/dashboard/comparison", label: t("nav.comparison"), icon: GitCompareArrows },
-    { key: "screener", to: "/dashboard/screener", label: t("nav.screener"), icon: ScanSearch },
     { key: "indices", to: "/dashboard/indices", label: t("nav.indices"), icon: Landmark },
     { key: "calendar", to: "/dashboard/calendar", label: t("nav.calendar"), icon: CalendarDays },
     { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
     { key: "tax", to: "/dashboard/tax", label: t("nav.tax"), icon: Receipt },
     { key: "templates", to: "/dashboard/templates", label: t("nav.templates"), icon: Copy },
+  ] as const;
+
+  const symbolsItems = [
+    { key: "watchlist", to: "/dashboard/watchlist", label: t("nav.watchlist"), icon: Eye },
+    { key: "comparison", to: "/dashboard/comparison", label: t("nav.comparison"), icon: GitCompareArrows },
+    { key: "screener", to: "/dashboard/screener", label: t("nav.screener"), icon: ScanSearch },
   ] as const;
 
   const learningItems = [
@@ -55,6 +69,23 @@ export function Sidebar() {
     <aside className="hidden w-56 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] p-3 md:block">
       <nav className="flex flex-col gap-1">
         {topItems.map((item) => (
+          <SidebarLink key={item.key} item={item} />
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setSymbolsCollapsed((c) => !c)}
+          className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
+          aria-expanded={!symbolsCollapsed}
+        >
+          {symbolsCollapsed ? (
+            <ChevronRight className="h-3 w-3" aria-hidden />
+          ) : (
+            <ChevronDown className="h-3 w-3" aria-hidden />
+          )}
+          <span>{t("nav.symbols")}</span>
+        </button>
+        {!symbolsCollapsed && symbolsItems.map((item) => (
           <SidebarLink key={item.key} item={item} />
         ))}
 

@@ -21,6 +21,8 @@ export type {
   EtfSectorWeight,
   EtfCountryWeight,
   IndexConstituent,
+  AnalystConsensus,
+  PriceTarget,
   NewsArticle,
   NewsOpts,
   HistoricalPriceOpts,

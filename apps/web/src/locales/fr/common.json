@@ -36,6 +36,7 @@
     "calendar": "Calendrier",
     "news": "Nouvelles",
     "learning": "Apprentissage",
+    "symbols": "Symboles",
     "research": "Recherche",
     "tax": "Conseiller fiscal",
     "templates": "Modèles",
@@ -115,6 +116,20 @@
     "inception": "Création",
     "topHoldings": "Principales positions",
     "sectorBreakdown": "Répartition sectorielle"
+  },
+  "analyst": {
+    "title": "Notations d'analystes et cours cibles",
+    "targetMean": "Cible moyenne",
+    "targetRange": "Fourchette",
+    "consensus": "Consensus",
+    "numAnalysts": "Nb analystes",
+    "recentTargets": "Actions d'analystes récentes",
+    "colDate": "Date",
+    "colFirm": "Firme",
+    "colAction": "Action",
+    "colRating": "Notation",
+    "colTarget": "Cible",
+    "openLink": "Ouvrir la source"
   },
   "analysis": {
     "title": "Analyse technique",

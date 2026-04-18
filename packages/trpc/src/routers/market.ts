@@ -801,6 +801,49 @@ export const marketRouter = createTRPCRouter({
       }
     }),
 
+  getAnalystConsensus: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const providers = input.provider ? [input.provider] : ["yfinance", "fmp"];
+      for (const provider of providers) {
+        try {
+          const result = await getOpenBBClient().getAnalystConsensus(input.symbol, provider);
+          if (result) return result;
+        } catch {
+          // try next provider
+        }
+      }
+      return null;
+    }),
+
+  getPriceTargets: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      limit: z.number().int().min(1).max(100).default(25),
+      provider: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const providers = input.provider ? [input.provider] : ["benzinga", "fmp"];
+      for (const provider of providers) {
+        try {
+          const result = await getOpenBBClient().getPriceTargets(input.symbol, {
+            limit: input.limit,
+            provider,
+          });
+          if (result.length > 0) return result;
+        } catch {
+          // try next
+        }
+      }
+      return [];
+    }),
+
   getEtfInfo: protectedProcedure
     .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
     .query(async ({ input }) => {

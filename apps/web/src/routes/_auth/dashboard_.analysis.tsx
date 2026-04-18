@@ -9,6 +9,7 @@ import { MarketChart } from "@/components/market-chart";
 import { IndicatorLibrary } from "@/components/analysis/indicator-library";
 import { IndicatorList } from "@/components/analysis/indicator-list";
 import { EtfSection } from "@/components/analysis/etf-section";
+import { AnalystSection } from "@/components/analysis/analyst-section";
 import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/analysis/open-analysis-action";
 import { SaveAnalysisAction } from "@/components/analysis/save-analysis-action";
 import { ConfidenceBadge } from "@/components/confidence-badge";
@@ -62,6 +63,7 @@ function AnalysisPage() {
   const [indicatorsCollapsed, setIndicatorsCollapsed] = useState<boolean>(persisted?.indicatorsCollapsed ?? false);
   const [latestCollapsed, setLatestCollapsed] = useState<boolean>(persisted?.latestCollapsed ?? false);
   const [etfCollapsed, setEtfCollapsed] = useState<boolean>(persisted?.etfCollapsed ?? false);
+  const [analystCollapsed, setAnalystCollapsed] = useState<boolean>(persisted?.analystCollapsed ?? false);
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
   const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
@@ -92,6 +94,7 @@ function AnalysisPage() {
       indicatorsCollapsed,
       latestCollapsed,
       etfCollapsed,
+      analystCollapsed,
       assetTypeFilter,
       exchangeFilter,
     });
@@ -110,6 +113,7 @@ function AnalysisPage() {
     indicatorsCollapsed,
     latestCollapsed,
     etfCollapsed,
+    analystCollapsed,
     assetTypeFilter,
     exchangeFilter,
   ]);
@@ -519,6 +523,14 @@ function AnalysisPage() {
           symbol={submittedSymbol}
           collapsed={etfCollapsed}
           onToggleCollapsed={() => setEtfCollapsed((c) => !c)}
+        />
+      )}
+
+      {submittedSymbol && (
+        <AnalystSection
+          symbol={submittedSymbol}
+          collapsed={analystCollapsed}
+          onToggleCollapsed={() => setAnalystCollapsed((c) => !c)}
         />
       )}
 
