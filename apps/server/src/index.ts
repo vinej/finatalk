@@ -141,7 +141,7 @@ app.use("/api/auth", authLimiter, toNodeHandler(auth));
 // ── tRPC ──────────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "1mb" }));
 
-const MAX_TRPC_BATCH = 10;
+const MAX_TRPC_BATCH = 20;
 app.use("/api/trpc", (req, res, next) => {
   const procedures = (req.path.split("/").pop() ?? "").split(",");
   if (procedures.length > MAX_TRPC_BATCH) {

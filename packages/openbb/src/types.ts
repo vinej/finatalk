@@ -262,6 +262,53 @@ export type InsiderTrade = {
   filingUrl: string | null;
 };
 
+export type YieldCurvePoint = {
+  date: string;
+  maturity: string;
+  maturityYears: number;
+  rate: number;
+};
+
+export type CentralBankRatePoint = {
+  date: string;
+  rate: number;
+  upper: number | null;
+  lower: number | null;
+};
+
+export type YieldCurveOpts = {
+  date?: string | undefined;
+  provider?: string | undefined;
+  country?: string | undefined;
+};
+
+export type CentralBankRateOpts = {
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  provider?: string | undefined;
+};
+
+export type TreasurySpreadOpts = {
+  maturity?: string | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  provider?: string | undefined;
+};
+
+export type OecdInterestRatePoint = {
+  date: string;
+  rate: number;
+  country: string | null;
+};
+
+export type OecdInterestRateOpts = {
+  country?: string | undefined;
+  duration?: "immediate" | "short" | "long" | undefined;
+  frequency?: "monthly" | "quarter" | "annual" | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+};
+
 export type ShortInterestRecord = {
   symbol: string;
   settlementDate: string | null;

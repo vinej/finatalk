@@ -18,6 +18,13 @@ import type {
   InsiderTrade,
   InstitutionalHolder,
   ShortInterestRecord,
+  YieldCurvePoint,
+  YieldCurveOpts,
+  CentralBankRatePoint,
+  CentralBankRateOpts,
+  TreasurySpreadOpts,
+  OecdInterestRatePoint,
+  OecdInterestRateOpts,
   NewsArticle,
   NewsOpts,
   FredDataPoint,
@@ -543,6 +550,86 @@ export class OpenBBClient {
         num(r, "shares_change_percent"),
       marketValue: num(r, "market_value") ?? num(r, "value"),
       percentHeld: num(r, "weight") ?? num(r, "percent_of_portfolio"),
+    }));
+  }
+
+  // ── Fixed Income ──────────────────────────────────────────────────────
+
+  async getYieldCurve(opts?: YieldCurveOpts): Promise<YieldCurvePoint[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/fixedincome/government/yield_curve", {
+      provider: opts?.provider ?? "fred",
+      date: opts?.date,
+      country: opts?.country,
+    });
+    return raw.map((r) => {
+      const rawRate = Number(r.rate ?? 0);
+      const rate = rawRate > 0 && rawRate < 1 ? rawRate * 100 : rawRate;
+      return {
+        date: String(r.date ?? ""),
+        maturity: String(r.maturity ?? ""),
+        maturityYears: Number(r.maturity_years ?? 0),
+        rate,
+      };
+    });
+  }
+
+  async getOecdInterestRate(opts?: OecdInterestRateOpts): Promise<OecdInterestRatePoint[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/economy/interest_rates", {
+      provider: "oecd",
+      country: opts?.country ?? "united_states",
+      duration: opts?.duration ?? "immediate",
+      frequency: opts?.frequency ?? "monthly",
+      start_date: opts?.startDate,
+      end_date: opts?.endDate,
+    });
+    return raw.map((r) => {
+      const v = Number(r.value ?? r.rate ?? 0);
+      const rate = v > 0 && v < 1 ? v * 100 : v;
+      return {
+        date: String(r.date ?? ""),
+        rate,
+        country: r.country != null ? String(r.country) : null,
+      };
+    });
+  }
+
+  async getCentralBankRate(
+    rate: "effr" | "sofr" | "ecb" | "sonia" | "estr" | "iorb",
+    opts?: CentralBankRateOpts,
+  ): Promise<CentralBankRatePoint[]> {
+    // Only federal_reserve and fred are valid for these endpoints; ecb/estr/sonia/iorb require fred.
+    const defaultProvider = rate === "effr" || rate === "sofr" ? "federal_reserve" : "fred";
+    const raw = await this.request<Array<Record<string, unknown>>>(`/fixedincome/rate/${rate}`, {
+      provider: opts?.provider ?? defaultProvider,
+      start_date: opts?.startDate,
+      end_date: opts?.endDate,
+    });
+    return raw.map((r) => {
+      const n = (v: unknown): number | null => {
+        if (v == null) return null;
+        const num = Number(v);
+        if (!Number.isFinite(num)) return null;
+        return num > 0 && num < 1 ? num * 100 : num;
+      };
+      return {
+        date: String(r.date ?? ""),
+        rate: n(r.rate) ?? 0,
+        upper: n(r.target_range_upper),
+        lower: n(r.target_range_lower),
+      };
+    });
+  }
+
+  async getTreasurySpread(opts?: TreasurySpreadOpts): Promise<{ date: string; rate: number }[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/fixedincome/spreads/tcm", {
+      provider: opts?.provider ?? "fred",
+      maturity: opts?.maturity ?? "3m",
+      start_date: opts?.startDate,
+      end_date: opts?.endDate,
+    });
+    return raw.map((r) => ({
+      date: String(r.date ?? ""),
+      rate: Number(r.rate ?? 0),
     }));
   }
 

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Receipt, ScanSearch, Settings, Wheat } from "lucide-react";
+import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Percent, PercentCircle, Receipt, ScanSearch, Settings, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,7 @@ export function Sidebar() {
     { key: "portfolios", label: t("nav.portfolios"), icon: Briefcase, link: portfolioLink, matchPrefix: "/dashboard/portfolios" },
     { key: "indices", to: "/dashboard/indices", label: t("nav.indices"), icon: Landmark },
     { key: "commodities", to: "/dashboard/commodities", label: t("nav.commodities"), icon: Wheat },
+    { key: "rates", to: "/dashboard/rates", label: t("nav.rates"), icon: Percent },
     { key: "calendar", to: "/dashboard/calendar", label: t("nav.calendar"), icon: CalendarDays },
     { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
@@ -61,6 +62,7 @@ export function Sidebar() {
   const learningItems = [
     { key: "learn-ta", to: "/dashboard/learn-ta", label: t("nav.learnTa"), icon: BookOpen },
     { key: "learn-investment", to: "/dashboard/learn-investment", label: t("nav.learnInvestment"), icon: GraduationCap },
+    { key: "learn-rates", to: "/dashboard/learn-rates", label: t("nav.learnRates"), icon: PercentCircle },
     { key: "strategies", to: "/dashboard/strategies", label: t("nav.strategies"), icon: Lightbulb },
   ] as const;
 

@@ -41,7 +41,16 @@
       "Bash(curl -s \"http://127.0.0.1:6900/api/v1/etf/holdings?symbol=SPY&provider=fmp\")",
       "Bash(pnpm exec *)",
       "Bash(node --experimental-strip-types -e ' *)",
-      "Bash(node -e \"const d=require\\('C:/Users/jyv/AppData/Local/Temp/obb-openapi.json'\\); const keys = Object.keys\\(d.paths\\).filter\\(k=>k.startsWith\\('/api/v1/equity/'\\)\\); console.log\\(keys.sort\\(\\).join\\('\\\\n'\\)\\);\")"
+      "Bash(node -e \"const d=require\\('C:/Users/jyv/AppData/Local/Temp/obb-openapi.json'\\); const keys = Object.keys\\(d.paths\\).filter\\(k=>k.startsWith\\('/api/v1/equity/'\\)\\); console.log\\(keys.sort\\(\\).join\\('\\\\n'\\)\\);\")",
+      "Bash(curl -s \"http://localhost:6900/api/v1/fixedincome/government/yield_curve?provider=fred\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data',c=>s+=c\\); process.stdin.on\\('end',\\(\\)=>{const d=JSON.parse\\(s\\); console.log\\(JSON.stringify\\(d.results,null,2\\)\\);}\\);\")",
+      "Bash(curl -s \"http://localhost:6900/api/v1/fixedincome/rate/effr?provider=federal_reserve&start_date=2026-04-01\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data',c=>s+=c\\); process.stdin.on\\('end',\\(\\)=>{const d=JSON.parse\\(s\\); console.log\\('First:', JSON.stringify\\(d.results?.[0]\\)\\); console.log\\('Last:', JSON.stringify\\(d.results?.[d.results.length-1]\\)\\); console.log\\('Len:', d.results?.length\\);}\\);\")",
+      "Bash(curl -s \"http://localhost:6900/api/v1/fixedincome/spreads/tcm?provider=fred\")",
+      "Bash(node -e \"const d=require\\('C:/Users/jyv/AppData/Local/Temp/obb-openapi.json'\\); const p=d.paths['/api/v1/fixedincome/spreads/tcm'].get; console.log\\('Params:', JSON.stringify\\(p.parameters.map\\(x=>\\({name:x.name,default:x.schema?.default,enum:x.schema?.enum}\\)\\),null,2\\)\\);\")",
+      "Bash(curl -s \"http://localhost:6900/api/v1/fixedincome/government/yield_curve?provider=fred&date=2025-04-18\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data',c=>s+=c\\); process.stdin.on\\('end',\\(\\)=>{const d=JSON.parse\\(s\\); console.log\\('Len:', d.results?.length, 'First:', JSON.stringify\\(d.results?.[0]\\)\\);}\\);\")",
+      "Bash(pnpm --filter @finatalk/openbb typecheck)"
     ]
   }
 }

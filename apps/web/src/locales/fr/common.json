@@ -29,11 +29,13 @@
     "portfolios": "Portefeuilles",
     "learnTa": "Apprendre l'AT",
     "learnInvestment": "Apprendre l'investissement",
+    "learnRates": "Analyser les taux",
     "strategies": "Stratégies",
     "comparison": "Comparer",
     "screener": "Filtre",
     "indices": "Indices",
     "commodities": "Matières premières",
+    "rates": "Taux",
     "calendar": "Calendrier",
     "news": "Nouvelles",
     "learning": "Apprentissage",
@@ -63,6 +65,17 @@
     "whenToBuy": "Quand l'acheter",
     "whyBuy": "Pourquoi l'acheter",
     "profitsQuebec": "Comment les profits sont versés (Québec / Canada)",
+    "furtherReading": "Pour aller plus loin",
+    "generalResources": "Ressources générales"
+  },
+  "learnRates": {
+    "title": "Analyser les taux",
+    "intro": "Un guide pour lire le tableau de bord Taux et traduire les courbes de rendement, les écarts et les taux directeurs en décisions d'investissement concrètes. Couvre les contextes américain et canadien, avec un accent sur ce que l'investisseur particulier canadien peut appliquer.",
+    "disclaimer": "Contenu éducatif — ne constitue pas un conseil en placement, fiscal ou juridique. Les régimes de taux évoluent ; relisez les données sur la page Taux avant d'agir. Consultez un professionnel qualifié pour votre situation personnelle.",
+    "tableOfContents": "Sujets",
+    "howToRead": "Comment le lire",
+    "whatItMeans": "Ce que cela signifie",
+    "investorAction": "Que faire comme investisseur",
     "furtherReading": "Pour aller plus loin",
     "generalResources": "Ressources générales"
   },
@@ -666,6 +679,81 @@
     "clones": "Clones",
     "by": "par",
     "filterByTag": "Filtrer par étiquette"
+  },
+  "rates": {
+    "title": "Taux et Revenu fixe",
+    "subtitle": "Courbes des taux, écarts clés et taux directeurs des banques centrales.",
+    "tab": {
+      "us": "États-Unis",
+      "ca": "Canada"
+    },
+    "yieldCurve": {
+      "title": "Courbe des taux",
+      "titleUs": "Courbe des taux du Trésor américain",
+      "titleCa": "Courbe des taux du gouvernement du Canada",
+      "showHistorical": "Afficher les historiques",
+      "today": "Aujourd'hui",
+      "oneMonthAgo": "Il y a 1 mois",
+      "sixMonthsAgo": "Il y a 6 mois",
+      "oneYearAgo": "Il y a 1 an",
+      "inversionWarning": "La courbe des taux est inversée — historiquement un indicateur avancé de récession.",
+      "noData": "Aucune donnée de courbe des taux disponible."
+    },
+    "spreads": {
+      "spread10y3m": "Écart 10A – 3M",
+      "desc10y3m": "Rendement du Trésor 10 ans moins 3 mois. Signal de récession très surveillé.",
+      "spread10y2y": "Écart 10A – 2A",
+      "desc10y2y": "Rendement du Trésor 10 ans moins 2 ans. Indicateur classique de la courbe des taux.",
+      "percentagePoints": "pp",
+      "invertedSignal": "Inversé — signal de récession",
+      "asOf": "au",
+      "noData": "Aucune donnée d'écart disponible."
+    },
+    "ca": {
+      "region": "CA",
+      "bocLabel": "Taux directeur BdC",
+      "bocDesc": "Taux directeur de la Banque du Canada (taux immédiat OCDE, mensuel).",
+      "goc10yLabel": "Obligation 10 ans GdC (OCDE long)",
+      "goc10yDesc": "Rendement canadien à long terme, moyenne mensuelle.",
+      "curveHighlights": "Points saillants de la courbe canadienne",
+      "tile2y": "Rendement 2A",
+      "tile10y": "Rendement 10A",
+      "tile10y2ySpread": "10A – 2A",
+      "tileAsOf": "Date de la courbe"
+    },
+    "policy": {
+      "title": "Taux directeurs",
+      "vs1MonthAgo": "vs il y a 1 mois",
+      "vsPrev": "vs préc.",
+      "targetRange": "Plage cible :",
+      "asOf": "au",
+      "noData": "Aucune donnée.",
+      "effr": {
+        "label": "Fed Funds (EFFR)",
+        "region": "É-U",
+        "desc": "Taux effectif des fonds fédéraux"
+      },
+      "sofr": {
+        "label": "SOFR",
+        "region": "É-U",
+        "desc": "Taux de financement au jour le jour garanti"
+      },
+      "ecb": {
+        "label": "Taux BCE",
+        "region": "UE",
+        "desc": "Taux de refinancement principal de la BCE"
+      },
+      "sonia": {
+        "label": "SONIA",
+        "region": "R-U",
+        "desc": "Taux moyen au jour le jour de la livre sterling"
+      },
+      "estr": {
+        "label": "€STR",
+        "region": "UE",
+        "desc": "Taux à court terme en euros"
+      }
+    }
   },
   "language": "Langue",
   "theme": { "light": "Clair", "dark": "Sombre", "system": "Système" }

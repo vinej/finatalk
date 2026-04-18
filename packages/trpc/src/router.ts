@@ -10,6 +10,7 @@ import { watchlistRouter } from "./routers/watchlist";
 import { screenerRouter } from "./routers/screener";
 import { templateRouter } from "./routers/template";
 import { newsRouter } from "./routers/news";
+import { ratesRouter } from "./routers/rates";
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
   screener: screenerRouter,
   template: templateRouter,
   news: newsRouter,
+  rates: ratesRouter,
 });
 
 export type AppRouter = typeof appRouter;

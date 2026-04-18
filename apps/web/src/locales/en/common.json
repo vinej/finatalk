@@ -29,11 +29,13 @@
     "portfolios": "Portfolios",
     "learnTa": "Learn TA",
     "learnInvestment": "Learn Investment",
+    "learnRates": "Analyse Rates",
     "strategies": "Strategies",
     "comparison": "Compare",
     "screener": "Screener",
     "indices": "Indices",
     "commodities": "Commodities",
+    "rates": "Rates",
     "calendar": "Calendar",
     "news": "News",
     "learning": "Learning",
@@ -63,6 +65,17 @@
     "whenToBuy": "When to buy",
     "whyBuy": "Why buy it",
     "profitsQuebec": "How profits are paid (Québec / Canada)",
+    "furtherReading": "Further reading",
+    "generalResources": "General resources"
+  },
+  "learnRates": {
+    "title": "Analyse rates",
+    "intro": "A guide to reading the Rates dashboard and translating yield curves, spreads, and central-bank policy rates into concrete investment decisions. Covers both US and Canadian context, with a focus on what Canadian retail investors can act on.",
+    "disclaimer": "Educational content — not investment, tax, or legal advice. Rate regimes evolve; re-read the data on the Rates page before acting. Consult a qualified advisor for your personal situation.",
+    "tableOfContents": "Topics",
+    "howToRead": "How to read it",
+    "whatItMeans": "What it means",
+    "investorAction": "What to do as an investor",
     "furtherReading": "Further reading",
     "generalResources": "General resources"
   },
@@ -666,6 +679,81 @@
     "clones": "Clones",
     "by": "by",
     "filterByTag": "Filter by tag"
+  },
+  "rates": {
+    "title": "Rates & Fixed Income",
+    "subtitle": "Yield curves, key spreads, and central bank policy rates.",
+    "tab": {
+      "us": "United States",
+      "ca": "Canada"
+    },
+    "yieldCurve": {
+      "title": "Yield Curve",
+      "titleUs": "US Treasury Yield Curve",
+      "titleCa": "Government of Canada Yield Curve",
+      "showHistorical": "Show historical overlays",
+      "today": "Today",
+      "oneMonthAgo": "1 month ago",
+      "sixMonthsAgo": "6 months ago",
+      "oneYearAgo": "1 year ago",
+      "inversionWarning": "Yield curve is inverted — historically a recession leading indicator.",
+      "noData": "No yield curve data available."
+    },
+    "spreads": {
+      "spread10y3m": "10Y – 3M Spread",
+      "desc10y3m": "10-year minus 3-month Treasury yield. Widely watched recession signal.",
+      "spread10y2y": "10Y – 2Y Spread",
+      "desc10y2y": "10-year minus 2-year Treasury yield. Classic yield-curve indicator.",
+      "percentagePoints": "pp",
+      "invertedSignal": "Inverted — recession signal",
+      "asOf": "as of",
+      "noData": "No spread data available."
+    },
+    "ca": {
+      "region": "CA",
+      "bocLabel": "BoC Overnight Rate",
+      "bocDesc": "Bank of Canada policy rate (OECD immediate rate, monthly).",
+      "goc10yLabel": "GoC 10Y (OECD long)",
+      "goc10yDesc": "Canadian long-term government bond yield, monthly average.",
+      "curveHighlights": "Canada Curve Highlights",
+      "tile2y": "2Y yield",
+      "tile10y": "10Y yield",
+      "tile10y2ySpread": "10Y – 2Y",
+      "tileAsOf": "Curve date"
+    },
+    "policy": {
+      "title": "Policy Rates",
+      "vs1MonthAgo": "vs 1mo ago",
+      "vsPrev": "vs prev",
+      "targetRange": "Target range:",
+      "asOf": "as of",
+      "noData": "No data.",
+      "effr": {
+        "label": "Fed Funds (EFFR)",
+        "region": "US",
+        "desc": "Effective Federal Funds Rate"
+      },
+      "sofr": {
+        "label": "SOFR",
+        "region": "US",
+        "desc": "Secured Overnight Financing Rate"
+      },
+      "ecb": {
+        "label": "ECB Main Rate",
+        "region": "EU",
+        "desc": "European Central Bank main refinancing rate"
+      },
+      "sonia": {
+        "label": "SONIA",
+        "region": "UK",
+        "desc": "Sterling Overnight Index Average"
+      },
+      "estr": {
+        "label": "€STR",
+        "region": "EU",
+        "desc": "Euro short-term rate"
+      }
+    }
   },
   "language": "Language",
   "theme": { "light": "Light", "dark": "Dark", "system": "System" }

@@ -24,9 +24,11 @@ import { Route as AuthDashboardStrategiesRouteImport } from './routes/_auth/dash
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
 import { Route as AuthDashboardScreenerRouteImport } from './routes/_auth/dashboard_.screener'
 import { Route as AuthDashboardResearchRouteImport } from './routes/_auth/dashboard_.research'
+import { Route as AuthDashboardRatesRouteImport } from './routes/_auth/dashboard_.rates'
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
 import { Route as AuthDashboardNewsRouteImport } from './routes/_auth/dashboard_.news'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
+import { Route as AuthDashboardLearnRatesRouteImport } from './routes/_auth/dashboard_.learn-rates'
 import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth/dashboard_.learn-investment'
 import { Route as AuthDashboardIndicesRouteImport } from './routes/_auth/dashboard_.indices'
 import { Route as AuthDashboardComparisonRouteImport } from './routes/_auth/dashboard_.comparison'
@@ -109,6 +111,11 @@ const AuthDashboardResearchRoute = AuthDashboardResearchRouteImport.update({
   path: '/dashboard/research',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardRatesRoute = AuthDashboardRatesRouteImport.update({
+  id: '/dashboard_/rates',
+  path: '/dashboard/rates',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardPortfoliosRoute = AuthDashboardPortfoliosRouteImport.update({
   id: '/dashboard_/portfolios',
   path: '/dashboard/portfolios',
@@ -122,6 +129,11 @@ const AuthDashboardNewsRoute = AuthDashboardNewsRouteImport.update({
 const AuthDashboardLearnTaRoute = AuthDashboardLearnTaRouteImport.update({
   id: '/dashboard_/learn-ta',
   path: '/dashboard/learn-ta',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthDashboardLearnRatesRoute = AuthDashboardLearnRatesRouteImport.update({
+  id: '/dashboard_/learn-rates',
+  path: '/dashboard/learn-rates',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthDashboardLearnInvestmentRoute =
@@ -177,9 +189,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
   '/dashboard/indices': typeof AuthDashboardIndicesRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
+  '/dashboard/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/news': typeof AuthDashboardNewsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
+  '/dashboard/rates': typeof AuthDashboardRatesRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/screener': typeof AuthDashboardScreenerRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
@@ -203,9 +217,11 @@ export interface FileRoutesByTo {
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
   '/dashboard/indices': typeof AuthDashboardIndicesRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
+  '/dashboard/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/news': typeof AuthDashboardNewsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
+  '/dashboard/rates': typeof AuthDashboardRatesRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
   '/dashboard/screener': typeof AuthDashboardScreenerRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
@@ -231,9 +247,11 @@ export interface FileRoutesById {
   '/_auth/dashboard_/comparison': typeof AuthDashboardComparisonRoute
   '/_auth/dashboard_/indices': typeof AuthDashboardIndicesRoute
   '/_auth/dashboard_/learn-investment': typeof AuthDashboardLearnInvestmentRoute
+  '/_auth/dashboard_/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/news': typeof AuthDashboardNewsRoute
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
+  '/_auth/dashboard_/rates': typeof AuthDashboardRatesRoute
   '/_auth/dashboard_/research': typeof AuthDashboardResearchRoute
   '/_auth/dashboard_/screener': typeof AuthDashboardScreenerRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
@@ -259,9 +277,11 @@ export interface FileRouteTypes {
     | '/dashboard/comparison'
     | '/dashboard/indices'
     | '/dashboard/learn-investment'
+    | '/dashboard/learn-rates'
     | '/dashboard/learn-ta'
     | '/dashboard/news'
     | '/dashboard/portfolios'
+    | '/dashboard/rates'
     | '/dashboard/research'
     | '/dashboard/screener'
     | '/dashboard/settings'
@@ -285,9 +305,11 @@ export interface FileRouteTypes {
     | '/dashboard/comparison'
     | '/dashboard/indices'
     | '/dashboard/learn-investment'
+    | '/dashboard/learn-rates'
     | '/dashboard/learn-ta'
     | '/dashboard/news'
     | '/dashboard/portfolios'
+    | '/dashboard/rates'
     | '/dashboard/research'
     | '/dashboard/screener'
     | '/dashboard/settings'
@@ -312,9 +334,11 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/comparison'
     | '/_auth/dashboard_/indices'
     | '/_auth/dashboard_/learn-investment'
+    | '/_auth/dashboard_/learn-rates'
     | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/news'
     | '/_auth/dashboard_/portfolios'
+    | '/_auth/dashboard_/rates'
     | '/_auth/dashboard_/research'
     | '/_auth/dashboard_/screener'
     | '/_auth/dashboard_/settings'
@@ -442,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardResearchRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/rates': {
+      id: '/_auth/dashboard_/rates'
+      path: '/dashboard/rates'
+      fullPath: '/dashboard/rates'
+      preLoaderRoute: typeof AuthDashboardRatesRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/portfolios': {
       id: '/_auth/dashboard_/portfolios'
       path: '/dashboard/portfolios'
@@ -461,6 +492,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/learn-ta'
       fullPath: '/dashboard/learn-ta'
       preLoaderRoute: typeof AuthDashboardLearnTaRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/dashboard_/learn-rates': {
+      id: '/_auth/dashboard_/learn-rates'
+      path: '/dashboard/learn-rates'
+      fullPath: '/dashboard/learn-rates'
+      preLoaderRoute: typeof AuthDashboardLearnRatesRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/dashboard_/learn-investment': {
@@ -523,9 +561,11 @@ interface AuthRouteChildren {
   AuthDashboardComparisonRoute: typeof AuthDashboardComparisonRoute
   AuthDashboardIndicesRoute: typeof AuthDashboardIndicesRoute
   AuthDashboardLearnInvestmentRoute: typeof AuthDashboardLearnInvestmentRoute
+  AuthDashboardLearnRatesRoute: typeof AuthDashboardLearnRatesRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardNewsRoute: typeof AuthDashboardNewsRoute
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
+  AuthDashboardRatesRoute: typeof AuthDashboardRatesRoute
   AuthDashboardResearchRoute: typeof AuthDashboardResearchRoute
   AuthDashboardScreenerRoute: typeof AuthDashboardScreenerRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
@@ -544,9 +584,11 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardComparisonRoute: AuthDashboardComparisonRoute,
   AuthDashboardIndicesRoute: AuthDashboardIndicesRoute,
   AuthDashboardLearnInvestmentRoute: AuthDashboardLearnInvestmentRoute,
+  AuthDashboardLearnRatesRoute: AuthDashboardLearnRatesRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardNewsRoute: AuthDashboardNewsRoute,
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
+  AuthDashboardRatesRoute: AuthDashboardRatesRoute,
   AuthDashboardResearchRoute: AuthDashboardResearchRoute,
   AuthDashboardScreenerRoute: AuthDashboardScreenerRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
