@@ -67,6 +67,42 @@ function applyFx(candles: Candle[], rates: Map<number, number>): Candle[] {
   return out;
 }
 
+export type DividendInfo = {
+  symbol: string;
+  dividendRate: number | null;
+  dividendYield: number | null;
+  exDividendDate: string | null;
+  dividendDate: string | null;
+};
+
+export async function fetchDividendInfo(symbol: string): Promise<DividendInfo> {
+  const sym = symbol.toUpperCase();
+  try {
+    const summary = await yf.quoteSummary(sym, {
+      modules: ["summaryDetail", "calendarEvents"],
+    });
+    const sd = summary.summaryDetail;
+    const ce = summary.calendarEvents;
+    const rate = sd?.dividendRate ?? sd?.trailingAnnualDividendRate ?? null;
+    const yld = sd?.dividendYield ?? sd?.trailingAnnualDividendYield ?? sd?.yield ?? null;
+    return {
+      symbol: sym,
+      dividendRate: rate ?? null,
+      dividendYield: yld ?? null,
+      exDividendDate: sd?.exDividendDate?.toISOString().slice(0, 10) ?? null,
+      dividendDate: ce?.dividendDate?.toISOString().slice(0, 10) ?? null,
+    };
+  } catch {
+    return {
+      symbol: sym,
+      dividendRate: null,
+      dividendYield: null,
+      exDividendDate: null,
+      dividendDate: null,
+    };
+  }
+}
+
 export async function fetchCandlesWithCurrency(
   symbol: string,
   range: z.infer<typeof RangeSchema>,

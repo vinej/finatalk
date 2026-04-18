@@ -8,6 +8,7 @@ export type InvestmentEntry = {
   characteristics: string;
   whenToBuy: string;
   whyBuy: string;
+  howToBuy: string;
   profitsQuebec: string;
   links: InvLink[];
 };
@@ -15,6 +16,7 @@ export type InvestmentEntry = {
 export const INVESTMENT_KINDS = [
   "savings",
   "gic",
+  "fixedIncome",
   "bond",
   "stock",
   "preferredShare",
@@ -77,6 +79,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "Always keep 3–6 months of expenses in a HISA as an emergency fund before investing in anything riskier. Also useful as a holding place for short-term goals (<1 year) or dry powder waiting to be deployed.",
     whyBuy:
       "Stability and instant access. Not a growth vehicle — real return (after inflation) is usually near zero or slightly negative — but it protects your downside and your liquidity.",
+    howToBuy:
+      "Open at any bank, credit union, or online institution (EQ Bank, Tangerine, Simplii, Desjardins). No brokerage account needed. Most discount brokerages also offer 'investment savings' ETFs (CASH.TO, PSA.TO, CMR) that pay HISA-like rates and can be parked inside a trading account.",
     profitsQuebec:
       "Interest is paid monthly or quarterly and is 100% taxable as ordinary income at your marginal federal + Québec rate (combined top bracket ≈ 53.31% in 2025). No preferential treatment. Inside a TFSA (CELI) or RRSP (REER), interest is sheltered from tax.",
     links: [
@@ -96,12 +100,35 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "When you have a known future expense with a matching timeline (down payment in 3 years, tuition next fall) and don't want any risk of loss. Also useful as a 'GIC ladder' — stagger maturities every year — for retirees who need predictable income.",
     whyBuy:
       "Absolute certainty of the nominal return. Beats a savings account rate when you can commit to locking the money for the term. Poor choice if inflation or rates rise sharply during your term.",
+    howToBuy:
+      "Banks and credit unions directly, or online GIC marketplaces (Oaken, EQ Bank). Any discount brokerage (Questrade, TD Direct Investing, RBC Direct, Wealthsimple, National Bank Direct Brokerage) maintains a GIC shelf with multiple issuers — practical for laddering across institutions while staying under the $100k CDIC limit at each issuer.",
     profitsQuebec:
       "Interest paid at maturity (short terms) or annually (longer terms) — but CRA/Revenu Québec require you to report interest as it accrues each year, even if not received yet (T5 / Relevé 3). Fully taxed at your marginal rate. Shelter inside a TFSA/RRSP to avoid the tax drag.",
     links: [
       { title: "Canada.ca — GICs", url: "https://www.canada.ca/en/financial-consumer-agency/services/savings-investments/guaranteed-investment-certificate.html" },
       { title: "AMF Québec — Certificats de placement garanti", url: "https://lautorite.qc.ca/grand-public/investissements/autres-produits-dinvestissement/certificat-de-placement-garanti" },
       { title: "Investopedia — GIC", url: "https://www.investopedia.com/terms/g/gic.asp" },
+    ],
+  },
+
+  fixedIncome: {
+    label: "Fixed Income (overview)",
+    summary:
+      "An umbrella category for investments that pay a predictable stream of interest and return your principal at a known maturity date. Opposed to equities (stocks), whose returns depend on market price and dividends. GICs, bonds, bond ETFs, and money market funds all belong to this category.",
+    characteristics:
+      "Key traits: (1) predictable cashflow — coupons or interest paid on a schedule; (2) principal protection — you get your original amount back at maturity (assuming the issuer doesn't default); (3) sensitivity to interest rates — prices of tradeable fixed income fall when rates rise, and vice versa; (4) credit risk — a corporate bond or non-insured GIC issuer can default. Within fixed income, risk increases roughly like this: HISA (insured) → GIC (insured) → Government of Canada bond → provincial bond → investment-grade corporate bond → high-yield (junk) bond.",
+    whenToBuy:
+      "When you want to reduce portfolio volatility, generate predictable income, or park money for a known future need (down payment, tuition). A classic rule of thumb was '(your age) % in bonds' — so a 40-year-old holds 40% fixed income — though modern planning favours a personalized mix based on goals and risk tolerance. Retirees typically hold more fixed income to stabilize withdrawals.",
+    whyBuy:
+      "Ballast — fixed income often rises or holds steady when stocks fall, cushioning portfolio drawdowns. Income — retirees rely on coupon/interest for living expenses. Certainty — for a specific dollar amount needed on a specific date, a matching-maturity bond or GIC removes market risk entirely.",
+    howToBuy:
+      "No single product is 'fixed income' — you choose an instrument in the category: HISA or money market fund (most liquid, lowest yield), GIC (CDIC-insured, locked term), bond ETF (diversified, tradeable intraday — ZAG, XBB, VAB, XSB for short-term), individual bonds (through a broker's bond desk, best for large lots), or a balanced/asset-allocation ETF (holds a bond slice automatically — XBAL is 40% fixed income, XCNS is 60%). For most retail investors, a bond ETF plus some GICs is simpler and cheaper than picking individual bonds. See the Bonds and GICs sections below for specifics.",
+    profitsQuebec:
+      "Almost all fixed income produces interest income, which is taxed as ordinary income at your marginal rate — the least tax-efficient form of investment return. In Québec this can reach 53.31% at the top bracket. Capital gains from selling a bond above par are 50% taxable. The strong tax case: shelter fixed income in RRSP/REER or TFSA/CELI to avoid the annual tax drag, and keep equities (more tax-favored via dividend credit and capital gains) in non-registered accounts. This is called 'asset location'.",
+    links: [
+      { title: "Investopedia — Fixed Income", url: "https://www.investopedia.com/terms/f/fixedincome.asp" },
+      { title: "AMF Québec — Revenu fixe", url: "https://lautorite.qc.ca/grand-public/investissements/produits-dinvestissement/obligations" },
+      { title: "Canadian Couch Potato — Bond basics", url: "https://canadiancouchpotato.com/2010/09/01/understanding-bond-etfs/" },
     ],
   },
 
@@ -115,6 +142,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "When you want steady income and lower volatility than stocks. Common allocations range from 20% of portfolio (young aggressive investor) to 60%+ (retiree drawing income). Buy during high-rate environments to lock in attractive yields; avoid long-duration bonds when rates are expected to rise.",
     whyBuy:
       "Diversification — bonds often (not always) zig when stocks zag, cushioning drawdowns. Predictable cashflow for retirees. Capital preservation relative to equities.",
+    howToBuy:
+      "Individual bonds: through a full-service broker or the bond desk of a discount brokerage — but retail liquidity is poor and spreads are wide, so small lots usually get a bad price. Most retail investors buy bond ETFs (ZAG, XBB, VAB) through any brokerage instead. The Government of Canada stopped selling Canada Savings Bonds (CSBs) in 2017.",
     profitsQuebec:
       "Coupon interest is paid semi-annually and taxed as ordinary income (fully taxable, marginal rate). Capital gains from selling a bond above par are 50% taxable (inclusion rate). Accrued interest on strip/zero-coupon bonds is taxable yearly even without cash payment. Shelter bond income in an RRSP/TFSA to avoid the tax drag. Foreign bond interest from US/overseas may have 15% withholding tax in a non-registered account.",
     links: [
@@ -134,6 +163,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "When your horizon is 5+ years. Stocks are the asset class most likely to outpace inflation over long periods. Buy through a registered account first (TFSA, then RRSP), then non-registered once those are full. Avoid putting money you'll need within 2 years into stocks.",
     whyBuy:
       "Long-term wealth growth. Equity ownership means you benefit directly from productivity gains and corporate earnings compounding. Historically the S&P/TSX Composite has returned ~7% annually after inflation over long horizons, though any individual decade can be very different.",
+    howToBuy:
+      "Only through a registered investment dealer. Self-directed: discount brokerages like Questrade, Wealthsimple, TD Direct Investing, RBC Direct Investing, BMO InvestorLine, Qtrade, National Bank Direct Brokerage, Desjardins Disnat. Full-service: IIROC-licensed advisor at a bank subsidiary (RBC DS, BMO Nesbitt Burns, TD Wealth). Stocks cannot be bought at a bank branch or directly from the issuer (except via DRIPs or employee share plans for existing shareholders).",
     profitsQuebec:
       "Two tax streams: (1) Canadian eligible dividends get a dividend tax credit (federal + Québec), so they're taxed lighter than interest — effective Québec top rate ~40% vs. 53% for interest. (2) Capital gains on sale: only 50% of the gain is taxable (inclusion rate); combined with the marginal rate, top effective ≈ 26.65% in Québec. Foreign (US) dividends are fully taxable and face 15% US withholding tax in a non-registered account — waived in RRSP, not in TFSA.",
     links: [
@@ -153,6 +184,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "When you want higher income than bonds offer without taking full equity risk, and you already have exposure to common shares and bonds. Most retail investors who want preferred exposure hold them through a preferred-share ETF (e.g. CPD.TO, ZPR.TO) to diversify issuer risk.",
     whyBuy:
       "Income enhancement — preferred yields often exceed investment-grade bond yields. Plus the Canadian dividend tax credit makes the after-tax yield more attractive than bond interest for non-registered accounts.",
+    howToBuy:
+      "Same channels as common stocks — any discount brokerage or full-service IIROC dealer. Preferred-share ETFs (CPD.TO, ZPR.TO) are easier to diversify issuer risk and buy like any other ETF. Not sold at bank branches.",
     profitsQuebec:
       "Dividends from Canadian preferreds qualify as eligible dividends — dividend tax credit applies (federal + Québec). Capital gains on sale: 50% inclusion rate. US-issued preferreds don't qualify — those dividends are taxed as ordinary foreign income with 15% US withholding.",
     links: [
@@ -172,6 +205,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "As a building block for almost any portfolio. Ideal for investors who want diversification without picking individual stocks. Three-ETF portfolios (Canadian equity + US equity + international equity) cover most needs. Add a bond ETF for balance. Use a broad-market ETF inside a TFSA/RRSP for simplest setup.",
     whyBuy:
       "Instant diversification at minimal cost. Lower fees than mutual funds (typically 1–2% cheaper MER), which compounds into a large retirement-age difference. Tax-efficient structure (in-kind creation/redemption reduces distributed capital gains).",
+    howToBuy:
+      "Any discount brokerage — several now offer commission-free ETF trades (Questrade, Wealthsimple, Qtrade, National Bank Direct Brokerage, Desjardins Disnat). Robo-advisors (Wealthsimple Invest, Questwealth, RBC InvestEase, BMO SmartFolio) buy ETFs for you automatically. Bank branches typically do NOT sell ETFs — for that you need the bank's discount brokerage arm (TD Direct, RBC Direct, BMO InvestorLine, etc.).",
     profitsQuebec:
       "ETFs distribute income periodically: dividends pass through and keep their character (Canadian eligible, foreign, etc.), interest passes through as interest, and realized capital gains inside the fund pass through as capital gains. Tax treatment follows the underlying source. Capital gains on sale of the ETF itself: 50% inclusion rate. You'll receive a T3/Relevé 16 in March for distributions.",
     links: [
@@ -191,6 +226,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "When you want professional management and don't want to trade an ETF yourself, or when you're investing regularly through an employer RRSP/REER plan that only offers mutual funds. Avoid high-MER funds in taxable accounts — the drag compounds.",
     whyBuy:
       "Simplicity: one purchase gives you a diversified, actively managed portfolio. Useful for automatic pre-authorized contributions. Historically dominant in Québec via the caisses populaires Desjardins fund families.",
+    howToBuy:
+      "You do NOT need to go through a bank. Multiple channels: (1) bank branches sell their own A-series funds (convenient but highest MER); (2) discount brokerages let you buy thousands of funds self-directed, often the lower-MER D-series (Questrade, TD Direct, RBC Direct, Wealthsimple, Qtrade, Desjardins Disnat); (3) MFDA-licensed advisors (IG Wealth, Primerica, Edward Jones); (4) full-service IIROC advisors (RBC DS, BMO Nesbitt Burns); (5) directly from low-cost fund companies (Mawer, Steadyhand, PH&N, Leith Wheeler — $5k–$25k minimums). Same underlying strategy in D-series at a discount broker typically saves 1–1.5% MER per year vs. the bank-branch A-series.",
     profitsQuebec:
       "Same pass-through tax treatment as ETFs — distributions keep the character of their source (dividends, interest, capital gains) and are taxable the year received, even if automatically reinvested (DRIP). Capital gains on unit sale: 50% inclusion rate. High-turnover active funds tend to distribute more capital gains year-to-year than index ETFs, which matters only in non-registered accounts.",
     links: [
@@ -210,6 +247,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "When you want a complete portfolio in a single ETF and don't want to rebalance manually. Ideal for beginners, busy professionals, or inside TFSAs/RRSPs where simplicity matters. Pick the risk level matching your horizon — VEQT for 20+ year horizons, VBAL for balanced retirement investing, VCNS for near-retirement.",
     whyBuy:
       "Set-and-forget investing. Auto-rebalancing means you hold target weights at all times without transaction costs. All the diversification of a 3-ETF portfolio in one purchase — no spreadsheet needed.",
+    howToBuy:
+      "Two wrappers with different channels. (a) ETF form (VBAL, VGRO, XEQT, ZBAL) — any discount brokerage or robo-advisor. (b) Mutual-fund form (TD Comfort Portfolios, RBC Select Portfolios, Tangerine Investment Funds, Desjardins Portefeuilles Chorus) — same channels as any mutual fund. Tangerine sells their fund-of-funds directly online with no advisor. The ETF form is typically 1.5–2% cheaper MER than the mutual-fund form — a significant difference over decades.",
     profitsQuebec:
       "Same pass-through as regular ETFs: the underlying dividends, interest, and capital gains flow to you keeping their character. Because internal rebalancing happens in-kind, distributed capital gains are typically small. T3/Relevé 16 at tax time. Capital gains on sale: 50% inclusion rate.",
     links: [
@@ -229,6 +268,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "When you want real-estate exposure without buying property, and you want high current income. Works as a diversifier within a stock sleeve — real estate has historically had moderate correlation to broad equities.",
     whyBuy:
       "Income + inflation hedge (rents reset over time). Access to commercial real estate at small dollar amounts. Liquid, unlike direct property.",
+    howToBuy:
+      "Publicly-listed REITs (CAR.UN, REI.UN, HR.UN, IIP.UN) trade on the TSX — buy through any discount brokerage like any stock. REIT ETFs (XRE, ZRE, VRE) same. Private (non-traded) REITs are sold only through exempt-market dealers and generally require accredited-investor status ($1M+ financial assets or $200k+ income).",
     profitsQuebec:
       "REIT distributions are a blended mix: part 'other income' (fully taxable like interest), part 'return of capital' (not taxed now, reduces your adjusted cost base and is taxed as a capital gain on sale), sometimes part 'capital gains' and part 'foreign income'. The T3/Relevé 16 breaks this down. Because of the ordinary-income portion, REITs are most tax-efficient inside a TFSA or RRSP.",
     links: [
@@ -252,6 +293,8 @@ const INVESTMENT_GUIDE_EN: Record<InvestmentKind, InvestmentEntry> = {
       "Priority order for most Québec residents: (1) FHSA if you don't own a home, (2) RRSP if your current marginal rate is higher than expected retirement rate, (3) TFSA, (4) non-registered. For low/moderate earners, TFSA often beats RRSP. Use RESP for kids to capture the 20% government grant.",
     whyBuy:
       "Tax drag is the largest controllable cost in a long-term portfolio. Sheltering high-tax income (interest, foreign dividends, REITs) inside TFSA/RRSP can add hundreds of thousands over a career compared to holding the same investments in a taxable account.",
+    howToBuy:
+      "Open at any bank, credit union, discount brokerage, robo-advisor, or full-service dealer — the wrapper itself is usually free. Then fund it and buy investments through that institution's platform. You can hold the same account type (e.g. TFSA) at multiple institutions, but the contribution limit is cumulative across all of them — track it yourself to avoid over-contribution penalties (1%/month). Transferring a registered account between institutions uses a T2033 form and keeps the tax-sheltered status.",
     profitsQuebec:
       "TFSA / CELI: no tax, ever, on growth or withdrawals (Canadian residents). " +
       "RRSP / REER: no tax while inside; withdrawals taxed at your full marginal rate (target: lower retirement rate). " +
@@ -277,6 +320,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Conservez toujours 3 à 6 mois de dépenses dans un CEIE comme fonds d'urgence avant d'investir dans quoi que ce soit de plus risqué. Utile aussi comme point d'attente pour les objectifs à court terme (< 1 an) ou pour garder du capital prêt à être déployé.",
     whyBuy:
       "Stabilité et accès instantané. Ce n'est pas un outil de croissance — le rendement réel (après inflation) est généralement proche de zéro ou légèrement négatif — mais il protège votre capital et votre liquidité.",
+    howToBuy:
+      "Ouvrez dans n'importe quelle banque, caisse populaire ou institution en ligne (Tangerine, EQ Bank, Simplii, Desjardins). Aucun compte de courtage requis. La plupart des courtiers à escompte offrent aussi des FNB « épargne-placement » (CASH.TO, PSA.TO, CMR) à taux comparable à un CEIE et qu'on peut garer dans un compte de négociation.",
     profitsQuebec:
       "Les intérêts sont versés mensuellement ou trimestriellement et sont 100 % imposables comme revenu ordinaire au taux marginal combiné fédéral + Québec (tranche supérieure ≈ 53,31 % en 2025). Aucun traitement préférentiel. À l'intérieur d'un CELI (TFSA) ou REER (RRSP), les intérêts sont à l'abri de l'impôt.",
     links: [
@@ -296,12 +341,35 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Lorsque vous avez une dépense future connue avec un échéancier précis (mise de fonds dans 3 ans, frais de scolarité l'automne prochain) et ne voulez aucun risque de perte. Également utile sous forme de « échelle de CPG » — échelonner les échéances chaque année — pour les retraités qui ont besoin de revenus prévisibles.",
     whyBuy:
       "Certitude absolue du rendement nominal. Bat le taux d'un compte d'épargne lorsque vous pouvez bloquer l'argent pour la durée. Mauvais choix si l'inflation ou les taux montent fortement pendant votre terme.",
+    howToBuy:
+      "Banques et caisses populaires directement, ou marchés de CPG en ligne (Oaken, EQ Bank). Tout courtier à escompte (Questrade, Courtage direct TD, RBC Placements en direct, Wealthsimple, Courtage direct Banque Nationale) tient un « étalage » de CPG de multiples émetteurs — pratique pour faire une échelle en respectant la limite SADC de 100 000 $ par institution.",
     profitsQuebec:
       "Intérêts versés à l'échéance (termes courts) ou annuellement (termes longs) — mais l'ARC et Revenu Québec exigent de déclarer les intérêts au fur et à mesure qu'ils courent chaque année, même s'ils ne sont pas encore reçus (T5 / Relevé 3). Entièrement imposés au taux marginal. Abritez-les dans un CELI/REER pour éviter la traînée fiscale.",
     links: [
       { title: "Canada.ca — CPG", url: "https://www.canada.ca/fr/agence-consommation-matiere-financiere/services/epargne-investissements/certificat-placement-garanti.html" },
       { title: "AMF Québec — Certificats de placement garanti", url: "https://lautorite.qc.ca/grand-public/investissements/autres-produits-dinvestissement/certificat-de-placement-garanti" },
       { title: "Investopedia — GIC (anglais)", url: "https://www.investopedia.com/terms/g/gic.asp" },
+    ],
+  },
+
+  fixedIncome: {
+    label: "Revenu fixe (vue d'ensemble)",
+    summary:
+      "Catégorie générale regroupant les placements qui versent un flux d'intérêts prévisible et remboursent le capital à une date d'échéance connue. S'oppose aux actions, dont le rendement dépend du prix de marché et des dividendes. Les CPG, les obligations, les FNB obligataires et les fonds du marché monétaire en font tous partie.",
+    characteristics:
+      "Caractéristiques clés : (1) flux de trésorerie prévisible — coupons ou intérêts versés selon un calendrier; (2) protection du capital — vous récupérez le montant initial à l'échéance (sauf défaut de l'émetteur); (3) sensibilité aux taux d'intérêt — le prix des titres négociables baisse quand les taux montent, et vice versa; (4) risque de crédit — un émetteur d'obligation corporative ou un CPG non assuré peut faire défaut. À l'intérieur du revenu fixe, le risque augmente approximativement ainsi : CEIE (assuré) → CPG (assuré) → obligation du gouvernement du Canada → obligation provinciale → obligation corporative de qualité → obligation à haut rendement (pacotille).",
+    whenToBuy:
+      "Lorsque vous voulez réduire la volatilité du portefeuille, générer un revenu prévisible, ou mettre de côté de l'argent pour un besoin futur connu (mise de fonds, frais de scolarité). Une règle classique était « (votre âge) % en obligations » — un investisseur de 40 ans détient donc 40 % de revenu fixe — bien que la planification moderne privilégie un dosage personnalisé selon les objectifs et la tolérance au risque. Les retraités détiennent généralement plus de revenu fixe pour stabiliser les retraits.",
+    whyBuy:
+      "Ballast — le revenu fixe monte ou reste stable lorsque les actions baissent, amortissant les reculs du portefeuille. Revenu — les retraités comptent sur les coupons/intérêts pour leurs dépenses courantes. Certitude — pour un montant précis à une date précise, une obligation ou un CPG à échéance correspondante élimine totalement le risque de marché.",
+    howToBuy:
+      "Aucun produit unique ne s'appelle « revenu fixe » — vous choisissez un instrument dans la catégorie : CEIE ou fonds du marché monétaire (les plus liquides, rendement le plus bas), CPG (assuré SADC, durée bloquée), FNB obligataire (diversifié, négociable en séance — ZAG, XBB, VAB, XSB pour court terme), obligations individuelles (via le bureau obligataire d'un courtier, pour gros lots), ou FNB équilibré / à répartition d'actifs (contient automatiquement une tranche obligataire — XBAL à 40 % de revenu fixe, XCNS à 60 %). Pour la plupart des investisseurs particuliers, un FNB obligataire combiné à quelques CPG est plus simple et moins coûteux que de choisir des obligations individuelles. Voir les sections Obligations et CPG ci-dessous pour les détails.",
+    profitsQuebec:
+      "Presque tout revenu fixe génère des intérêts, imposés comme revenu ordinaire au taux marginal — la forme de rendement la moins avantageuse fiscalement. Au Québec, cela peut atteindre 53,31 % dans la tranche la plus élevée. Les gains en capital sur une obligation vendue au-dessus du pair sont imposables à 50 %. L'argument fiscal fort : abritez le revenu fixe dans un REER ou un CELI pour éviter la traînée fiscale annuelle, et gardez les actions (mieux traitées via le crédit d'impôt pour dividendes et les gains en capital) dans les comptes non enregistrés. C'est ce qu'on appelle la « localisation des actifs ».",
+    links: [
+      { title: "Investopedia — Fixed Income (anglais)", url: "https://www.investopedia.com/terms/f/fixedincome.asp" },
+      { title: "AMF Québec — Revenu fixe", url: "https://lautorite.qc.ca/grand-public/investissements/produits-dinvestissement/obligations" },
+      { title: "Canadian Couch Potato — Bond basics (anglais)", url: "https://canadiancouchpotato.com/2010/09/01/understanding-bond-etfs/" },
     ],
   },
 
@@ -315,6 +383,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Lorsque vous voulez un revenu régulier et une volatilité moindre que les actions. Les allocations typiques vont de 20 % du portefeuille (jeune investisseur agressif) à 60 % et plus (retraité qui tire un revenu). Achetez en contexte de taux élevés pour verrouiller des rendements attrayants ; évitez les obligations à longue durée quand les taux doivent monter.",
     whyBuy:
       "Diversification — les obligations zigzaguent souvent (pas toujours) à l'inverse des actions, amortissant les baisses. Flux de trésorerie prévisible pour les retraités. Préservation du capital par rapport aux actions.",
+    howToBuy:
+      "Obligations individuelles : via un courtier de plein exercice ou le bureau obligataire d'un courtier à escompte — mais la liquidité détail est faible et les écarts sont larges, alors les petits lots obtiennent généralement un mauvais prix. La plupart des investisseurs particuliers achètent plutôt des FNB obligataires (ZAG, XBB, VAB) via n'importe quel courtier. Le gouvernement du Canada a cessé de vendre des Obligations d'épargne du Canada (OEC) en 2017.",
     profitsQuebec:
       "Les intérêts de coupon sont versés semestriellement et imposés comme revenu ordinaire (entièrement imposable, taux marginal). Les gains en capital d'une vente d'obligation au-dessus du pair sont imposables à 50 % (taux d'inclusion). Les intérêts courus sur les obligations à coupon détaché / zéro coupon sont imposables chaque année même sans paiement. Abritez les revenus obligataires dans un REER/CELI pour éviter la traînée fiscale. Les intérêts d'obligations étrangères (É.-U., outre-mer) peuvent subir une retenue d'impôt de 15 % dans un compte non enregistré.",
     links: [
@@ -334,6 +404,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Quand votre horizon est de 5 ans ou plus. Les actions sont la classe d'actifs la plus susceptible de battre l'inflation sur de longues périodes. Achetez d'abord dans un compte enregistré (CELI, puis REER), puis en non enregistré une fois ces limites atteintes. Évitez d'investir en actions l'argent dont vous aurez besoin dans moins de 2 ans.",
     whyBuy:
       "Croissance de patrimoine à long terme. Posséder des actions signifie profiter directement des gains de productivité et de la capitalisation des bénéfices. Historiquement, le S&P/TSX Composite a rapporté environ 7 % par an après inflation sur de longues périodes, même si chaque décennie peut être très différente.",
+    howToBuy:
+      "Uniquement via un courtier en valeurs mobilières inscrit. Autonome : courtiers à escompte comme Questrade, Wealthsimple, Courtage direct TD, RBC Placements en direct, BMO Ligne d'action, Qtrade, Courtage direct Banque Nationale, Desjardins Disnat. Plein exercice : conseiller inscrit OCRCVM chez une filiale bancaire (RBC DVM, BMO Nesbitt Burns, TD Gestion de patrimoine). Les actions ne s'achètent pas en succursale bancaire ni directement de l'émetteur (sauf via un régime de réinvestissement des dividendes ou un plan d'actionnariat salarié pour les détenteurs existants).",
     profitsQuebec:
       "Deux flux d'imposition : (1) les dividendes canadiens déterminés bénéficient du crédit d'impôt pour dividendes (fédéral + Québec), donc imposés plus légèrement que les intérêts — taux marginal québécois le plus élevé ≈ 40 % contre 53 % pour les intérêts. (2) Gains en capital à la vente : seulement 50 % du gain est imposable (taux d'inclusion) ; combiné au taux marginal, le taux effectif maximal ≈ 26,65 % au Québec. Les dividendes étrangers (É.-U.) sont entièrement imposables et subissent une retenue américaine de 15 % dans un compte non enregistré — levée dans un REER, mais pas dans un CELI.",
     links: [
@@ -353,6 +425,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Lorsque vous voulez un revenu plus élevé que celui des obligations sans prendre le plein risque d'actions, et que vous avez déjà une exposition aux actions ordinaires et aux obligations. La plupart des investisseurs particuliers qui souhaitent une exposition aux privilégiées les détiennent via un FNB d'actions privilégiées (p. ex. CPD.TO, ZPR.TO) pour diversifier le risque émetteur.",
     whyBuy:
       "Bonification du revenu — les rendements des privilégiées dépassent souvent ceux des obligations de qualité. De plus, le crédit d'impôt pour dividendes canadiens rend le rendement après impôt plus attrayant que les intérêts obligataires dans un compte non enregistré.",
+    howToBuy:
+      "Mêmes canaux que les actions ordinaires — n'importe quel courtier à escompte ou courtier OCRCVM plein exercice. Les FNB d'actions privilégiées (CPD.TO, ZPR.TO) permettent de diversifier plus facilement le risque émetteur et s'achètent comme n'importe quel FNB. Non vendues en succursale bancaire.",
     profitsQuebec:
       "Les dividendes des privilégiées canadiennes sont des dividendes déterminés — le crédit d'impôt pour dividendes s'applique (fédéral + Québec). Gains en capital à la vente : taux d'inclusion de 50 %. Les privilégiées émises aux États-Unis n'y sont pas admissibles — ces dividendes sont imposés comme revenu étranger ordinaire avec une retenue américaine de 15 %.",
     links: [
@@ -372,6 +446,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Comme brique de base pour presque n'importe quel portefeuille. Idéal pour les investisseurs qui veulent une diversification sans choisir des actions individuelles. Un portefeuille de trois FNB (actions canadiennes + américaines + internationales) couvre la majorité des besoins. Ajoutez un FNB obligataire pour l'équilibre. Utilisez un FNB large dans un CELI/REER pour la configuration la plus simple.",
     whyBuy:
       "Diversification instantanée à coût minime. Frais inférieurs aux fonds communs (typiquement 1 à 2 % de RFG de moins), ce qui compose jusqu'à un écart important à la retraite. Structure fiscalement efficiente (création/rachat en nature réduit les gains en capital distribués).",
+    howToBuy:
+      "Tout courtier à escompte — plusieurs offrent maintenant les FNB sans commission (Questrade, Wealthsimple, Qtrade, Courtage direct Banque Nationale, Desjardins Disnat). Les robots-conseillers (Wealthsimple Invest, Questwealth, RBC InvestAssist, BMO SmartFolio) achètent les FNB pour vous automatiquement. Les succursales bancaires ne vendent généralement PAS de FNB — il faut passer par le bras courtage à escompte de la banque (Courtage direct TD, RBC Placements en direct, BMO Ligne d'action, etc.).",
     profitsQuebec:
       "Les FNB distribuent des revenus périodiquement : les dividendes circulent en conservant leur nature (canadiens déterminés, étrangers, etc.), les intérêts circulent comme intérêts, et les gains en capital réalisés dans le fonds circulent comme gains en capital. Le traitement fiscal suit la source sous-jacente. Gains en capital à la vente du FNB lui-même : taux d'inclusion de 50 %. Vous recevrez un T3/Relevé 16 en mars pour les distributions.",
     links: [
@@ -391,6 +467,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Lorsque vous voulez une gestion professionnelle et ne voulez pas négocier un FNB vous-même, ou quand vous investissez régulièrement via un régime REER d'employeur qui n'offre que des fonds communs. Évitez les fonds à RFG élevé dans les comptes imposables — la traînée se compose.",
     whyBuy:
       "Simplicité : un seul achat vous donne un portefeuille diversifié et géré activement. Utile pour les cotisations préautorisées automatiques. Historiquement dominant au Québec via les familles de fonds des caisses populaires Desjardins.",
+    howToBuy:
+      "Vous n'êtes PAS obligé de passer par une banque. Plusieurs canaux : (1) les succursales bancaires vendent leurs propres fonds série A (pratique mais RFG le plus élevé) ; (2) les courtiers à escompte permettent d'acheter des milliers de fonds en autonome, souvent la série D à RFG réduit (Questrade, Courtage direct TD, RBC Placements en direct, Wealthsimple, Qtrade, Desjardins Disnat) ; (3) conseillers ACFM (IG Gestion de patrimoine, Primerica, Edward Jones) ; (4) conseillers OCRCVM plein exercice (RBC DVM, BMO Nesbitt Burns) ; (5) directement des sociétés de fonds à frais bas (Mawer, Steadyhand, PH&N, Leith Wheeler — minimums de 5 000 $ à 25 000 $). La même stratégie sous-jacente en série D chez un courtier à escompte épargne typiquement 1 à 1,5 % de RFG par année par rapport à la série A en succursale.",
     profitsQuebec:
       "Même traitement fiscal par transparence que les FNB — les distributions conservent la nature de leur source (dividendes, intérêts, gains en capital) et sont imposables l'année reçue, même si automatiquement réinvesties (PRD/DRIP). Gains en capital à la vente de parts : taux d'inclusion de 50 %. Les fonds actifs à rotation élevée tendent à distribuer plus de gains en capital d'une année à l'autre que les FNB indiciels, ce qui ne compte que dans les comptes non enregistrés.",
     links: [
@@ -410,6 +488,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Lorsque vous voulez un portefeuille complet dans un seul FNB et ne voulez pas rééquilibrer manuellement. Idéal pour les débutants, les professionnels occupés, ou à l'intérieur d'un CELI/REER où la simplicité compte. Choisissez le niveau de risque qui correspond à votre horizon — VEQT pour 20 ans et plus, VBAL pour un placement de retraite équilibré, VCNS près de la retraite.",
     whyBuy:
       "Investissement « posez et oubliez ». Le rééquilibrage automatique garde les pondérations cibles en tout temps sans coûts de transaction. Toute la diversification d'un portefeuille à 3 FNB en un seul achat — aucun tableur nécessaire.",
+    howToBuy:
+      "Deux enveloppes, canaux différents. (a) Forme FNB (VBAL, VGRO, XEQT, ZBAL) — tout courtier à escompte ou robot-conseiller. (b) Forme fonds commun (Portefeuilles Confort TD, Portefeuilles Sélect RBC, Fonds d'investissement Tangerine, Portefeuilles Chorus Desjardins) — mêmes canaux que tout fonds commun. Tangerine vend ses fonds de fonds directement en ligne, sans conseiller. La forme FNB est typiquement de 1,5 à 2 % de RFG moins cher que la forme fonds commun — une différence importante sur des décennies.",
     profitsQuebec:
       "Même transparence fiscale que les FNB ordinaires : les dividendes, intérêts et gains en capital sous-jacents vous parviennent en conservant leur nature. Comme le rééquilibrage interne se fait en nature, les gains en capital distribués sont généralement faibles. T3/Relevé 16 au printemps. Gains en capital à la vente : taux d'inclusion de 50 %.",
     links: [
@@ -429,6 +509,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Lorsque vous voulez une exposition immobilière sans acheter de propriété, et que vous voulez un revenu courant élevé. Fonctionne comme diversificateur dans une poche d'actions — l'immobilier a historiquement une corrélation modérée avec les actions larges.",
     whyBuy:
       "Revenu + protection contre l'inflation (les loyers se réajustent avec le temps). Accès à l'immobilier commercial à partir de petits montants. Liquide, contrairement à la propriété directe.",
+    howToBuy:
+      "Les FPI cotées (CAR.UN, REI.UN, HR.UN, IIP.UN) se négocient à la TSX — achetez-les via n'importe quel courtier à escompte comme n'importe quelle action. Mêmes canaux pour les FNB de FPI (XRE, ZRE, VRE). Les FPI privées (non cotées) ne se vendent que par des courtiers de marché dispensé et exigent généralement le statut d'investisseur qualifié (1 M$ et plus d'actifs financiers ou 200 000 $ et plus de revenu).",
     profitsQuebec:
       "Les distributions de FPI sont un mélange : en partie « autres revenus » (entièrement imposables comme les intérêts), en partie « remboursement de capital » (non imposé immédiatement, réduit votre prix de base rajusté et sera imposé en gain en capital à la vente), parfois en partie « gains en capital » et en partie « revenus étrangers ». Le T3/Relevé 16 ventile le tout. En raison de la portion en revenu ordinaire, les FPI sont fiscalement plus efficientes à l'intérieur d'un CELI ou d'un REER.",
     links: [
@@ -452,6 +534,8 @@ const INVESTMENT_GUIDE_FR: Record<InvestmentKind, InvestmentEntry> = {
       "Ordre de priorité pour la plupart des résidents du Québec : (1) CELIAPP si vous n'êtes pas propriétaire, (2) REER si votre taux marginal actuel est plus élevé que le taux prévu à la retraite, (3) CELI, (4) non enregistré. Pour les revenus faibles/modérés, le CELI bat souvent le REER. Utilisez le REEE pour les enfants afin de capter la subvention gouvernementale de 20 %.",
     whyBuy:
       "La traînée fiscale est le plus grand coût contrôlable d'un portefeuille à long terme. Abriter les revenus à forte imposition (intérêts, dividendes étrangers, FPI) dans un CELI/REER peut ajouter des centaines de milliers de dollars sur une carrière par rapport à détenir les mêmes placements dans un compte imposable.",
+    howToBuy:
+      "Ouvrez à n'importe quelle banque, caisse populaire, courtier à escompte, robot-conseiller ou courtier plein exercice — l'enveloppe elle-même est généralement gratuite. Vous financez ensuite le compte et achetez les placements via la plateforme de l'institution. Vous pouvez détenir un même type de compte (p. ex. un CELI) dans plusieurs institutions, mais le plafond de cotisation est cumulatif — surveillez-le vous-même pour éviter les pénalités de surcotisation (1 %/mois). Le transfert d'un compte enregistré entre institutions se fait avec un formulaire T2033 et conserve le statut à l'abri de l'impôt.",
     profitsQuebec:
       "CELI / TFSA : aucun impôt, jamais, sur la croissance ni sur les retraits (résidents canadiens). " +
       "REER / RRSP : aucun impôt à l'intérieur ; les retraits sont imposés à votre plein taux marginal (cible : taux de retraite plus bas). " +

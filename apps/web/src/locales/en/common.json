@@ -30,6 +30,7 @@
     "learnTa": "Learn TA",
     "learnInvestment": "Learn Investment",
     "learnRates": "Analyse Rates",
+    "learnFees": "Investment Fees",
     "strategies": "Strategies",
     "comparison": "Compare",
     "screener": "Screener",
@@ -64,7 +65,19 @@
     "characteristics": "Characteristics",
     "whenToBuy": "When to buy",
     "whyBuy": "Why buy it",
+    "howToBuy": "Where and how to buy it",
     "profitsQuebec": "How profits are paid (Québec / Canada)",
+    "furtherReading": "Further reading",
+    "generalResources": "General resources"
+  },
+  "learnFees": {
+    "title": "Investment fees",
+    "intro": "Every dollar you pay in fees is a dollar that doesn't compound for your future. This is a complete reference to every fee a Canadian retail investor encounters — commissions, MER, trailers, FX, admin, transfer, advisor — with typical costs and how to minimize each one.",
+    "disclaimer": "Educational content — not investment, tax, or legal advice. Fee schedules change; always verify current rates with your broker before acting. Ranges reflect the 2025 Canadian retail market.",
+    "tableOfContents": "Fee types",
+    "howItWorks": "How it works",
+    "typicalCost": "Typical cost",
+    "howToMinimize": "How to minimize it",
     "furtherReading": "Further reading",
     "generalResources": "General resources"
   },

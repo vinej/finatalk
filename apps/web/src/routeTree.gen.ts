@@ -30,6 +30,7 @@ import { Route as AuthDashboardNewsRouteImport } from './routes/_auth/dashboard_
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
 import { Route as AuthDashboardLearnRatesRouteImport } from './routes/_auth/dashboard_.learn-rates'
 import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth/dashboard_.learn-investment'
+import { Route as AuthDashboardLearnFeesRouteImport } from './routes/_auth/dashboard_.learn-fees'
 import { Route as AuthDashboardIndicesRouteImport } from './routes/_auth/dashboard_.indices'
 import { Route as AuthDashboardComparisonRouteImport } from './routes/_auth/dashboard_.comparison'
 import { Route as AuthDashboardCommoditiesRouteImport } from './routes/_auth/dashboard_.commodities'
@@ -142,6 +143,11 @@ const AuthDashboardLearnInvestmentRoute =
     path: '/dashboard/learn-investment',
     getParentRoute: () => AuthRoute,
   } as any)
+const AuthDashboardLearnFeesRoute = AuthDashboardLearnFeesRouteImport.update({
+  id: '/dashboard_/learn-fees',
+  path: '/dashboard/learn-fees',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardIndicesRoute = AuthDashboardIndicesRouteImport.update({
   id: '/dashboard_/indices',
   path: '/dashboard/indices',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
   '/dashboard/indices': typeof AuthDashboardIndicesRoute
+  '/dashboard/learn-fees': typeof AuthDashboardLearnFeesRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
   '/dashboard/indices': typeof AuthDashboardIndicesRoute
+  '/dashboard/learn-fees': typeof AuthDashboardLearnFeesRoute
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/_auth/dashboard_/commodities': typeof AuthDashboardCommoditiesRoute
   '/_auth/dashboard_/comparison': typeof AuthDashboardComparisonRoute
   '/_auth/dashboard_/indices': typeof AuthDashboardIndicesRoute
+  '/_auth/dashboard_/learn-fees': typeof AuthDashboardLearnFeesRoute
   '/_auth/dashboard_/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/_auth/dashboard_/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/dashboard/commodities'
     | '/dashboard/comparison'
     | '/dashboard/indices'
+    | '/dashboard/learn-fees'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-rates'
     | '/dashboard/learn-ta'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/dashboard/commodities'
     | '/dashboard/comparison'
     | '/dashboard/indices'
+    | '/dashboard/learn-fees'
     | '/dashboard/learn-investment'
     | '/dashboard/learn-rates'
     | '/dashboard/learn-ta'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/commodities'
     | '/_auth/dashboard_/comparison'
     | '/_auth/dashboard_/indices'
+    | '/_auth/dashboard_/learn-fees'
     | '/_auth/dashboard_/learn-investment'
     | '/_auth/dashboard_/learn-rates'
     | '/_auth/dashboard_/learn-ta'
@@ -508,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardLearnInvestmentRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/learn-fees': {
+      id: '/_auth/dashboard_/learn-fees'
+      path: '/dashboard/learn-fees'
+      fullPath: '/dashboard/learn-fees'
+      preLoaderRoute: typeof AuthDashboardLearnFeesRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/indices': {
       id: '/_auth/dashboard_/indices'
       path: '/dashboard/indices'
@@ -560,6 +579,7 @@ interface AuthRouteChildren {
   AuthDashboardCommoditiesRoute: typeof AuthDashboardCommoditiesRoute
   AuthDashboardComparisonRoute: typeof AuthDashboardComparisonRoute
   AuthDashboardIndicesRoute: typeof AuthDashboardIndicesRoute
+  AuthDashboardLearnFeesRoute: typeof AuthDashboardLearnFeesRoute
   AuthDashboardLearnInvestmentRoute: typeof AuthDashboardLearnInvestmentRoute
   AuthDashboardLearnRatesRoute: typeof AuthDashboardLearnRatesRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
@@ -583,6 +603,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardCommoditiesRoute: AuthDashboardCommoditiesRoute,
   AuthDashboardComparisonRoute: AuthDashboardComparisonRoute,
   AuthDashboardIndicesRoute: AuthDashboardIndicesRoute,
+  AuthDashboardLearnFeesRoute: AuthDashboardLearnFeesRoute,
   AuthDashboardLearnInvestmentRoute: AuthDashboardLearnInvestmentRoute,
   AuthDashboardLearnRatesRoute: AuthDashboardLearnRatesRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,

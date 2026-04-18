@@ -30,6 +30,7 @@
     "learnTa": "Apprendre l'AT",
     "learnInvestment": "Apprendre l'investissement",
     "learnRates": "Analyser les taux",
+    "learnFees": "Frais de placement",
     "strategies": "Stratégies",
     "comparison": "Comparer",
     "screener": "Filtre",
@@ -64,7 +65,19 @@
     "characteristics": "Caractéristiques",
     "whenToBuy": "Quand l'acheter",
     "whyBuy": "Pourquoi l'acheter",
+    "howToBuy": "Où et comment l'acheter",
     "profitsQuebec": "Comment les profits sont versés (Québec / Canada)",
+    "furtherReading": "Pour aller plus loin",
+    "generalResources": "Ressources générales"
+  },
+  "learnFees": {
+    "title": "Frais de placement",
+    "intro": "Chaque dollar versé en frais est un dollar qui ne compose pas pour votre avenir. Guide de référence complet de tous les frais auxquels fait face l'investisseur particulier canadien — commissions, RFG, commissions de suivi, change, administration, transfert, conseiller — avec les coûts typiques et comment les minimiser.",
+    "disclaimer": "Contenu éducatif — ne constitue pas un conseil en placement, fiscal ou juridique. Les barèmes de frais changent ; vérifiez toujours les taux en vigueur auprès de votre courtier avant d'agir. Les fourchettes reflètent le marché de détail canadien 2025.",
+    "tableOfContents": "Types de frais",
+    "howItWorks": "Comment ça fonctionne",
+    "typicalCost": "Coût typique",
+    "howToMinimize": "Comment les minimiser",
     "furtherReading": "Pour aller plus loin",
     "generalResources": "Ressources générales"
   },

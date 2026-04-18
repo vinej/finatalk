@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
 import { GenerateAnalysisDialog } from "@/components/portfolio/generate-analysis-dialog";
 import { PortfolioChatDrawer } from "@/components/portfolio/portfolio-chat-drawer";
-import { PortfolioPerformanceChart } from "@/components/portfolio/portfolio-performance-chart";
+import { PortfolioPerformanceChart, type PerformanceRange } from "@/components/portfolio/portfolio-performance-chart";
 import { ConfidenceBadge } from "@/components/confidence-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,6 +110,7 @@ function PortfolioDetailPage() {
   const [confidenceMap, setConfidenceMap] = useState<Map<string, "high" | "medium" | "low">>(new Map());
   const [refreshingConfidence, setRefreshingConfidence] = useState(false);
   const [confidenceProgress, setConfidenceProgress] = useState("");
+  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>("6mo");
   const confidenceAbortRef = useRef(false);
   const confidenceInitRef = useRef(false);
 
@@ -529,7 +530,7 @@ function PortfolioDetailPage() {
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => reportMutation.mutate({ id: portfolioId, locale: i18n.language })}
+            onClick={() => reportMutation.mutate({ id: portfolioId, locale: i18n.language, range: performanceRange })}
             disabled={reportMutation.isPending || holdings.length === 0}
           >
             {reportMutation.isPending ? (
@@ -588,7 +589,12 @@ function PortfolioDetailPage() {
               </p>
             )}
             {performanceItems.length > 0 && (
-              <PortfolioPerformanceChart items={performanceItems} currency={currency} />
+              <PortfolioPerformanceChart
+                items={performanceItems}
+                currency={currency}
+                range={performanceRange}
+                onRangeChange={setPerformanceRange}
+              />
             )}
           </CardContent>
         </Card>

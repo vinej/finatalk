@@ -10,9 +10,15 @@ import {
   HoldingInputSchema,
   PortfolioTitleSchema,
 } from "../schemas/portfolio";
-import { SymbolSchema } from "../schemas/indicator";
+import { RangeSchema, SymbolSchema } from "../schemas/indicator";
 import { generatePortfolioReport } from "../lib/pdf-report";
-import { fetchCandlesWithCurrency } from "./market";
+import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
+
+const CHART_PALETTE = [
+  "#3b82f6", "#10b981", "#f59e0b", "#ef4444",
+  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316",
+  "#06b6d4", "#84cc16", "#e11d48", "#7c3aed",
+];
 
 const TransactionTypeSchema = z.enum(["buy", "sell", "dividend"]);
 
@@ -651,6 +657,7 @@ export const portfolioRouter = createTRPCRouter({
     .input(z.object({
       id: z.string(),
       locale: z.string().min(2).max(10).default("en"),
+      range: RangeSchema.default("6mo"),
     }))
     .mutation(async ({ ctx, input }) => {
       const p = await findOwnedPortfolio(ctx, input.id);
@@ -663,24 +670,32 @@ export const portfolioRouter = createTRPCRouter({
         new Set(holdings.map((h) => h.symbol.toUpperCase())),
       );
 
-      type PriceInfo = {
+      type SymbolData = {
         lastClose: number | null;
-        error: string | null;
+        points: { t: number; v: number }[];
       };
 
-      const priceEntries = await Promise.all(
-        uniqueSymbols.map(async (symbol): Promise<[string, PriceInfo]> => {
+      const symbolEntries = await Promise.all(
+        uniqueSymbols.map(async (symbol): Promise<[string, SymbolData]> => {
           try {
-            const { candles } = await fetchCandlesWithCurrency(symbol, "1mo", "1d", currency);
-            const last = candles[candles.length - 1];
-            if (!last) return [symbol, { lastClose: null, error: "no data" }];
-            return [symbol, { lastClose: last.close, error: null }];
+            const { candles } = await fetchCandlesWithCurrency(symbol, input.range, "1d", currency);
+            if (candles.length === 0) return [symbol, { lastClose: null, points: [] }];
+            const last = candles[candles.length - 1]!;
+            const base = candles[0]!.close;
+            const points =
+              Number.isFinite(base) && base > 0
+                ? candles.map((c) => ({ t: c.time, v: (c.close / base) * 100 }))
+                : [];
+            return [symbol, { lastClose: last.close, points }];
           } catch {
-            return [symbol, { lastClose: null, error: "fetch failed" }];
+            return [symbol, { lastClose: null, points: [] }];
           }
         }),
       );
-      const pricesBySymbol = new Map<string, PriceInfo>(priceEntries);
+      const symbolData = new Map<string, SymbolData>(symbolEntries);
+      const pricesBySymbol = new Map<string, { lastClose: number | null; error: string | null }>(
+        symbolEntries.map(([s, d]) => [s, { lastClose: d.lastClose, error: null }]),
+      );
 
       const rows = holdings.map((h) => {
         const info = pricesBySymbol.get(h.symbol.toUpperCase())!;
@@ -714,6 +729,98 @@ export const portfolioRouter = createTRPCRouter({
       const totalAbs = totalMV - totalCost;
       const totalPct = totalCost > 0 ? (totalAbs / totalCost) * 100 : null;
 
+      // ── Dividend income ─────────────────────────────────────
+      const divInfos = await Promise.all(
+        uniqueSymbols.map((s) => fetchDividendInfo(s)),
+      );
+      const divBySymbol = new Map(divInfos.map((d) => [d.symbol, d]));
+      const dividendRows = holdings.map((h) => {
+        const info = divBySymbol.get(h.symbol.toUpperCase())!;
+        const qty = Number(h.quantity);
+        const annual =
+          info.dividendRate != null && info.dividendRate > 0
+            ? qty * info.dividendRate
+            : null;
+        return {
+          symbol: h.symbol,
+          quantity: qty,
+          dividendRate: info.dividendRate,
+          dividendYield: info.dividendYield,
+          annualIncome: annual,
+          exDividendDate: info.exDividendDate,
+          dividendDate: info.dividendDate,
+        };
+      });
+      const totalAnnualIncome = dividendRows.reduce(
+        (s, r) => s + (r.annualIncome ?? 0),
+        0,
+      );
+
+      // ── Tax summary (ACB + realized gains) ──────────────────
+      const taxItems = await Promise.all(
+        holdings.map(async (h) => {
+          const txRows = await ctx.db.query.transaction.findMany({
+            where: eq(transaction.holdingId, h.id),
+          });
+          if (txRows.length === 0) return null;
+          const acb = computeAcb(txRows);
+          return {
+            symbol: h.symbol,
+            totalShares: acb.totalShares,
+            acbPerShare: acb.acbPerShare,
+            acbTotal: acb.acbTotal,
+            realizedGains: acb.realizedGains,
+            transactionCount: txRows.length,
+          };
+        }),
+      );
+      const taxRows = taxItems.filter((r) => r !== null);
+      const totalRealized = taxRows.reduce((s, r) => s + r.realizedGains, 0);
+      const taxableGains = totalRealized > 0 ? totalRealized * 0.5 : 0;
+
+      const isFr = input.locale.toLowerCase().startsWith("fr");
+      const labels = isFr
+        ? {
+            marketValue: "Valeur de marché",
+            costBasis: "Coût d'achat",
+            unrealizedPL: "P/V non réalisé",
+            return: "Rendement",
+            holdings: "Positions",
+            allocation: "Répartition",
+            total: "Total",
+            dividendIncome: "Revenu de dividendes",
+            annualIncome: "Revenu annuel",
+            monthlyEstimate: "Estimation mensuelle",
+            taxSummary: "Sommaire fiscal",
+            totalRealized: "Gains réalisés totaux",
+            taxableGains: "Gains imposables (50 %)",
+            taxNote: "Taux d'inclusion de 50 % — consultez un fiscaliste.",
+            noDividendData: "Aucune position versant un dividende.",
+            noTransactionData: "Aucune transaction enregistrée.",
+            footer:
+              "Généré par FinaTalk. Ce rapport est à titre informatif seulement et ne constitue pas un conseil en placement.",
+            colSymbol: "Symbole",
+            colQty: "Qté",
+            colAvgCost: "Coût moy.",
+            colLast: "Dernier",
+            colMktValue: "Val. marché",
+            colCostBasis: "Coût d'achat",
+            colPL: "P/V",
+            colPLPct: "P/V %",
+            colWeight: "Poids",
+            colRate: "Taux",
+            colYield: "Rend.",
+            colAnnualEst: "Est. annuelle",
+            colExDate: "Date ex-div.",
+            colPayDate: "Date vers.",
+            colShares: "Actions",
+            colAcbPerShare: "PBR/action",
+            colAcbTotal: "PBR total",
+            colRealized: "Gain réalisé",
+            colTxCount: "Txs",
+          }
+        : undefined;
+
       const pdfBuffer = await generatePortfolioReport({
         title: p.title,
         currency,
@@ -730,6 +837,25 @@ export const portfolioRouter = createTRPCRouter({
           unrealizedPct: totalPct,
         },
         locale: input.locale,
+        dividends: {
+          rows: dividendRows,
+          totalAnnualIncome,
+          totalMonthlyEstimate: totalAnnualIncome / 12,
+        },
+        taxSummary: {
+          rows: taxRows,
+          totalRealized,
+          taxableGains,
+        },
+        performance: {
+          range: input.range,
+          series: uniqueSymbols.map((symbol, i) => ({
+            symbol,
+            color: CHART_PALETTE[i % CHART_PALETTE.length]!,
+            points: symbolData.get(symbol)?.points ?? [],
+          })),
+        },
+        ...(labels ? { labels } : {}),
       });
 
       return {

@@ -5,24 +5,27 @@ import {
   type Time,
   createChart,
 } from "lightweight-charts";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 
-const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
-type Range = (typeof RANGES)[number];
+export const PERFORMANCE_RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
+export type PerformanceRange = (typeof PERFORMANCE_RANGES)[number];
 
 export type PerformanceItem = { symbol: string; color: string };
 
 export function PortfolioPerformanceChart({
   items,
   currency,
+  range,
+  onRangeChange,
 }: {
   items: PerformanceItem[];
   currency: string;
+  range: PerformanceRange;
+  onRangeChange: (range: PerformanceRange) => void;
 }) {
   const { t } = useTranslation();
-  const [range, setRange] = useState<Range>("6mo");
 
   const convertTo = currency === "CAD" ? ("CAD" as const) : null;
 
@@ -112,10 +115,10 @@ export function PortfolioPerformanceChart({
           <select
             id="perf-range"
             value={range}
-            onChange={(e) => setRange(e.target.value as Range)}
+            onChange={(e) => onRangeChange(e.target.value as PerformanceRange)}
             className="h-7 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-xs"
           >
-            {RANGES.map((r) => (
+            {PERFORMANCE_RANGES.map((r) => (
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
