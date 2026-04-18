@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Briefcase, CalendarDays, Eye, GitCompareArrows, GraduationCap, Home, Lightbulb, LineChart, Microscope, ScanSearch, Settings } from "lucide-react";
+import { BookOpen, Briefcase, CalendarDays, Copy, Eye, GitCompareArrows, GraduationCap, Home, Lightbulb, LineChart, Microscope, Receipt, ScanSearch, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useLastPortfolioId } from "@/lib/portfolio-persistence";
@@ -24,6 +24,8 @@ export function Sidebar() {
     { key: "screener", to: "/dashboard/screener", label: t("nav.screener"), icon: ScanSearch },
     { key: "calendar", to: "/dashboard/calendar", label: t("nav.calendar"), icon: CalendarDays },
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
+    { key: "tax", to: "/dashboard/tax", label: t("nav.tax"), icon: Receipt },
+    { key: "templates", to: "/dashboard/templates", label: t("nav.templates"), icon: Copy },
     { key: "learn-ta", to: "/dashboard/learn-ta", label: t("nav.learnTa"), icon: BookOpen },
     { key: "learn-investment", to: "/dashboard/learn-investment", label: t("nav.learnInvestment"), icon: GraduationCap },
     { key: "strategies", to: "/dashboard/strategies", label: t("nav.strategies"), icon: Lightbulb },

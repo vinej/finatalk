@@ -18,6 +18,8 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthDashboardWatchlistRouteImport } from './routes/_auth/dashboard_.watchlist'
+import { Route as AuthDashboardTemplatesRouteImport } from './routes/_auth/dashboard_.templates'
+import { Route as AuthDashboardTaxRouteImport } from './routes/_auth/dashboard_.tax'
 import { Route as AuthDashboardStrategiesRouteImport } from './routes/_auth/dashboard_.strategies'
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
 import { Route as AuthDashboardScreenerRouteImport } from './routes/_auth/dashboard_.screener'
@@ -72,6 +74,16 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
 const AuthDashboardWatchlistRoute = AuthDashboardWatchlistRouteImport.update({
   id: '/dashboard_/watchlist',
   path: '/dashboard/watchlist',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthDashboardTemplatesRoute = AuthDashboardTemplatesRouteImport.update({
+  id: '/dashboard_/templates',
+  path: '/dashboard/templates',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthDashboardTaxRoute = AuthDashboardTaxRouteImport.update({
+  id: '/dashboard_/tax',
+  path: '/dashboard/tax',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthDashboardStrategiesRoute = AuthDashboardStrategiesRouteImport.update({
@@ -150,6 +162,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/screener': typeof AuthDashboardScreenerRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
   '/dashboard/strategies': typeof AuthDashboardStrategiesRoute
+  '/dashboard/tax': typeof AuthDashboardTaxRoute
+  '/dashboard/templates': typeof AuthDashboardTemplatesRoute
   '/dashboard/watchlist': typeof AuthDashboardWatchlistRoute
   '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -171,6 +185,8 @@ export interface FileRoutesByTo {
   '/dashboard/screener': typeof AuthDashboardScreenerRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
   '/dashboard/strategies': typeof AuthDashboardStrategiesRoute
+  '/dashboard/tax': typeof AuthDashboardTaxRoute
+  '/dashboard/templates': typeof AuthDashboardTemplatesRoute
   '/dashboard/watchlist': typeof AuthDashboardWatchlistRoute
   '/dashboard/portfolios/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -194,6 +210,8 @@ export interface FileRoutesById {
   '/_auth/dashboard_/screener': typeof AuthDashboardScreenerRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
   '/_auth/dashboard_/strategies': typeof AuthDashboardStrategiesRoute
+  '/_auth/dashboard_/tax': typeof AuthDashboardTaxRoute
+  '/_auth/dashboard_/templates': typeof AuthDashboardTemplatesRoute
   '/_auth/dashboard_/watchlist': typeof AuthDashboardWatchlistRoute
   '/_auth/dashboard_/portfolios_/$portfolioId': typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -217,6 +235,8 @@ export interface FileRouteTypes {
     | '/dashboard/screener'
     | '/dashboard/settings'
     | '/dashboard/strategies'
+    | '/dashboard/tax'
+    | '/dashboard/templates'
     | '/dashboard/watchlist'
     | '/dashboard/portfolios/$portfolioId'
   fileRoutesByTo: FileRoutesByTo
@@ -238,6 +258,8 @@ export interface FileRouteTypes {
     | '/dashboard/screener'
     | '/dashboard/settings'
     | '/dashboard/strategies'
+    | '/dashboard/tax'
+    | '/dashboard/templates'
     | '/dashboard/watchlist'
     | '/dashboard/portfolios/$portfolioId'
   id:
@@ -260,6 +282,8 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/screener'
     | '/_auth/dashboard_/settings'
     | '/_auth/dashboard_/strategies'
+    | '/_auth/dashboard_/tax'
+    | '/_auth/dashboard_/templates'
     | '/_auth/dashboard_/watchlist'
     | '/_auth/dashboard_/portfolios_/$portfolioId'
   fileRoutesById: FileRoutesById
@@ -337,6 +361,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/watchlist'
       fullPath: '/dashboard/watchlist'
       preLoaderRoute: typeof AuthDashboardWatchlistRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/dashboard_/templates': {
+      id: '/_auth/dashboard_/templates'
+      path: '/dashboard/templates'
+      fullPath: '/dashboard/templates'
+      preLoaderRoute: typeof AuthDashboardTemplatesRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/dashboard_/tax': {
+      id: '/_auth/dashboard_/tax'
+      path: '/dashboard/tax'
+      fullPath: '/dashboard/tax'
+      preLoaderRoute: typeof AuthDashboardTaxRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/dashboard_/strategies': {
@@ -431,6 +469,8 @@ interface AuthRouteChildren {
   AuthDashboardScreenerRoute: typeof AuthDashboardScreenerRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
   AuthDashboardStrategiesRoute: typeof AuthDashboardStrategiesRoute
+  AuthDashboardTaxRoute: typeof AuthDashboardTaxRoute
+  AuthDashboardTemplatesRoute: typeof AuthDashboardTemplatesRoute
   AuthDashboardWatchlistRoute: typeof AuthDashboardWatchlistRoute
   AuthDashboardPortfoliosPortfolioIdRoute: typeof AuthDashboardPortfoliosPortfolioIdRoute
 }
@@ -447,6 +487,8 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardScreenerRoute: AuthDashboardScreenerRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
   AuthDashboardStrategiesRoute: AuthDashboardStrategiesRoute,
+  AuthDashboardTaxRoute: AuthDashboardTaxRoute,
+  AuthDashboardTemplatesRoute: AuthDashboardTemplatesRoute,
   AuthDashboardWatchlistRoute: AuthDashboardWatchlistRoute,
   AuthDashboardPortfoliosPortfolioIdRoute:
     AuthDashboardPortfoliosPortfolioIdRoute,

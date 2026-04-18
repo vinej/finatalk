@@ -9,6 +9,8 @@ import { analysisGeneratorAgent } from "./agents/analysis-generator";
 import { portfolioGeneratorAgent } from "./agents/portfolio-generator";
 import { researchAdvisorAgent } from "./agents/research-advisor";
 import { scenarioPlannerAgent } from "./agents/scenario-planner";
+import { taxAdvisorAgent } from "./agents/tax-advisor";
+import { morningBriefingAgent } from "./agents/morning-briefing";
 
 type IndicatorSpec = RunAnalysisInput["indicators"][number];
 
@@ -21,6 +23,8 @@ export const mastra = new Mastra({
     portfolioGeneratorAgent,
     researchAdvisorAgent,
     scenarioPlannerAgent,
+    taxAdvisorAgent,
+    morningBriefingAgent,
   },
 });
 
@@ -367,4 +371,70 @@ export async function chatWithScenarioPlanner(
   };
   const result = await scenarioPlannerAgent.generate([preamble, ...history]);
   return { response: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
+}
+
+// ── Tax advisor ─────────────────────────────────────────────────────────
+
+export type TaxAdvisorPortfolio = {
+  title: string;
+  currency: string;
+  accountType: string | null;
+  holdings: PortfolioAdvisorHolding[];
+};
+
+export type ChatWithTaxAdvisorArgs = {
+  messages: ChatMessage[];
+  context: {
+    portfolios: TaxAdvisorPortfolio[];
+  };
+  language?: string;
+};
+
+export async function chatWithTaxAdvisor(
+  args: ChatWithTaxAdvisorArgs,
+): Promise<{ response: string; provider: string }> {
+  const { messages, context, language = "en" } = args;
+  const contextBlock = {
+    userLanguage: language,
+    portfolios: context.portfolios,
+  };
+  const history = trimHistory(messages);
+  const preamble: ChatMessage = {
+    role: "user",
+    content:
+      `Context about the user's portfolios across different account types. Use this to provide tax optimization advice (do not quote verbatim):\n${JSON.stringify(contextBlock)}`,
+  };
+  const result = await taxAdvisorAgent.generate([preamble, ...history]);
+  return { response: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
+}
+
+// ── Morning briefing ────────────────────────────────────────────────────
+
+export type GenerateBriefingArgs = {
+  portfolios: Array<{
+    title: string;
+    currency: string;
+    holdings: Array<{ symbol: string; quantity: number }>;
+  }>;
+  watchlistSymbols: string[];
+  language?: string;
+};
+
+export async function generateMorningBriefing(
+  args: GenerateBriefingArgs,
+): Promise<{ briefing: string; provider: string }> {
+  const { portfolios, watchlistSymbols, language = "en" } = args;
+  const contextBlock = {
+    userLanguage: language,
+    date: new Date().toISOString().slice(0, 10),
+    portfolios,
+    watchlistSymbols,
+  };
+  const preamble: ChatMessage = {
+    role: "user",
+    content:
+      `Generate today's morning briefing. Here is the user's portfolio and watchlist context:\n${JSON.stringify(contextBlock)}\n\nFetch live prices for the holdings and watchlist symbols, then write the briefing.`,
+  };
+  const result = await morningBriefingAgent.generate([preamble]);
+  return { briefing: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
 }

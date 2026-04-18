@@ -96,6 +96,34 @@ export type ChatWithScenarioPlannerFn = (args: {
   language?: string;
 }) => Promise<{ response: string; provider: string }>;
 
+export type ChatWithTaxAdvisorFn = (args: {
+  messages: ChatMessage[];
+  context: {
+    portfolios: Array<{
+      title: string;
+      currency: string;
+      accountType: string | null;
+      holdings: Array<{
+        symbol: string;
+        quantity: number;
+        costBasis: number;
+        purchaseDate: string;
+      }>;
+    }>;
+  };
+  language?: string;
+}) => Promise<{ response: string; provider: string }>;
+
+export type GenerateBriefingFn = (args: {
+  portfolios: Array<{
+    title: string;
+    currency: string;
+    holdings: Array<{ symbol: string; quantity: number }>;
+  }>;
+  watchlistSymbols: string[];
+  language?: string;
+}) => Promise<{ briefing: string; provider: string }>;
+
 export type TRPCServices = {
   summarizeChart?: SummarizeChartFn;
   chatWithAdvisor?: ChatWithAdvisorFn;
@@ -104,6 +132,8 @@ export type TRPCServices = {
   generatePortfolio?: GeneratePortfolioFn;
   chatWithResearch?: ChatWithResearchFn;
   chatWithScenarioPlanner?: ChatWithScenarioPlannerFn;
+  chatWithTaxAdvisor?: ChatWithTaxAdvisorFn;
+  generateBriefing?: GenerateBriefingFn;
 };
 
 export async function createTRPCContext(

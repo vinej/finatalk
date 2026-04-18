@@ -5,6 +5,7 @@ import { z } from "zod";
 import { analysis, holding, portfolio, transaction, type Holding, type Transaction } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import {
+  AccountTypeSchema,
   CurrencySchema,
   HoldingInputSchema,
   PortfolioTitleSchema,
@@ -160,6 +161,7 @@ export const portfolioRouter = createTRPCRouter({
       id: p.id,
       title: p.title,
       currency: CurrencySchema.parse(p.currency),
+      accountType: p.accountType ?? null,
       holdingCount: counts[i]!.length,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
@@ -180,6 +182,7 @@ export const portfolioRouter = createTRPCRouter({
         id: p.id,
         title: p.title,
         currency: CurrencySchema.parse(p.currency),
+        accountType: p.accountType ?? null,
         holdings: rows.map((r) => ({
           ...serializeHolding(r.h),
           analysisTitle: r.analysisTitle ?? null,
@@ -194,6 +197,7 @@ export const portfolioRouter = createTRPCRouter({
     .input(z.object({
       title: PortfolioTitleSchema,
       currency: CurrencySchema,
+      accountType: AccountTypeSchema.nullable().optional(),
       overwrite: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -209,7 +213,7 @@ export const portfolioRouter = createTRPCRouter({
         }
         await ctx.db
           .update(portfolio)
-          .set({ currency: input.currency, updatedAt: new Date() })
+          .set({ currency: input.currency, accountType: input.accountType ?? null, updatedAt: new Date() })
           .where(eq(portfolio.id, existing.id));
         return { id: existing.id, overwritten: true };
       }
@@ -219,6 +223,7 @@ export const portfolioRouter = createTRPCRouter({
         userId: ctx.user.id,
         title: input.title,
         currency: input.currency,
+        accountType: input.accountType ?? null,
       });
       return { id, overwritten: false };
     }),
@@ -228,10 +233,12 @@ export const portfolioRouter = createTRPCRouter({
       id: z.string(),
       title: PortfolioTitleSchema.optional(),
       currency: CurrencySchema.optional(),
+      accountType: AccountTypeSchema.nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await findOwnedPortfolio(ctx, input.id);
       const values: Record<string, unknown> = { updatedAt: new Date() };
+      if (input.accountType !== undefined) values.accountType = input.accountType;
       if (input.title !== undefined) {
         const duplicate = await ctx.db.query.portfolio.findFirst({
           where: and(

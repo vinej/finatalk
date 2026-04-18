@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Briefcase, LineChart, Loader2, Microscope, TrendingDown, TrendingUp } from "lucide-react";
-import { useMemo } from "react";
+import { Briefcase, LineChart, Loader2, Microscope, Newspaper, TrendingDown, TrendingUp } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 
@@ -29,10 +30,45 @@ function formatPct(value: number | null | undefined) {
 }
 
 function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: user } = trpc.user.me.useQuery();
   const portfoliosQuery = trpc.portfolio.listPortfolios.useQuery();
   const portfolios = portfoliosQuery.data ?? [];
+  const portfolioIds = portfolios.map((p) => p.id);
+
+  const detailQueries = trpc.useQueries((t) =>
+    portfolioIds.map((id) => t.portfolio.getPortfolio({ id })),
+  );
+
+  const watchlistQuery = trpc.watchlist.get.useQuery();
+
+  const [briefing, setBriefing] = useState<string | null>(null);
+
+  const briefingMutation = trpc.ai.generateBriefing.useMutation({
+    onSuccess: (data) => setBriefing(data.briefing),
+  });
+
+  function generateBriefing() {
+    const portfolioData = detailQueries
+      .filter((q) => q.data)
+      .map((q) => {
+        const d = q.data!;
+        return {
+          title: d.title,
+          currency: d.currency,
+          holdings: d.holdings.map((h) => ({
+            symbol: h.symbol,
+            quantity: Number(h.quantity),
+          })),
+        };
+      });
+    const watchlistSymbols = watchlistQuery.data?.items?.map((i) => i.symbol) ?? [];
+    briefingMutation.mutate({
+      portfolios: portfolioData,
+      watchlistSymbols,
+      language: i18n.language,
+    });
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -72,6 +108,47 @@ function DashboardPage() {
         <QuickLink to="/dashboard/research" icon={Microscope} label={t("dashboard.goResearch")} />
         <QuickLink to="/dashboard/portfolios" icon={Briefcase} label={t("dashboard.goPortfolios")} />
       </div>
+
+      {portfolios.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Newspaper className="h-4 w-4 text-[var(--color-muted-fg)]" />
+                <CardTitle className="text-sm font-semibold">{t("briefing.title")}</CardTitle>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={generateBriefing}
+                disabled={briefingMutation.isPending}
+              >
+                {briefingMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    {t("briefing.generating")}
+                  </>
+                ) : (
+                  t("briefing.generate")
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {briefingMutation.isError && (
+              <p className="text-xs text-[#ef4444]">{t("briefing.failed")}</p>
+            )}
+            {briefing ? (
+              <div className="space-y-2">
+                <div className="whitespace-pre-wrap text-sm">{briefing}</div>
+                <p className="text-[10px] text-[var(--color-muted-fg)]">{t("briefing.disclaimer")}</p>
+              </div>
+            ) : !briefingMutation.isPending ? (
+              <p className="py-4 text-center text-xs text-[var(--color-muted-fg)]">{t("briefing.empty")}</p>
+            ) : null}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

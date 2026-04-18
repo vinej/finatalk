@@ -4,6 +4,9 @@ import { SymbolSchema } from "./indicator";
 export const CurrencySchema = z.enum(["USD", "CAD"]);
 export type Currency = z.infer<typeof CurrencySchema>;
 
+export const AccountTypeSchema = z.enum(["non-registered", "TFSA", "RRSP", "RESP", "LIRA", "RRIF"]);
+export type AccountType = z.infer<typeof AccountTypeSchema>;
+
 export const PortfolioTitleSchema = z.string().trim().min(1).max(120);
 
 export const HoldingInputSchema = z.object({
