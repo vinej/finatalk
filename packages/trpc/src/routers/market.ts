@@ -641,4 +641,103 @@ export const marketRouter = createTRPCRouter({
       );
       return results;
     }),
+
+  getEarningsCalendar: protectedProcedure
+    .input(z.object({ symbols: z.array(SymbolSchema).min(1).max(100) }))
+    .query(async ({ input }) => {
+      type CalendarEvent = {
+        symbol: string;
+        eventType: "earnings" | "ex-dividend" | "dividend";
+        date: string;
+        title: string;
+        details: Record<string, unknown>;
+      };
+
+      const allEvents: CalendarEvent[] = [];
+
+      const results = await Promise.allSettled(
+        input.symbols.map(async (sym) => {
+          const symbol = sym.toUpperCase();
+          const summary = await yf.quoteSummary(symbol, {
+            modules: ["calendarEvents", "summaryDetail", "earningsHistory"],
+          });
+
+          const ce = summary.calendarEvents;
+          const sd = summary.summaryDetail;
+          const eh = summary.earningsHistory;
+
+          if (ce?.earnings?.earningsDate) {
+            for (const d of ce.earnings.earningsDate) {
+              allEvents.push({
+                symbol,
+                eventType: "earnings",
+                date: d.toISOString().slice(0, 10),
+                title: `${symbol} Earnings`,
+                details: {
+                  earningsAverage: ce.earnings.earningsAverage ?? null,
+                  earningsHigh: ce.earnings.earningsHigh ?? null,
+                  earningsLow: ce.earnings.earningsLow ?? null,
+                  revenueAverage: ce.earnings.revenueAverage ?? null,
+                },
+              });
+            }
+          }
+
+          if (sd?.exDividendDate) {
+            allEvents.push({
+              symbol,
+              eventType: "ex-dividend",
+              date: sd.exDividendDate.toISOString().slice(0, 10),
+              title: `${symbol} Ex-Dividend`,
+              details: {
+                dividendRate: sd.dividendRate ?? null,
+                dividendYield: sd.dividendYield ?? null,
+              },
+            });
+          }
+
+          if (ce?.dividendDate) {
+            allEvents.push({
+              symbol,
+              eventType: "dividend",
+              date: ce.dividendDate.toISOString().slice(0, 10),
+              title: `${symbol} Dividend Payment`,
+              details: {
+                dividendRate: sd?.dividendRate ?? null,
+              },
+            });
+          }
+
+          if (eh?.history) {
+            for (const entry of eh.history.slice(-4)) {
+              if (entry.quarter) {
+                allEvents.push({
+                  symbol,
+                  eventType: "earnings",
+                  date: entry.quarter.toISOString().slice(0, 10),
+                  title: `${symbol} Earnings (past)`,
+                  details: {
+                    epsActual: entry.epsActual ?? null,
+                    epsEstimate: entry.epsEstimate ?? null,
+                    epsDifference: entry.epsDifference ?? null,
+                    surprisePercent: entry.surprisePercent ?? null,
+                  },
+                });
+              }
+            }
+          }
+        }),
+      );
+
+      const errors: string[] = [];
+      for (let i = 0; i < results.length; i++) {
+        if (results[i]!.status === "rejected") {
+          errors.push(input.symbols[i]!.toUpperCase());
+        }
+      }
+
+      allEvents.sort((a, b) => a.date.localeCompare(b.date));
+
+      return { events: allEvents, errors };
+    }),
 });

@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { analysis, holding, portfolio, type Holding } from "@finatalk/db";
+import { analysis, holding, portfolio, transaction, type Holding, type Transaction } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import {
   CurrencySchema,
@@ -12,6 +12,95 @@ import {
 import { SymbolSchema } from "../schemas/indicator";
 import { generatePortfolioReport } from "../lib/pdf-report";
 import { fetchCandlesWithCurrency } from "./market";
+
+const TransactionTypeSchema = z.enum(["buy", "sell", "dividend"]);
+
+const TransactionInputSchema = z.object({
+  type: TransactionTypeSchema,
+  quantity: z.number().positive(),
+  price: z.number().nonnegative(),
+  fee: z.number().nonnegative().default(0),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD"),
+  note: z.string().max(500).optional(),
+});
+
+type AcbResult = {
+  totalShares: number;
+  acbPerShare: number;
+  acbTotal: number;
+  realizedGains: number;
+  transactions: Array<{
+    id: string;
+    type: string;
+    quantity: number;
+    price: number;
+    fee: number;
+    date: string;
+    note: string | null;
+    realizedGain: number | null;
+    acbPerShareAfter: number;
+    sharesAfter: number;
+    createdAt: Date;
+  }>;
+};
+
+function computeAcb(rows: Transaction[]): AcbResult {
+  const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.getTime() - b.createdAt.getTime());
+  let totalShares = 0;
+  let acbTotal = 0;
+  let realizedGains = 0;
+
+  const transactions: AcbResult["transactions"] = [];
+
+  for (const tx of sorted) {
+    const qty = Number(tx.quantity);
+    const price = Number(tx.price);
+    const fee = Number(tx.fee);
+
+    let realizedGain: number | null = null;
+
+    if (tx.type === "buy") {
+      acbTotal += qty * price + fee;
+      totalShares += qty;
+    } else if (tx.type === "sell") {
+      const acbPerShare = totalShares > 0 ? acbTotal / totalShares : 0;
+      const proceeds = qty * price - fee;
+      realizedGain = proceeds - acbPerShare * qty;
+      realizedGains += realizedGain;
+      acbTotal -= acbPerShare * qty;
+      totalShares -= qty;
+      if (totalShares < 0.00000001) {
+        totalShares = 0;
+        acbTotal = 0;
+      }
+    } else if (tx.type === "dividend") {
+      realizedGain = qty * price - fee;
+      realizedGains += realizedGain;
+    }
+
+    transactions.push({
+      id: tx.id,
+      type: tx.type,
+      quantity: qty,
+      price,
+      fee,
+      date: tx.date,
+      note: tx.note ?? null,
+      realizedGain,
+      acbPerShareAfter: totalShares > 0 ? acbTotal / totalShares : 0,
+      sharesAfter: totalShares,
+      createdAt: tx.createdAt,
+    });
+  }
+
+  return {
+    totalShares,
+    acbPerShare: totalShares > 0 ? acbTotal / totalShares : 0,
+    acbTotal,
+    realizedGains,
+    transactions,
+  };
+}
 
 type OwnedCtx = { db: typeof import("@finatalk/db").db; user: { id: string } };
 
@@ -386,6 +475,131 @@ export const portfolioRouter = createTRPCRouter({
           .where(eq(holding.id, h.id));
       }
       return { symbol: sym, confidence: input.confidence };
+    }),
+
+  listTransactions: protectedProcedure
+    .input(z.object({ holdingId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { holding: h } = await findOwnedHolding(ctx, input.holdingId);
+      const rows = await ctx.db.query.transaction.findMany({
+        where: eq(transaction.holdingId, h.id),
+      });
+      return computeAcb(rows);
+    }),
+
+  getPortfolioTaxSummary: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const p = await findOwnedPortfolio(ctx, input.id);
+      const holdings = await ctx.db.query.holding.findMany({
+        where: eq(holding.portfolioId, p.id),
+      });
+      const results = await Promise.all(
+        holdings.map(async (h) => {
+          const rows = await ctx.db.query.transaction.findMany({
+            where: eq(transaction.holdingId, h.id),
+          });
+          if (rows.length === 0) return null;
+          const acb = computeAcb(rows);
+          return {
+            symbol: h.symbol,
+            holdingId: h.id,
+            totalShares: acb.totalShares,
+            acbPerShare: acb.acbPerShare,
+            acbTotal: acb.acbTotal,
+            realizedGains: acb.realizedGains,
+            transactionCount: rows.length,
+          };
+        }),
+      );
+      const items = results.filter((r) => r !== null);
+      const totalRealized = items.reduce((s, r) => s + r.realizedGains, 0);
+      const taxableGains = totalRealized > 0 ? totalRealized * 0.5 : 0;
+      return { items, totalRealized, taxableGains };
+    }),
+
+  addTransaction: protectedProcedure
+    .input(z.object({
+      holdingId: z.string(),
+      transaction: TransactionInputSchema,
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { holding: h, portfolio: p } = await findOwnedHolding(ctx, input.holdingId);
+
+      if (input.transaction.type === "sell") {
+        const existing = await ctx.db.query.transaction.findMany({
+          where: eq(transaction.holdingId, h.id),
+        });
+        const acb = computeAcb(existing);
+        if (input.transaction.quantity > acb.totalShares + 0.00000001) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Cannot sell ${input.transaction.quantity} shares — only ${acb.totalShares.toFixed(4)} held.`,
+          });
+        }
+      }
+
+      const id = randomUUID();
+      await ctx.db.insert(transaction).values({
+        id,
+        holdingId: input.holdingId,
+        type: input.transaction.type,
+        quantity: String(input.transaction.quantity),
+        price: String(input.transaction.price),
+        fee: String(input.transaction.fee),
+        date: input.transaction.date,
+        note: input.transaction.note ?? null,
+      });
+
+      const allTx = await ctx.db.query.transaction.findMany({
+        where: eq(transaction.holdingId, h.id),
+      });
+      const acb = computeAcb(allTx);
+      await ctx.db
+        .update(holding)
+        .set({
+          quantity: String(acb.totalShares),
+          costBasis: String(acb.acbPerShare),
+          updatedAt: new Date(),
+        })
+        .where(eq(holding.id, h.id));
+      await ctx.db
+        .update(portfolio)
+        .set({ updatedAt: new Date() })
+        .where(eq(portfolio.id, p.id));
+
+      return { id };
+    }),
+
+  deleteTransaction: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const tx = await ctx.db.query.transaction.findFirst({
+        where: eq(transaction.id, input.id),
+      });
+      if (!tx) throw new TRPCError({ code: "NOT_FOUND" });
+      const { holding: h, portfolio: p } = await findOwnedHolding(ctx, tx.holdingId);
+
+      await ctx.db.delete(transaction).where(eq(transaction.id, input.id));
+
+      const remaining = await ctx.db.query.transaction.findMany({
+        where: eq(transaction.holdingId, h.id),
+      });
+      const acb = computeAcb(remaining);
+      await ctx.db
+        .update(holding)
+        .set({
+          quantity: String(acb.totalShares),
+          costBasis: String(acb.acbPerShare),
+          updatedAt: new Date(),
+        })
+        .where(eq(holding.id, h.id));
+      await ctx.db
+        .update(portfolio)
+        .set({ updatedAt: new Date() })
+        .where(eq(portfolio.id, p.id));
+
+      return { id: input.id };
     }),
 
   generateAnalysisForSymbol: protectedProcedure

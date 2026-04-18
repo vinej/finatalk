@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Download, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Check, ChevronDown, ChevronRight, DollarSign, Download, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
@@ -82,6 +82,7 @@ function PortfolioDetailPage() {
   const [sortKey, setSortKey] = useState<SortKey>("symbol");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [chatOpen, setChatOpen] = useState(false);
+  const [txHoldingId, setTxHoldingId] = useState<string | null>(null);
   const [editingHoldingId, setEditingHoldingId] = useState<string | null>(null);
   const [holdingDraft, setHoldingDraft] = useState({
     symbol: "",
@@ -609,6 +610,8 @@ function PortfolioDetailPage() {
 
       <DividendSection symbols={[...new Set(holdings.map((h) => h.symbol.toUpperCase()))]} holdings={holdings} currency={currency} />
 
+      <TaxSummarySection portfolioId={portfolioId} currency={currency} />
+
       <div>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -744,8 +747,8 @@ function PortfolioDetailPage() {
                     }
                     const fullName = symbolNameMap.get(h.symbol.toUpperCase());
                     return (
+                      <React.Fragment key={h.id}>
                       <tr
-                        key={h.id}
                         className="border-b border-[var(--color-border)] text-sm"
                         title={fullName ?? h.symbol}
                       >
@@ -813,23 +816,34 @@ function PortfolioDetailPage() {
                         </td>
                         <td className="px-2 py-2 text-right">
                           <div className="flex justify-end gap-1">
-                            {h.analysisId && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                title={t("portfolio.analysisInfo")}
-                                onClick={() =>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title={t("tx.transactions")}
+                              onClick={() => setTxHoldingId(txHoldingId === h.id ? null : h.id)}
+                              aria-label={t("tx.transactions")}
+                            >
+                              <DollarSign className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title={t("portfolio.analysisInfo")}
+                              disabled={!h.analysisId}
+                              onClick={() => {
+                                if (h.analysisId) {
                                   setInfoHolding({
                                     holdingId: h.id,
                                     symbol: h.symbol,
-                                    analysisId: h.analysisId!,
-                                  })
+                                    analysisId: h.analysisId,
+                                  });
                                 }
-                                aria-label={t("portfolio.analysisInfo")}
-                              >
-                                <FileText className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
+                              }}
+                              aria-label={t("portfolio.analysisInfo")}
+                              className={h.analysisId ? "" : "opacity-30"}
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                            </Button>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -855,6 +869,20 @@ function PortfolioDetailPage() {
                           </div>
                         </td>
                       </tr>
+                      {txHoldingId === h.id && (
+                        <tr>
+                          <td colSpan={10} className="border-b border-[var(--color-border)] bg-[#10b981]/5 p-0">
+                            <TransactionPanel
+                              holdingId={h.id}
+                              symbol={h.symbol}
+                              currency={currency}
+                              portfolioId={portfolioId}
+                              onClose={() => setTxHoldingId(null)}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
                     );
                   })
                 )}
@@ -1296,6 +1324,319 @@ function saveDividendCollapsed(collapsed: boolean): void {
   } catch { /* ignore */ }
 }
 
+function TransactionPanel({
+  holdingId,
+  symbol,
+  currency,
+  portfolioId,
+  onClose,
+}: {
+  holdingId: string;
+  symbol: string;
+  currency: string;
+  portfolioId: string;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const utils = trpc.useUtils();
+
+  const txQuery = trpc.portfolio.listTransactions.useQuery({ holdingId });
+  const addTx = trpc.portfolio.addTransaction.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.portfolio.listTransactions.invalidate({ holdingId }),
+        utils.portfolio.getPortfolio.invalidate({ id: portfolioId }),
+        utils.portfolio.getValuation.invalidate({ id: portfolioId }),
+        utils.portfolio.getPortfolioTaxSummary.invalidate({ id: portfolioId }),
+      ]);
+      setType("buy");
+      setQty("");
+      setPrice("");
+      setFee("");
+      setDate(todayIso());
+      setNote("");
+      toast.success(t("tx.added"));
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteTx = trpc.portfolio.deleteTransaction.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.portfolio.listTransactions.invalidate({ holdingId }),
+        utils.portfolio.getPortfolio.invalidate({ id: portfolioId }),
+        utils.portfolio.getValuation.invalidate({ id: portfolioId }),
+        utils.portfolio.getPortfolioTaxSummary.invalidate({ id: portfolioId }),
+      ]);
+      toast.success(t("tx.deleted"));
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const [type, setType] = useState<"buy" | "sell" | "dividend">("buy");
+  const [qty, setQty] = useState("");
+  const [price, setPrice] = useState("");
+  const [fee, setFee] = useState("");
+  const [date, setDate] = useState(todayIso());
+  const [note, setNote] = useState("");
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const q = Number(qty);
+    const p = Number(price);
+    const f = Number(fee) || 0;
+    if (!Number.isFinite(q) || q <= 0 || !Number.isFinite(p) || p < 0) return;
+    addTx.mutate({
+      holdingId,
+      transaction: { type, quantity: q, price: p, fee: f, date, note: note.trim() || undefined },
+    });
+  }
+
+  const data = txQuery.data;
+
+  return (
+    <div className="px-4 py-3">
+      <div className="mb-2 flex items-center gap-2">
+        <DollarSign className="h-4 w-4 text-[var(--color-muted-fg)]" />
+        <span className="text-xs font-semibold uppercase text-[var(--color-muted-fg)]">
+          {t("tx.transactionsFor", { symbol })}
+        </span>
+        {data && (
+          <span className="ml-auto text-xs text-[var(--color-muted-fg)]">
+            {t("tx.acb")}: {formatCurrency(data.acbPerShare, currency)}/sh
+            {data.realizedGains !== 0 && (
+              <> · {t("tx.realizedPl")}: <span className={data.realizedGains >= 0 ? "text-[#10b981]" : "text-[#ef4444]"}>{formatCurrency(data.realizedGains, currency)}</span></>
+            )}
+          </span>
+        )}
+      </div>
+
+      {txQuery.isPending ? (
+        <div className="flex items-center gap-2 py-2 text-xs text-[var(--color-muted-fg)]">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("portfolio.loading")}
+        </div>
+      ) : data && data.transactions.length > 0 ? (
+        <table className="mb-3 w-full text-xs">
+          <thead>
+            <tr className="border-b border-[var(--color-border)] text-left text-[var(--color-muted-fg)]">
+              <th className="px-1 py-1 font-medium">{t("tx.date")}</th>
+              <th className="px-1 py-1 font-medium">{t("tx.type")}</th>
+              <th className="px-1 py-1 text-right font-medium">{t("tx.qty")}</th>
+              <th className="px-1 py-1 text-right font-medium">{t("tx.price")}</th>
+              <th className="px-1 py-1 text-right font-medium">{t("tx.fee")}</th>
+              <th className="px-1 py-1 text-right font-medium">{t("tx.realizedGain")}</th>
+              <th className="px-1 py-1 text-right font-medium">{t("tx.acbAfter")}</th>
+              <th className="px-1 py-1 text-right font-medium">{t("tx.sharesAfter")}</th>
+              <th className="px-1 py-1" />
+            </tr>
+          </thead>
+          <tbody>
+            {data.transactions.map((tx) => (
+              <tr key={tx.id} className="border-b border-[var(--color-border)]">
+                <td className="px-1 py-1 text-[var(--color-muted-fg)]">{tx.date}</td>
+                <td className="px-1 py-1">
+                  <span
+                    className={
+                      "inline-block rounded px-1.5 py-0.5 text-[10px] font-medium uppercase " +
+                      (tx.type === "buy"
+                        ? "bg-[#10b981]/10 text-[#10b981]"
+                        : tx.type === "sell"
+                          ? "bg-[#ef4444]/10 text-[#ef4444]"
+                          : "bg-[#3b82f6]/10 text-[#3b82f6]")
+                    }
+                  >
+                    {t(`tx.${tx.type}`)}
+                  </span>
+                </td>
+                <td className="px-1 py-1 text-right tabular-nums">{formatQty(tx.quantity)}</td>
+                <td className="px-1 py-1 text-right tabular-nums">{formatCurrency(tx.price, currency)}</td>
+                <td className="px-1 py-1 text-right tabular-nums text-[var(--color-muted-fg)]">
+                  {tx.fee > 0 ? formatCurrency(tx.fee, currency) : "—"}
+                </td>
+                <td
+                  className={
+                    "px-1 py-1 text-right tabular-nums " +
+                    (tx.realizedGain == null ? "" : tx.realizedGain >= 0 ? "text-[#10b981]" : "text-[#ef4444]")
+                  }
+                >
+                  {tx.realizedGain != null ? formatCurrency(tx.realizedGain, currency) : "—"}
+                </td>
+                <td className="px-1 py-1 text-right tabular-nums">{formatCurrency(tx.acbPerShareAfter, currency)}</td>
+                <td className="px-1 py-1 text-right tabular-nums">{formatQty(tx.sharesAfter)}</td>
+                <td className="px-1 py-1 text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(t("tx.confirmDelete"))) {
+                        deleteTx.mutate({ id: tx.id });
+                      }
+                    }}
+                    className="rounded p-1 text-[var(--color-muted-fg)] hover:text-[var(--color-destructive)]"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="mb-3 text-xs text-[var(--color-muted-fg)]">{t("tx.noTransactions")}</p>
+      )}
+
+      <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("tx.type")}</label>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as "buy" | "sell" | "dividend")}
+            className="h-7 rounded border border-[var(--color-border)] bg-transparent px-1.5 text-xs"
+          >
+            <option value="buy">{t("tx.buy")}</option>
+            <option value="sell">{t("tx.sell")}</option>
+            <option value="dividend">{t("tx.dividend")}</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("tx.qty")}</label>
+          <Input value={qty} onChange={(e) => setQty(e.target.value)} type="number" step="any" min="0" className="h-7 w-20 text-xs" required />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("tx.price")}</label>
+          <Input value={price} onChange={(e) => setPrice(e.target.value)} type="number" step="any" min="0" className="h-7 w-24 text-xs" required />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("tx.fee")}</label>
+          <Input value={fee} onChange={(e) => setFee(e.target.value)} type="number" step="any" min="0" className="h-7 w-20 text-xs" placeholder="0" />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("tx.date")}</label>
+          <Input value={date} onChange={(e) => setDate(e.target.value)} type="date" className="h-7 w-32 text-xs" required />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("tx.note")}</label>
+          <Input value={note} onChange={(e) => setNote(e.target.value)} className="h-7 w-32 text-xs" maxLength={500} />
+        </div>
+        <Button type="submit" size="sm" disabled={addTx.isPending} className="h-7 text-xs">
+          {addTx.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Plus className="mr-1 h-3 w-3" />}
+          {t("tx.add")}
+        </Button>
+      </form>
+      <div className="mt-3 flex justify-end">
+        <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={onClose}>
+          <X className="mr-1 h-3 w-3" />
+          {t("tx.close")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function TaxSummarySection({
+  portfolioId,
+  currency,
+}: {
+  portfolioId: string;
+  currency: string;
+}) {
+  const { t } = useTranslation();
+  const [collapsed, setCollapsed] = useState(true);
+
+  const taxQuery = trpc.portfolio.getPortfolioTaxSummary.useQuery(
+    { id: portfolioId },
+    { enabled: !collapsed, staleTime: 60_000 },
+  );
+
+  const data = taxQuery.data;
+  const items = data?.items ?? [];
+  const hasData = items.length > 0;
+
+  if (collapsed && !hasData) {
+    return (
+      <Card>
+        <CardHeader className="cursor-pointer select-none" onClick={() => setCollapsed(false)}>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+            <CardTitle className="text-sm font-semibold">{t("tx.taxSummary")}</CardTitle>
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="cursor-pointer select-none" onClick={() => setCollapsed((v) => !v)}>
+        <div className="flex items-center gap-2">
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+          )}
+          <CardTitle className="text-sm font-semibold">{t("tx.taxSummary")}</CardTitle>
+        </div>
+      </CardHeader>
+      {!collapsed && (
+        <CardContent>
+          {taxQuery.isPending ? (
+            <div className="flex items-center gap-2 py-4 text-xs text-[var(--color-muted-fg)]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("portfolio.loading")}
+            </div>
+          ) : items.length === 0 ? (
+            <p className="text-xs text-[var(--color-muted-fg)]">{t("tx.noTransactions")}</p>
+          ) : (
+            <>
+              <div className="mb-3 flex flex-wrap gap-6">
+                <div>
+                  <p className="text-xs text-[var(--color-muted-fg)]">{t("tx.totalRealized")}</p>
+                  <p className={`text-lg font-semibold tabular-nums ${data!.totalRealized >= 0 ? "text-[#10b981]" : "text-[#ef4444]"}`}>
+                    {formatCurrency(data!.totalRealized, currency)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--color-muted-fg)]">{t("tx.taxableGains")}</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {formatCurrency(data!.taxableGains, currency)}
+                  </p>
+                  <p className="text-[10px] text-[var(--color-muted-fg)]">{t("tx.taxNote")}</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-muted-fg)]">
+                      <th className="px-2 py-2 font-medium">{t("portfolio.symbol")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("tx.shares")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("tx.acbPerShare")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("tx.acbTotal")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("tx.realizedPl")}</th>
+                      <th className="px-2 py-2 text-right font-medium">{t("tx.txCount")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.sort((a, b) => a.symbol.localeCompare(b.symbol)).map((r) => (
+                      <tr key={r.holdingId} className="border-b border-[var(--color-border)]">
+                        <td className="px-2 py-2 font-medium">{r.symbol}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{formatQty(r.totalShares)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{formatCurrency(r.acbPerShare, currency)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{formatCurrency(r.acbTotal, currency)}</td>
+                        <td className={`px-2 py-2 text-right tabular-nums ${r.realizedGains >= 0 ? "text-[#10b981]" : "text-[#ef4444]"}`}>
+                          {formatCurrency(r.realizedGains, currency)}
+                        </td>
+                        <td className="px-2 py-2 text-right tabular-nums">{r.transactionCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
 function DividendSection({
   symbols,
   holdings,
@@ -1321,12 +1662,10 @@ function DividendSection({
   );
 
   const data = dividendQuery.data ?? [];
-  const withDividends = data
-    .filter((d) => d.dividendRate != null && d.dividendRate > 0)
-    .sort((a, b) => a.symbol.localeCompare(b.symbol));
+  const sortedData = [...data].sort((a, b) => a.symbol.localeCompare(b.symbol));
+  const withDividends = sortedData.filter((d) => d.dividendRate != null && d.dividendRate > 0);
 
   if (symbols.length === 0) return null;
-  if (!collapsed && dividendQuery.isSuccess && withDividends.length === 0) return null;
 
   const qtyBySymbol = new Map<string, number>();
   for (const h of holdings) {
@@ -1388,31 +1727,32 @@ function DividendSection({
                     </tr>
                   </thead>
                   <tbody>
-                    {withDividends.map((d) => {
+                    {sortedData.map((d) => {
+                      const pays = d.dividendRate != null && d.dividendRate > 0;
                       const qty = qtyBySymbol.get(d.symbol) ?? 0;
-                      const annual = qty * (d.dividendRate ?? 0);
+                      const annual = pays ? qty * (d.dividendRate ?? 0) : 0;
                       return (
                         <tr key={d.symbol} className="border-b border-[var(--color-border)]">
                           <td className="px-2 py-2 font-medium">{d.symbol}</td>
                           <td className="px-2 py-2 text-right tabular-nums">
-                            {d.dividendYield != null ? `${(d.dividendYield * 100).toFixed(2)}%` : "—"}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums">
-                          {d.dividendRate != null ? `$${d.dividendRate.toFixed(2)}` : "—"}
-                        </td>
-                        <td className="px-2 py-2 text-xs text-[var(--color-muted-fg)]">
-                          {d.exDividendDate ?? "—"}
-                        </td>
-                        <td className="px-2 py-2 text-xs text-[var(--color-muted-fg)]">
-                          {d.dividendDate ?? "—"}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums font-medium text-[#10b981]">
-                          {formatCurrency(annual, currency)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                            {pays && d.dividendYield != null ? `${(d.dividendYield * 100).toFixed(2)}%` : "—"}
+                          </td>
+                          <td className="px-2 py-2 text-right tabular-nums">
+                            {pays && d.dividendRate != null ? `$${d.dividendRate.toFixed(2)}` : "—"}
+                          </td>
+                          <td className="px-2 py-2 text-xs text-[var(--color-muted-fg)]">
+                            {pays ? (d.exDividendDate ?? "—") : "—"}
+                          </td>
+                          <td className="px-2 py-2 text-xs text-[var(--color-muted-fg)]">
+                            {pays ? (d.dividendDate ?? "—") : "—"}
+                          </td>
+                          <td className={`px-2 py-2 text-right tabular-nums font-medium ${pays ? "text-[#10b981]" : ""}`}>
+                            {pays ? formatCurrency(annual, currency) : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
               </table>
             </div>
             </>

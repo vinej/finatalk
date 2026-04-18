@@ -24,7 +24,9 @@
       "Bash(node -e \"console.log\\(require\\('./apps/web/package.json'\\).dependencies['lightweight-charts']\\)\")",
       "Bash(grep -r \"createSeriesMarkers\" node_modules/.pnpm/lightweight-charts@*/node_modules/lightweight-charts/dist/)",
       "Bash(xargs grep *)",
-      "Bash(find /c/SanoTalk/finatalk -name \"package.json\" -path \"*/apps/web/*\" -exec cat {} \\\\;)"
+      "Bash(find /c/SanoTalk/finatalk -name \"package.json\" -path \"*/apps/web/*\" -exec cat {} \\\\;)",
+      "Read(//c/SanoTalk/finatalk/apps/web/src/routes/_auth/**)",
+      "Bash(npx tsr *)"
     ]
   }
 }
