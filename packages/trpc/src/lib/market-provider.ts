@@ -1,0 +1,180 @@
+import { getOpenBBClient, isOpenBBEnabled, type OHLCVBar } from "@finatalk/openbb";
+import YahooFinance from "yahoo-finance2";
+import type { z } from "zod";
+import type { IntervalSchema, RangeSchema } from "../schemas/indicator";
+
+type Range = z.infer<typeof RangeSchema>;
+type Interval = z.infer<typeof IntervalSchema>;
+
+export type Candle = {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+type ProviderResult<T> = { data: T; provider: "openbb" | "yahoo" };
+
+const yf = new YahooFinance();
+
+export function rangeToPeriod1(range: Range): Date {
+  const now = new Date();
+  if (range === "max") return new Date(1970, 0, 1);
+  const months: Record<Exclude<Range, "max">, number> = {
+    "1mo": 1, "3mo": 3, "6mo": 6, "1y": 12, "2y": 24, "5y": 60,
+  };
+  const d = new Date(now);
+  d.setMonth(d.getMonth() - months[range]);
+  return d;
+}
+
+function mapInterval(interval: Interval): string {
+  const map: Record<Interval, string> = {
+    "1d": "1d", "1wk": "1wk", "1mo": "1mo",
+  };
+  return map[interval];
+}
+
+function openbbBarToCandle(bar: OHLCVBar): Candle {
+  const date = bar.date.includes("T") ? new Date(bar.date) : new Date(bar.date + "T00:00:00Z");
+  return {
+    time: Math.floor(date.getTime() / 1000),
+    open: bar.open,
+    high: bar.high,
+    low: bar.low,
+    close: bar.close,
+    volume: bar.volume,
+  };
+}
+
+export async function fetchChartWithFallback(
+  symbol: string,
+  range: Range,
+  interval: Interval,
+): Promise<ProviderResult<{ candles: Candle[]; currency: string }>> {
+  if (isOpenBBEnabled()) {
+    try {
+      const client = getOpenBBClient();
+      const bars = await client.getHistoricalPrice(symbol, {
+        startDate: rangeToPeriod1(range).toISOString().slice(0, 10),
+        interval: mapInterval(interval),
+        provider: "yfinance",
+      });
+      const candles = bars.map(openbbBarToCandle).filter((c) => c.open > 0);
+      if (candles.length > 0) {
+        let currency = "USD";
+        try {
+          const quote = await client.getQuote(symbol);
+          if (quote.symbol.endsWith(".TO") || quote.symbol.endsWith(".V")) currency = "CAD";
+          else if (quote.symbol.endsWith(".L")) currency = "GBP";
+        } catch { /* default USD */ }
+        return { data: { candles, currency }, provider: "openbb" };
+      }
+    } catch {
+      // fall through to yahoo
+    }
+  }
+
+  const result = await yf.chart(symbol, {
+    period1: rangeToPeriod1(range),
+    interval,
+    return: "array",
+  });
+  const currency = (result.meta.currency ?? "USD").toUpperCase();
+  const candles: Candle[] = [];
+  for (const q of result.quotes) {
+    if (q.open == null || q.high == null || q.low == null || q.close == null) continue;
+    candles.push({
+      time: Math.floor(q.date.getTime() / 1000),
+      open: q.open,
+      high: q.high,
+      low: q.low,
+      close: q.close,
+      volume: q.volume ?? 0,
+    });
+  }
+  return { data: { candles, currency }, provider: "yahoo" };
+}
+
+export async function fetchFxRatesWithFallback(
+  fromCcy: string,
+  toCcy: string,
+  range: Range,
+  interval: Interval,
+): Promise<Map<number, number>> {
+  if (isOpenBBEnabled()) {
+    try {
+      const client = getOpenBBClient();
+      const pair = `${fromCcy}${toCcy}`;
+      const bars = await client.getCurrencyHistorical(pair, {
+        startDate: rangeToPeriod1(range).toISOString().slice(0, 10),
+        interval: mapInterval(interval),
+        provider: "yfinance",
+      });
+      const byTime = new Map<number, number>();
+      for (const bar of bars) {
+        if (bar.close > 0) {
+          const candle = openbbBarToCandle(bar);
+          byTime.set(candle.time, bar.close);
+        }
+      }
+      if (byTime.size > 0) return byTime;
+    } catch {
+      // fall through to yahoo
+    }
+  }
+
+  const pair = `${fromCcy}${toCcy}=X`;
+  const result = await yf.chart(pair, {
+    period1: rangeToPeriod1(range),
+    interval,
+    return: "array",
+  });
+  const byTime = new Map<number, number>();
+  for (const q of result.quotes) {
+    if (q.close == null) continue;
+    byTime.set(Math.floor(q.date.getTime() / 1000), q.close);
+  }
+  return byTime;
+}
+
+export async function fetchQuoteWithFallback(
+  symbol: string,
+): Promise<ProviderResult<{ last: number; change: number | null; changePercent: number | null }>> {
+  if (isOpenBBEnabled()) {
+    try {
+      const client = getOpenBBClient();
+      const quote = await client.getQuote(symbol);
+      return {
+        data: {
+          last: quote.last,
+          change: quote.change,
+          changePercent: quote.changePercent,
+        },
+        provider: "openbb",
+      };
+    } catch {
+      // fall through
+    }
+  }
+
+  const result = await yf.chart(symbol, {
+    period1: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    interval: "1d",
+    return: "array",
+  });
+  const quotes = result.quotes;
+  const last = quotes[quotes.length - 1];
+  const prev = quotes.length >= 2 ? quotes[quotes.length - 2] : undefined;
+  return {
+    data: {
+      last: last?.close ?? 0,
+      change: last?.close != null && prev?.close != null ? last.close - prev.close : null,
+      changePercent: last?.close != null && prev?.close != null && prev.close !== 0 ? ((last.close - prev.close) / prev.close) * 100 : null,
+    },
+    provider: "yahoo",
+  };
+}
+

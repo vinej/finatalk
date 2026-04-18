@@ -17,5 +17,24 @@ services:
       timeout: 5s
       retries: 10
 
+  openbb:
+    build:
+      context: ../services/openbb
+      dockerfile: Dockerfile
+    container_name: finatalk_openbb
+    restart: unless-stopped
+    ports:
+      - "6900:6900"
+    env_file:
+      - ../.env
+    environment:
+      OPENBB_API_PORT: "6900"
+      OPENBB_API_HOST: "0.0.0.0"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6900/openapi.json"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   finatalk_pgdata:

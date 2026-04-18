@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Briefcase, LineChart, Loader2, Microscope, Newspaper, TrendingDown, TrendingUp } from "lucide-react";
+import { Briefcase, Database, LineChart, Loader2, Microscope, Newspaper, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
@@ -72,9 +72,12 @@ function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold">{t("dashboard.welcome", { name: user?.name ?? "" })}</h1>
-        <p className="text-sm text-[var(--color-muted-fg)]">{t("dashboard.subtitle")}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-lg font-semibold">{t("dashboard.welcome", { name: user?.name ?? "" })}</h1>
+          <p className="text-sm text-[var(--color-muted-fg)]">{t("dashboard.subtitle")}</p>
+        </div>
+        <ProviderBadge />
       </div>
 
       {portfoliosQuery.isPending ? (
@@ -257,6 +260,26 @@ function PortfolioSummaryCard({
         </div>
       )}
     </Link>
+  );
+}
+
+function ProviderBadge() {
+  const { t } = useTranslation();
+  const { data } = trpc.market.providerStatus.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  if (!data) return null;
+  const label = data.active === "openbb" ? "OpenBB Platform" : "Yahoo Finance";
+  const tone = data.active === "openbb" ? "text-[#10b981]" : "text-[var(--color-muted-fg)]";
+  return (
+    <div className="flex shrink-0 items-center gap-1.5 pt-1 text-[11px] text-[var(--color-muted-fg)]">
+      <Database className={`h-3 w-3 ${tone}`} />
+      <span>{t("dashboard.poweredBy", { provider: label })}</span>
+      {data.openbbEnabled && !data.openbbHealthy && (
+        <span className="text-[#f59e0b]">· {t("dashboard.providerFallback")}</span>
+      )}
+    </div>
   );
 }
 

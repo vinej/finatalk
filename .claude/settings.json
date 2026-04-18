@@ -26,7 +26,8 @@
       "Bash(xargs grep *)",
       "Bash(find /c/SanoTalk/finatalk -name \"package.json\" -path \"*/apps/web/*\" -exec cat {} \\\\;)",
       "Read(//c/SanoTalk/finatalk/apps/web/src/routes/_auth/**)",
-      "Bash(npx tsr *)"
+      "Bash(npx tsr *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

@@ -20,6 +20,7 @@ import {
 } from "trading-signals";
 import YahooFinance from "yahoo-finance2";
 import { z } from "zod";
+import { getOpenBBClient, isOpenBBEnabled, type OHLCVBar } from "@finatalk/openbb";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import {
   IndicatorSpec,
@@ -27,72 +28,16 @@ import {
   RangeSchema,
   SymbolSchema,
 } from "../schemas/indicator";
+import {
+  fetchChartWithFallback,
+  fetchFxRatesWithFallback,
+  rangeToPeriod1,
+  type Candle,
+} from "../lib/market-provider";
 
 const yf = new YahooFinance();
 
 type IndicatorSpecT = z.infer<typeof IndicatorSpec>;
-
-type Candle = {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-};
-
-function rangeToPeriod1(range: z.infer<typeof RangeSchema>): Date {
-  const now = new Date();
-  if (range === "max") return new Date(1970, 0, 1);
-  const months: Record<Exclude<typeof range, "max">, number> = {
-    "1mo": 1, "3mo": 3, "6mo": 6, "1y": 12, "2y": 24, "5y": 60,
-  };
-  const d = new Date(now);
-  d.setMonth(d.getMonth() - months[range]);
-  return d;
-}
-
-async function fetchChart(symbol: string, range: z.infer<typeof RangeSchema>, interval: z.infer<typeof IntervalSchema>) {
-  try {
-    return await yf.chart(symbol, {
-      period1: rangeToPeriod1(range),
-      interval,
-      return: "array",
-    });
-  } catch (err) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: err instanceof Error ? err.message : `Failed to fetch ${symbol}`,
-    });
-  }
-}
-
-function extractCandles(result: Awaited<ReturnType<typeof fetchChart>>): Candle[] {
-  const candles: Candle[] = [];
-  for (const q of result.quotes) {
-    if (q.open == null || q.high == null || q.low == null || q.close == null) continue;
-    candles.push({
-      time: Math.floor(q.date.getTime() / 1000),
-      open: q.open,
-      high: q.high,
-      low: q.low,
-      close: q.close,
-      volume: q.volume ?? 0,
-    });
-  }
-  return candles;
-}
-
-async function fetchFxRates(fromCcy: string, toCcy: string, range: z.infer<typeof RangeSchema>, interval: z.infer<typeof IntervalSchema>): Promise<Map<number, number>> {
-  const pair = `${fromCcy}${toCcy}=X`;
-  const result = await fetchChart(pair, range, interval);
-  const byTime = new Map<number, number>();
-  for (const q of result.quotes) {
-    if (q.close == null) continue;
-    byTime.set(Math.floor(q.date.getTime() / 1000), q.close);
-  }
-  return byTime;
-}
 
 function applyFx(candles: Candle[], rates: Map<number, number>): Candle[] {
   const sortedTimes = [...rates.keys()].sort((a, b) => a - b);
@@ -124,9 +69,9 @@ export async function fetchCandlesWithCurrency(
   interval: z.infer<typeof IntervalSchema>,
   convertTo: string | null,
 ): Promise<{ candles: Candle[]; nativeCurrency: string; displayCurrency: string }> {
-  const result = await fetchChart(symbol, range, interval);
-  const nativeCurrency = (result.meta.currency ?? "USD").toUpperCase();
-  let candles = extractCandles(result);
+  const { data } = await fetchChartWithFallback(symbol, range, interval);
+  const nativeCurrency = data.currency;
+  let candles = data.candles;
   if (candles.length === 0) {
     throw new TRPCError({ code: "BAD_REQUEST", message: `No data for ${symbol}` });
   }
@@ -134,7 +79,7 @@ export async function fetchCandlesWithCurrency(
   if (!target || target === nativeCurrency) {
     return { candles, nativeCurrency, displayCurrency: nativeCurrency };
   }
-  const rates = await fetchFxRates(nativeCurrency, target, range, interval);
+  const rates = await fetchFxRatesWithFallback(nativeCurrency, target, range, interval);
   if (rates.size === 0) {
     return { candles, nativeCurrency, displayCurrency: nativeCurrency };
   }
@@ -739,5 +684,187 @@ export const marketRouter = createTRPCRouter({
       allEvents.sort((a, b) => a.date.localeCompare(b.date));
 
       return { events: allEvents, errors };
+    }),
+
+  getCompanyProfile: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const client = getOpenBBClient();
+      return client.getCompanyProfile(input.symbol.toUpperCase());
+    }),
+
+  getFinancialStatements: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      statementType: z.enum(["income", "balance", "cash"]),
+      period: z.enum(["annual", "quarterly"]).default("annual"),
+      limit: z.number().int().min(1).max(20).default(5),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const client = getOpenBBClient();
+      const symbol = input.symbol.toUpperCase();
+      switch (input.statementType) {
+        case "income": return client.getIncomeStatement(symbol, { period: input.period, limit: input.limit });
+        case "balance": return client.getBalanceSheet(symbol, { period: input.period, limit: input.limit });
+        case "cash": return client.getCashFlow(symbol, { period: input.period, limit: input.limit });
+      }
+    }),
+
+  getOptionsChain: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      expiration: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const client = getOpenBBClient();
+      return client.getOptionsChain(input.symbol.toUpperCase(), {
+        expiration: input.expiration,
+      });
+    }),
+
+  getEconomicIndicators: protectedProcedure
+    .input(z.object({
+      country: z.string().default("united_states"),
+      indicator: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const client = getOpenBBClient();
+      return client.getEconomicIndicators({
+        country: input.country,
+        indicator: input.indicator,
+        startDate: input.startDate,
+        endDate: input.endDate,
+      });
+    }),
+
+  getFredSeries: protectedProcedure
+    .input(z.object({
+      seriesId: z.string().min(1).max(50),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const client = getOpenBBClient();
+      return client.getFredSeries(input.seriesId, {
+        startDate: input.startDate,
+        endDate: input.endDate,
+      });
+    }),
+
+  getEtfInfo: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      try {
+        return await getOpenBBClient().getEtfInfo(input.symbol, input.provider);
+      } catch {
+        return null;
+      }
+    }),
+
+  getEtfHoldings: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      provider: z.string().optional(),
+      limit: z.number().int().min(1).max(200).optional(),
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      try {
+        return await getOpenBBClient().getEtfHoldings(input.symbol, {
+          ...(input.provider ? { provider: input.provider } : {}),
+          ...(input.limit != null ? { limit: input.limit } : {}),
+        });
+      } catch {
+        return [];
+      }
+    }),
+
+  getEtfSectors: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      try {
+        return await getOpenBBClient().getEtfSectors(input.symbol, input.provider);
+      } catch {
+        return [];
+      }
+    }),
+
+  getEtfCountries: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      try {
+        return await getOpenBBClient().getEtfCountries(input.symbol, input.provider);
+      } catch {
+        return [];
+      }
+    }),
+
+  providerStatus: protectedProcedure
+    .query(async () => {
+      if (!isOpenBBEnabled()) {
+        return { active: "yahoo" as const, openbbEnabled: false, openbbHealthy: false };
+      }
+      const healthy = await getOpenBBClient().isHealthy().catch(() => false);
+      return {
+        active: healthy ? ("openbb" as const) : ("yahoo" as const),
+        openbbEnabled: true,
+        openbbHealthy: healthy,
+      };
+    }),
+
+  getCryptoCandles: protectedProcedure
+    .input(z.object({
+      symbol: z.string().trim().min(1).max(20),
+      range: RangeSchema,
+      interval: IntervalSchema,
+    }))
+    .query(async ({ input }) => {
+      if (!isOpenBBEnabled()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
+      }
+      const client = getOpenBBClient();
+      const bars = await client.getCryptoHistorical(input.symbol.toUpperCase(), {
+        startDate: rangeToPeriod1(input.range).toISOString().slice(0, 10),
+        interval: input.interval,
+      });
+      return {
+        symbol: input.symbol.toUpperCase(),
+        candles: bars.map((b: OHLCVBar) => ({
+          time: Math.floor(new Date(b.date.includes("T") ? b.date : b.date + "T00:00:00Z").getTime() / 1000),
+          open: b.open,
+          high: b.high,
+          low: b.low,
+          close: b.close,
+          volume: b.volume,
+        })),
+      };
     }),
 });

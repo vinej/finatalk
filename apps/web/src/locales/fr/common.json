@@ -33,6 +33,8 @@
     "comparison": "Comparer",
     "screener": "Filtre",
     "calendar": "Calendrier",
+    "news": "Nouvelles",
+    "learning": "Apprentissage",
     "research": "Recherche",
     "tax": "Conseiller fiscal",
     "templates": "Modèles",
@@ -71,6 +73,27 @@
     "prosAndCons": "Avantages et inconvénients",
     "furtherReading": "Pour aller plus loin",
     "generalResources": "Ressources générales"
+  },
+  "news": {
+    "title": "Nouvelles",
+    "subtitle": "Dernières manchettes du marché et de vos symboles suivis.",
+    "tabWorld": "Marché",
+    "tabMine": "Mes symboles",
+    "tabSymbol": "Rechercher un symbole",
+    "search": "Rechercher",
+    "loading": "Chargement des nouvelles…",
+    "empty": "Aucune nouvelle trouvée.",
+    "noSymbols": "Ajoutez des positions ou des symboles suivis pour voir des nouvelles personnalisées.",
+    "showing": "Nouvelles pour {{symbol}}"
+  },
+  "etf": {
+    "title": "Détails du FNB",
+    "expenseRatio": "Ratio de frais",
+    "aum": "Actifs sous gestion",
+    "yield": "Rendement",
+    "inception": "Création",
+    "topHoldings": "Principales positions",
+    "sectorBreakdown": "Répartition sectorielle"
   },
   "analysis": {
     "title": "Analyse technique",
@@ -313,7 +336,9 @@
     "topMovers": "Principaux mouvements",
     "goAnalysis": "Analyse technique",
     "goResearch": "Recherche IA",
-    "goPortfolios": "Portefeuilles"
+    "goPortfolios": "Portefeuilles",
+    "poweredBy": "Propulsé par {{provider}}",
+    "providerFallback": "repli sur Yahoo"
   },
   "notifications": {
     "title": "Notifications",

@@ -1,0 +1,501 @@
+import { OpenBBError } from "./errors";
+import type {
+  BalanceSheet,
+  CashFlow,
+  CompanyProfile,
+  DividendOpts,
+  DividendRecord,
+  EarningsEvent,
+  EconomicDataPoint,
+  EconomicIndicatorOpts,
+  EtfCountryWeight,
+  EtfHolding,
+  EtfInfo,
+  EtfSectorWeight,
+  NewsArticle,
+  NewsOpts,
+  FredDataPoint,
+  FredOpts,
+  FundamentalOpts,
+  HistoricalPriceOpts,
+  IncomeStatement,
+  OHLCVBar,
+  OptionContract,
+  OptionsChain,
+  OptionsChainOpts,
+  Quote,
+  SearchResult,
+} from "./types";
+
+type Params = Record<string, string | number | boolean | undefined>;
+
+function parseNewsArticle(r: Record<string, unknown>, fallbackSymbol?: string): NewsArticle {
+  const rawSymbols = r.symbols ?? r.tickers ?? r.stocks;
+  let symbols: string[] = [];
+  if (Array.isArray(rawSymbols)) {
+    symbols = rawSymbols.map((s) => String(s)).filter(Boolean);
+  } else if (typeof rawSymbols === "string") {
+    symbols = rawSymbols.split(/[,;\s]+/).filter(Boolean);
+  }
+  if (symbols.length === 0 && fallbackSymbol) symbols = [fallbackSymbol];
+
+  const images = r.images;
+  let imageUrl: string | null = null;
+  if (typeof r.image === "string") imageUrl = r.image;
+  else if (typeof r.image_url === "string") imageUrl = r.image_url;
+  else if (Array.isArray(images) && images[0]) {
+    const first = images[0] as Record<string, unknown> | string;
+    imageUrl = typeof first === "string" ? first : (typeof first?.url === "string" ? first.url : null);
+  }
+
+  return {
+    title: String(r.title ?? r.headline ?? ""),
+    url: String(r.url ?? r.link ?? ""),
+    publishedAt: r.date != null ? String(r.date) : (r.published_at != null ? String(r.published_at) : (r.published_utc != null ? String(r.published_utc) : null)),
+    source: r.source != null ? String(r.source) : (r.publisher != null ? String(r.publisher) : null),
+    author: r.author != null ? String(r.author) : null,
+    summary: r.text != null ? String(r.text) : (r.description != null ? String(r.description) : (r.summary != null ? String(r.summary) : null)),
+    imageUrl,
+    symbols,
+  };
+}
+
+export class OpenBBClient {
+  private baseUrl: string;
+  private timeout: number;
+
+  constructor(opts?: { baseUrl?: string; timeoutMs?: number }) {
+    this.baseUrl = opts?.baseUrl ?? process.env.OPENBB_BASE_URL ?? "http://localhost:6900";
+    this.timeout = opts?.timeoutMs ?? 30_000;
+  }
+
+  private async request<T>(path: string, params?: Params): Promise<T> {
+    const url = new URL(`/api/v1${path}`, this.baseUrl);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined) url.searchParams.set(k, String(v));
+      }
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const res = await fetch(url.toString(), {
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      });
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new OpenBBError(
+          `OpenBB ${path} returned ${res.status}: ${body.slice(0, 500)}`,
+          res.status,
+          path,
+        );
+      }
+
+      const json = await res.json();
+      const results = (json as { results?: T }).results;
+      return results !== undefined ? results : (json as T);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // ── Equity Price ──────────────────────────────────────────────────────
+
+  async getHistoricalPrice(symbol: string, opts: HistoricalPriceOpts): Promise<OHLCVBar[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/price/historical", {
+      symbol,
+      start_date: opts.startDate,
+      end_date: opts.endDate,
+      interval: opts.interval,
+      provider: opts.provider ?? "yfinance",
+    });
+    return raw.map((r) => ({
+      date: String(r.date ?? ""),
+      open: Number(r.open ?? 0),
+      high: Number(r.high ?? 0),
+      low: Number(r.low ?? 0),
+      close: Number(r.close ?? 0),
+      volume: Number(r.volume ?? 0),
+    }));
+  }
+
+  async getQuote(symbol: string, provider?: string): Promise<Quote> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/price/quote", {
+      symbol,
+      provider: provider ?? "yfinance",
+    });
+    const r = raw[0] ?? {};
+    return {
+      symbol: String(r.symbol ?? symbol),
+      name: r.name != null ? String(r.name) : null,
+      last: Number(r.last_price ?? r.price ?? r.close ?? 0),
+      open: r.open != null ? Number(r.open) : null,
+      high: r.high != null ? Number(r.high) : null,
+      low: r.low != null ? Number(r.low) : null,
+      close: r.close != null ? Number(r.close) : null,
+      change: r.change != null ? Number(r.change) : null,
+      changePercent: r.change_percent != null ? Number(r.change_percent) : null,
+      volume: r.volume != null ? Number(r.volume) : null,
+      previousClose: r.prev_close != null ? Number(r.prev_close) : null,
+      marketCap: r.market_cap != null ? Number(r.market_cap) : null,
+    };
+  }
+
+  // ── Equity Fundamentals ───────────────────────────────────────────────
+
+  async getDividends(symbol: string, opts?: DividendOpts): Promise<DividendRecord[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/fundamental/dividends", {
+      symbol,
+      start_date: opts?.startDate,
+      end_date: opts?.endDate,
+      provider: opts?.provider ?? "yfinance",
+    });
+    return raw.map((r) => ({
+      exDividendDate: r.ex_dividend_date != null ? String(r.ex_dividend_date) : null,
+      payDate: r.pay_date != null ? String(r.pay_date) : null,
+      amount: Number(r.amount ?? r.dividend ?? 0),
+      currency: r.currency != null ? String(r.currency) : null,
+    }));
+  }
+
+  async getIncomeStatement(symbol: string, opts?: FundamentalOpts): Promise<IncomeStatement[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/fundamental/income", {
+      symbol,
+      period: opts?.period ?? "annual",
+      limit: opts?.limit ?? 5,
+      provider: opts?.provider ?? "fmp",
+    });
+    return raw.map((r) => ({
+      period: String(r.period ?? r.date ?? ""),
+      fiscalYear: r.calendar_year != null ? Number(r.calendar_year) : null,
+      revenue: r.revenue != null ? Number(r.revenue) : null,
+      grossProfit: r.gross_profit != null ? Number(r.gross_profit) : null,
+      operatingIncome: r.operating_income != null ? Number(r.operating_income) : null,
+      netIncome: r.net_income != null ? Number(r.net_income) : null,
+      eps: r.eps != null ? Number(r.eps) : null,
+      epsDiluted: r.eps_diluted != null ? Number(r.eps_diluted) : null,
+    }));
+  }
+
+  async getBalanceSheet(symbol: string, opts?: FundamentalOpts): Promise<BalanceSheet[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/fundamental/balance", {
+      symbol,
+      period: opts?.period ?? "annual",
+      limit: opts?.limit ?? 5,
+      provider: opts?.provider ?? "fmp",
+    });
+    return raw.map((r) => ({
+      period: String(r.period ?? r.date ?? ""),
+      fiscalYear: r.calendar_year != null ? Number(r.calendar_year) : null,
+      totalAssets: r.total_assets != null ? Number(r.total_assets) : null,
+      totalLiabilities: r.total_liabilities != null ? Number(r.total_liabilities) : null,
+      totalEquity: r.total_stockholders_equity != null ? Number(r.total_stockholders_equity) : null,
+      cashAndEquivalents: r.cash_and_cash_equivalents != null ? Number(r.cash_and_cash_equivalents) : null,
+      totalDebt: r.total_debt != null ? Number(r.total_debt) : null,
+    }));
+  }
+
+  async getCashFlow(symbol: string, opts?: FundamentalOpts): Promise<CashFlow[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/fundamental/cash", {
+      symbol,
+      period: opts?.period ?? "annual",
+      limit: opts?.limit ?? 5,
+      provider: opts?.provider ?? "fmp",
+    });
+    return raw.map((r) => ({
+      period: String(r.period ?? r.date ?? ""),
+      fiscalYear: r.calendar_year != null ? Number(r.calendar_year) : null,
+      operatingCashFlow: r.operating_cash_flow != null ? Number(r.operating_cash_flow) : null,
+      investingCashFlow: r.investing_cash_flow != null ? Number(r.investing_cash_flow) : null,
+      financingCashFlow: r.financing_cash_flow != null ? Number(r.financing_cash_flow) : null,
+      freeCashFlow: r.free_cash_flow != null ? Number(r.free_cash_flow) : null,
+      capitalExpenditure: r.capital_expenditure != null ? Number(r.capital_expenditure) : null,
+    }));
+  }
+
+  async getCompanyProfile(symbol: string, provider?: string): Promise<CompanyProfile> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/profile", {
+      symbol,
+      provider: provider ?? "fmp",
+    });
+    const r = raw[0] ?? {};
+    return {
+      symbol: String(r.symbol ?? symbol),
+      name: String(r.name ?? r.company_name ?? ""),
+      sector: r.sector != null ? String(r.sector) : null,
+      industry: r.industry != null ? String(r.industry) : null,
+      description: r.description != null ? String(r.description) : null,
+      country: r.country != null ? String(r.country) : null,
+      exchange: r.exchange != null ? String(r.exchange) : null,
+      marketCap: r.market_cap != null ? Number(r.market_cap) : null,
+      employees: r.full_time_employees != null ? Number(r.full_time_employees) : null,
+      website: r.website != null ? String(r.website) : null,
+      ceo: r.ceo != null ? String(r.ceo) : null,
+    };
+  }
+
+  async getEarningsCalendar(symbol: string, provider?: string): Promise<EarningsEvent[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/calendar/earnings", {
+      symbol,
+      provider: provider ?? "fmp",
+    });
+    return raw.map((r) => ({
+      symbol: String(r.symbol ?? symbol),
+      reportDate: r.report_date != null ? String(r.report_date) : (r.date != null ? String(r.date) : null),
+      epsEstimate: r.eps_estimated != null ? Number(r.eps_estimated) : null,
+      epsActual: r.eps_actual != null ? Number(r.eps_actual) : null,
+      revenueEstimate: r.revenue_estimated != null ? Number(r.revenue_estimated) : null,
+      revenueActual: r.revenue_actual != null ? Number(r.revenue_actual) : null,
+    }));
+  }
+
+  // ── Search ────────────────────────────────────────────────────────────
+
+  async searchEquity(query: string, opts?: { provider?: string; limit?: number }): Promise<SearchResult[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/equity/search", {
+      query,
+      provider: opts?.provider ?? "sec",
+      limit: opts?.limit ?? 20,
+    });
+    return raw.map((r) => ({
+      symbol: String(r.symbol ?? ""),
+      name: String(r.name ?? ""),
+      exchange: r.exchange != null ? String(r.exchange) : null,
+      assetType: r.stock_type != null ? String(r.stock_type) : null,
+    }));
+  }
+
+  // ── Derivatives ───────────────────────────────────────────────────────
+
+  async getOptionsChain(symbol: string, opts?: OptionsChainOpts): Promise<OptionsChain> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/derivatives/options/chains", {
+      symbol,
+      expiration: opts?.expiration,
+      provider: opts?.provider ?? "cboe",
+    });
+
+    const calls: OptionContract[] = [];
+    const puts: OptionContract[] = [];
+    const expirations = new Set<string>();
+
+    for (const r of raw) {
+      const exp = String(r.expiration ?? "");
+      if (exp) expirations.add(exp);
+
+      const contract: OptionContract = {
+        strike: Number(r.strike ?? 0),
+        expiration: exp,
+        contractType: String(r.option_type ?? "").toLowerCase() === "put" ? "put" : "call",
+        lastPrice: r.last_trade_price != null ? Number(r.last_trade_price) : null,
+        bid: r.bid != null ? Number(r.bid) : null,
+        ask: r.ask != null ? Number(r.ask) : null,
+        volume: r.volume != null ? Number(r.volume) : null,
+        openInterest: r.open_interest != null ? Number(r.open_interest) : null,
+        impliedVolatility: r.implied_volatility != null ? Number(r.implied_volatility) : null,
+      };
+
+      if (contract.contractType === "put") puts.push(contract);
+      else calls.push(contract);
+    }
+
+    return {
+      symbol,
+      expirations: [...expirations].sort(),
+      calls,
+      puts,
+    };
+  }
+
+  // ── Economy ───────────────────────────────────────────────────────────
+
+  async getEconomicIndicators(opts: EconomicIndicatorOpts): Promise<EconomicDataPoint[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/economy/indicators", {
+      country: opts.country ?? "united_states",
+      symbol: opts.indicator,
+      start_date: opts.startDate,
+      end_date: opts.endDate,
+      provider: opts.provider ?? "econdb",
+    });
+    return raw.map((r) => ({
+      date: String(r.date ?? ""),
+      value: Number(r.value ?? 0),
+      country: r.country != null ? String(r.country) : null,
+    }));
+  }
+
+  async getFredSeries(seriesId: string, opts?: FredOpts): Promise<FredDataPoint[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/economy/fred_series", {
+      symbol: seriesId,
+      start_date: opts?.startDate,
+      end_date: opts?.endDate,
+      provider: opts?.provider ?? "fred",
+    });
+    return raw.map((r) => ({
+      date: String(r.date ?? ""),
+      value: Number(r.value ?? 0),
+    }));
+  }
+
+  // ── Crypto ────────────────────────────────────────────────────────────
+
+  async getCryptoHistorical(symbol: string, opts: HistoricalPriceOpts): Promise<OHLCVBar[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/crypto/price/historical", {
+      symbol,
+      start_date: opts.startDate,
+      end_date: opts.endDate,
+      interval: opts.interval,
+      provider: opts.provider ?? "yfinance",
+    });
+    return raw.map((r) => ({
+      date: String(r.date ?? ""),
+      open: Number(r.open ?? 0),
+      high: Number(r.high ?? 0),
+      low: Number(r.low ?? 0),
+      close: Number(r.close ?? 0),
+      volume: Number(r.volume ?? 0),
+    }));
+  }
+
+  // ── News ──────────────────────────────────────────────────────────────
+
+  async getCompanyNews(symbol: string, opts?: NewsOpts): Promise<NewsArticle[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/news/company", {
+      symbol,
+      limit: opts?.limit ?? 25,
+      start_date: opts?.startDate,
+      end_date: opts?.endDate,
+      provider: opts?.provider ?? "yfinance",
+    });
+    return raw.map((r) => parseNewsArticle(r, symbol));
+  }
+
+  async getWorldNews(opts?: NewsOpts): Promise<NewsArticle[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/news/world", {
+      limit: opts?.limit ?? 50,
+      start_date: opts?.startDate,
+      end_date: opts?.endDate,
+      provider: opts?.provider ?? "fmp",
+    });
+    return raw.map((r) => parseNewsArticle(r));
+  }
+
+  // ── ETF ───────────────────────────────────────────────────────────────
+
+  async getEtfInfo(symbol: string, provider?: string): Promise<EtfInfo> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/etf/info", {
+      symbol,
+      provider: provider ?? "yfinance",
+    });
+    const r = raw[0] ?? {};
+    return {
+      symbol: String(r.symbol ?? symbol),
+      name: String(r.name ?? r.fund_name ?? ""),
+      description: r.description != null ? String(r.description) : null,
+      inceptionDate: r.inception_date != null ? String(r.inception_date) : null,
+      expenseRatio: r.expense_ratio != null ? Number(r.expense_ratio) : (r.net_expense_ratio != null ? Number(r.net_expense_ratio) : null),
+      aum: r.aum != null ? Number(r.aum) : (r.total_assets != null ? Number(r.total_assets) : null),
+      nav: r.nav != null ? Number(r.nav) : null,
+      yield: r.yield != null ? Number(r.yield) : (r.dividend_yield != null ? Number(r.dividend_yield) : null),
+      category: r.category != null ? String(r.category) : (r.fund_category != null ? String(r.fund_category) : null),
+      issuer: r.issuer != null ? String(r.issuer) : (r.fund_family != null ? String(r.fund_family) : null),
+      currency: r.currency != null ? String(r.currency) : null,
+    };
+  }
+
+  async getEtfHoldings(symbol: string, opts?: { provider?: string; limit?: number }): Promise<EtfHolding[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/etf/holdings", {
+      symbol,
+      provider: opts?.provider ?? "fmp",
+    });
+    const rows = raw.map((r) => ({
+      symbol: r.symbol != null ? String(r.symbol) : (r.asset != null ? String(r.asset) : null),
+      name: String(r.name ?? r.holding_name ?? r.description ?? ""),
+      weight: r.weight != null ? Number(r.weight) : (r.weight_percentage != null ? Number(r.weight_percentage) : null),
+      shares: r.shares != null ? Number(r.shares) : (r.shares_held != null ? Number(r.shares_held) : null),
+      marketValue: r.market_value != null ? Number(r.market_value) : null,
+    }));
+    return opts?.limit != null ? rows.slice(0, opts.limit) : rows;
+  }
+
+  async getEtfSectors(symbol: string, provider?: string): Promise<EtfSectorWeight[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/etf/sectors", {
+      symbol,
+      provider: provider ?? "fmp",
+    });
+    return raw
+      .map((r) => ({
+        sector: String(r.sector ?? r.industry ?? ""),
+        weight: Number(r.weight ?? r.weight_percentage ?? 0),
+      }))
+      .filter((s) => s.sector && Number.isFinite(s.weight));
+  }
+
+  async getEtfCountries(symbol: string, provider?: string): Promise<EtfCountryWeight[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/etf/countries", {
+      symbol,
+      provider: provider ?? "fmp",
+    });
+    return raw
+      .map((r) => ({
+        country: String(r.country ?? ""),
+        weight: Number(r.weight ?? 0),
+      }))
+      .filter((c) => c.country && Number.isFinite(c.weight));
+  }
+
+  async searchEtf(query: string, opts?: { provider?: string; limit?: number }): Promise<SearchResult[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/etf/search", {
+      query,
+      provider: opts?.provider ?? "fmp",
+      limit: opts?.limit ?? 20,
+    });
+    return raw.map((r) => ({
+      symbol: String(r.symbol ?? ""),
+      name: String(r.name ?? ""),
+      exchange: r.exchange != null ? String(r.exchange) : null,
+      assetType: "etf",
+    }));
+  }
+
+  // ── Currency ──────────────────────────────────────────────────────────
+
+  async getCurrencyHistorical(pair: string, opts: HistoricalPriceOpts): Promise<OHLCVBar[]> {
+    const raw = await this.request<Array<Record<string, unknown>>>("/currency/price/historical", {
+      symbol: pair,
+      start_date: opts.startDate,
+      end_date: opts.endDate,
+      interval: opts.interval,
+      provider: opts.provider ?? "yfinance",
+    });
+    return raw.map((r) => ({
+      date: String(r.date ?? ""),
+      open: Number(r.open ?? 0),
+      high: Number(r.high ?? 0),
+      low: Number(r.low ?? 0),
+      close: Number(r.close ?? 0),
+      volume: Number(r.volume ?? 0),
+    }));
+  }
+
+  // ── Health ────────────────────────────────────────────────────────────
+
+  async isHealthy(): Promise<boolean> {
+    try {
+      const url = new URL("/openapi.json", this.baseUrl);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5_000);
+      try {
+        const res = await fetch(url.toString(), { signal: controller.signal });
+        return res.ok;
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch {
+      return false;
+    }
+  }
+}

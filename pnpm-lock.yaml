@@ -29,6 +29,9 @@ importers:
       '@finatalk/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@finatalk/openbb':
+        specifier: workspace:*
+        version: link:../../packages/openbb
       '@finatalk/trpc':
         specifier: workspace:*
         version: link:../../packages/trpc
@@ -216,11 +219,27 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/openbb:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.7.5
+        version: 22.19.17
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/trpc:
     dependencies:
       '@finatalk/db':
         specifier: workspace:*
         version: link:../db
+      '@finatalk/openbb':
+        specifier: workspace:*
+        version: link:../openbb
       '@trpc/server':
         specifier: ^11.0.0
         version: 11.16.0(typescript@5.9.3)

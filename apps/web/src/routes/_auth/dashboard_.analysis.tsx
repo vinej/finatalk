@@ -8,6 +8,7 @@ import { ChatDrawer } from "@/components/ai/chat-drawer";
 import { MarketChart } from "@/components/market-chart";
 import { IndicatorLibrary } from "@/components/analysis/indicator-library";
 import { IndicatorList } from "@/components/analysis/indicator-list";
+import { EtfSection } from "@/components/analysis/etf-section";
 import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/analysis/open-analysis-action";
 import { SaveAnalysisAction } from "@/components/analysis/save-analysis-action";
 import { ConfidenceBadge } from "@/components/confidence-badge";
@@ -59,6 +60,8 @@ function AnalysisPage() {
   const [loadedAnalysisDescription, setLoadedAnalysisDescription] = useState<string | null>(persisted?.loadedAnalysisDescription ?? null);
   const [controlsCollapsed, setControlsCollapsed] = useState<boolean>(persisted?.controlsCollapsed ?? false);
   const [indicatorsCollapsed, setIndicatorsCollapsed] = useState<boolean>(persisted?.indicatorsCollapsed ?? false);
+  const [latestCollapsed, setLatestCollapsed] = useState<boolean>(persisted?.latestCollapsed ?? false);
+  const [etfCollapsed, setEtfCollapsed] = useState<boolean>(persisted?.etfCollapsed ?? false);
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">(persisted?.assetTypeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
 
@@ -86,6 +89,8 @@ function AnalysisPage() {
       loadedAnalysisDescription,
       controlsCollapsed,
       indicatorsCollapsed,
+      latestCollapsed,
+      etfCollapsed,
       assetTypeFilter,
     });
   }, [
@@ -101,6 +106,8 @@ function AnalysisPage() {
     loadedAnalysisDescription,
     controlsCollapsed,
     indicatorsCollapsed,
+    latestCollapsed,
+    etfCollapsed,
     assetTypeFilter,
   ]);
 
@@ -463,6 +470,14 @@ function AnalysisPage() {
         )}
       </Card>
 
+      {submittedSymbol && (
+        <EtfSection
+          symbol={submittedSymbol}
+          collapsed={etfCollapsed}
+          onToggleCollapsed={() => setEtfCollapsed((c) => !c)}
+        />
+      )}
+
       <div className={!indicatorsCollapsed && (loadedAnalysisDescription || loadedAnalysisTitle) ? "grid gap-4 md:grid-cols-2" : ""}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
@@ -518,6 +533,36 @@ function AnalysisPage() {
         )}
       </div>
 
+      {query.data && query.data.results.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <button
+              type="button"
+              onClick={() => setLatestCollapsed((c) => !c)}
+              className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-[var(--color-accent)]"
+              aria-expanded={!latestCollapsed}
+              title={latestCollapsed ? t("analysis.expand") : t("analysis.collapse")}
+            >
+              {latestCollapsed ? (
+                <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+              )}
+              <CardTitle className="text-base">{t("analysis.latest")}</CardTitle>
+            </button>
+          </CardHeader>
+          {!latestCollapsed && (
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 md:grid-cols-4">
+                {query.data.results.map((r, i) => (
+                  <LatestCell key={i} result={r} />
+                ))}
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
           <CardTitle className="text-base">{submittedSymbol}</CardTitle>
@@ -560,21 +605,6 @@ function AnalysisPage() {
           )}
         </CardContent>
       </Card>
-
-      {query.data && query.data.results.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t("analysis.latest")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 md:grid-cols-4">
-              {query.data.results.map((r, i) => (
-                <LatestCell key={i} result={r} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <ChatDrawer
         open={chatOpen}

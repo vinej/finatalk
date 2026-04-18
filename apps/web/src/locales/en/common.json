@@ -33,6 +33,8 @@
     "comparison": "Compare",
     "screener": "Screener",
     "calendar": "Calendar",
+    "news": "News",
+    "learning": "Learning",
     "research": "Research",
     "tax": "Tax Advisor",
     "templates": "Templates",
@@ -71,6 +73,27 @@
     "prosAndCons": "Pros and cons",
     "furtherReading": "Further reading",
     "generalResources": "General resources"
+  },
+  "news": {
+    "title": "News",
+    "subtitle": "Latest headlines across the market and your tracked symbols.",
+    "tabWorld": "Market",
+    "tabMine": "My symbols",
+    "tabSymbol": "Search symbol",
+    "search": "Search",
+    "loading": "Loading news…",
+    "empty": "No news found.",
+    "noSymbols": "Add holdings or watchlist symbols to see personalized news.",
+    "showing": "Showing news for {{symbol}}"
+  },
+  "etf": {
+    "title": "ETF details",
+    "expenseRatio": "Expense ratio",
+    "aum": "Assets under management",
+    "yield": "Yield",
+    "inception": "Inception",
+    "topHoldings": "Top holdings",
+    "sectorBreakdown": "Sector breakdown"
   },
   "analysis": {
     "title": "Technical analysis",
@@ -313,7 +336,9 @@
     "topMovers": "Top movers",
     "goAnalysis": "Technical analysis",
     "goResearch": "AI Research",
-    "goPortfolios": "Portfolios"
+    "goPortfolios": "Portfolios",
+    "poweredBy": "Powered by {{provider}}",
+    "providerFallback": "falling back to Yahoo"
   },
   "notifications": {
     "title": "Notifications",

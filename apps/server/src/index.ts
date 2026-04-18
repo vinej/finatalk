@@ -194,8 +194,13 @@ app.use(
   }),
 );
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get("/health", async (_req, res) => {
+  let openbb: boolean | null = null;
+  if (process.env.OPENBB_ENABLED === "true" && process.env.OPENBB_BASE_URL) {
+    const { getOpenBBClient } = await import("@finatalk/openbb");
+    openbb = await getOpenBBClient().isHealthy().catch(() => false);
+  }
+  res.json({ status: "ok", timestamp: new Date().toISOString(), openbb });
 });
 
 const server = app.listen(PORT, () => {
