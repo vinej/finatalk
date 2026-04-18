@@ -81,6 +81,21 @@ export type ChatWithResearchFn = (args: {
   provider: string;
 }>;
 
+export type ChatWithScenarioPlannerFn = (args: {
+  messages: ChatMessage[];
+  context: {
+    portfolioTitle: string;
+    currency: string;
+    holdings: Array<{
+      symbol: string;
+      quantity: number;
+      costBasis: number;
+      purchaseDate: string;
+    }>;
+  };
+  language?: string;
+}) => Promise<{ response: string; provider: string }>;
+
 export type TRPCServices = {
   summarizeChart?: SummarizeChartFn;
   chatWithAdvisor?: ChatWithAdvisorFn;
@@ -88,6 +103,7 @@ export type TRPCServices = {
   generateAnalysis?: GenerateAnalysisFn;
   generatePortfolio?: GeneratePortfolioFn;
   chatWithResearch?: ChatWithResearchFn;
+  chatWithScenarioPlanner?: ChatWithScenarioPlannerFn;
 };
 
 export async function createTRPCContext(

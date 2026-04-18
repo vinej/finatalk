@@ -31,6 +31,7 @@
     "learnInvestment": "Learn Investment",
     "strategies": "Strategies",
     "comparison": "Compare",
+    "screener": "Screener",
     "research": "Research",
     "settings": "Settings"
   },
@@ -213,6 +214,11 @@
     "chatSend": "Send",
     "chatThinking": "Thinking…",
     "chatFailed": "Couldn't reach the advisor.",
+    "advisorTab": "Advisor",
+    "whatifTab": "What-If",
+    "whatifEmpty": "Describe a scenario to see its impact on your portfolio.",
+    "whatifExample": "e.g. \"What if I sell AAPL and buy MSFT?\" or \"What if the market drops 20%?\"",
+    "whatifPlaceholder": "Describe a what-if scenario…",
     "confirmDelete": "Delete portfolio \"{{title}}\" and all its holdings?",
     "confirmDeleteHolding": "Remove {{symbol}} from this portfolio?",
     "duplicateTitle": "A portfolio with that title already exists.",
@@ -265,7 +271,10 @@
     "summaryFailed": "Couldn't generate summary.",
     "refreshConfidence": "Refresh AI confidence",
     "refreshAllConfidence": "Refresh all confidence levels",
-    "confidence": "Confidence"
+    "confidence": "Confidence",
+    "downloadReport": "PDF Report",
+    "reportGenerated": "Report downloaded.",
+    "reportFailed": "Couldn't generate the report."
   },
   "ai": {
     "disclaimer": "AI-generated educational content, not investment advice."
@@ -385,6 +394,34 @@
     "loading": "Loading comparison…",
     "loadFailed": "Couldn't load comparison data.",
     "noData": "No data available for one or more symbols."
+  },
+  "screener": {
+    "title": "Stock Screener",
+    "filters": "Filters",
+    "source": "Scan from",
+    "sourcePortfolio": "Portfolio holdings",
+    "sourceWatchlist": "Watchlist",
+    "sourceCustom": "Custom symbols",
+    "customSymbols": "Symbols (comma-separated)",
+    "priceMin": "Price min",
+    "priceMax": "Price max",
+    "rsiMin": "RSI min",
+    "rsiMax": "RSI max",
+    "rsiPeriod": "RSI period",
+    "aboveMa": "Above MA",
+    "belowMa": "Below MA",
+    "maType": "MA type",
+    "scan": "Scan",
+    "scanning": "Scanning…",
+    "scanFailed": "Scan failed.",
+    "clearFilters": "Clear",
+    "symbolCount_one": "{{count}} symbol",
+    "symbolCount_other": "{{count}} symbols",
+    "results": "Results",
+    "noResults": "No symbols matched the filters.",
+    "colSymbol": "Symbol",
+    "colPrice": "Price",
+    "colChange": "Change"
   },
   "language": "Language",
   "theme": { "light": "Light", "dark": "Dark", "system": "System" }

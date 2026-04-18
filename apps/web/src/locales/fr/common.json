@@ -31,6 +31,7 @@
     "learnInvestment": "Apprendre l'investissement",
     "strategies": "Stratégies",
     "comparison": "Comparer",
+    "screener": "Filtre",
     "research": "Recherche",
     "settings": "Paramètres"
   },
@@ -213,6 +214,11 @@
     "chatSend": "Envoyer",
     "chatThinking": "Réflexion…",
     "chatFailed": "Impossible de joindre le conseiller.",
+    "advisorTab": "Conseiller",
+    "whatifTab": "Scénario",
+    "whatifEmpty": "Décrivez un scénario pour voir son impact sur votre portefeuille.",
+    "whatifExample": "ex. : « Et si je vends AAPL et j'achète MSFT ? » ou « Et si le marché baisse de 20 % ? »",
+    "whatifPlaceholder": "Décrivez un scénario hypothétique…",
     "confirmDelete": "Supprimer le portefeuille « {{title}} » et toutes ses positions ?",
     "confirmDeleteHolding": "Retirer {{symbol}} de ce portefeuille ?",
     "duplicateTitle": "Un portefeuille porte déjà ce titre.",
@@ -265,7 +271,10 @@
     "summaryFailed": "Échec de la génération du résumé.",
     "refreshConfidence": "Actualiser la confiance IA",
     "refreshAllConfidence": "Actualiser tous les niveaux de confiance",
-    "confidence": "Confiance"
+    "confidence": "Confiance",
+    "downloadReport": "Rapport PDF",
+    "reportGenerated": "Rapport téléchargé.",
+    "reportFailed": "Impossible de générer le rapport."
   },
   "ai": {
     "disclaimer": "Contenu éducatif généré par IA, ne constitue pas un conseil en investissement."
@@ -385,6 +394,34 @@
     "loading": "Chargement de la comparaison…",
     "loadFailed": "Impossible de charger les données de comparaison.",
     "noData": "Aucune donnée disponible pour un ou plusieurs symboles."
+  },
+  "screener": {
+    "title": "Filtre d'actions",
+    "filters": "Filtres",
+    "source": "Scanner depuis",
+    "sourcePortfolio": "Positions du portefeuille",
+    "sourceWatchlist": "Liste de suivi",
+    "sourceCustom": "Symboles personnalisés",
+    "customSymbols": "Symboles (séparés par des virgules)",
+    "priceMin": "Prix min",
+    "priceMax": "Prix max",
+    "rsiMin": "RSI min",
+    "rsiMax": "RSI max",
+    "rsiPeriod": "Période RSI",
+    "aboveMa": "Au-dessus MM",
+    "belowMa": "En dessous MM",
+    "maType": "Type MM",
+    "scan": "Scanner",
+    "scanning": "Analyse en cours…",
+    "scanFailed": "Échec de l'analyse.",
+    "clearFilters": "Effacer",
+    "symbolCount_one": "{{count}} symbole",
+    "symbolCount_other": "{{count}} symboles",
+    "results": "Résultats",
+    "noResults": "Aucun symbole ne correspond aux filtres.",
+    "colSymbol": "Symbole",
+    "colPrice": "Prix",
+    "colChange": "Variation"
   },
   "language": "Langue",
   "theme": { "light": "Clair", "dark": "Sombre", "system": "Système" }

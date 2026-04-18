@@ -10,6 +10,7 @@ import {
   PortfolioTitleSchema,
 } from "../schemas/portfolio";
 import { SymbolSchema } from "../schemas/indicator";
+import { generatePortfolioReport } from "../lib/pdf-report";
 import { fetchCandlesWithCurrency } from "./market";
 
 type OwnedCtx = { db: typeof import("@finatalk/db").db; user: { id: string } };
@@ -423,5 +424,96 @@ export const portfolioRouter = createTRPCRouter({
         prompt: input.prompt,
         ...(input.language ? { language: input.language } : {}),
       });
+    }),
+
+  generateReport: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      locale: z.string().min(2).max(10).default("en"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const p = await findOwnedPortfolio(ctx, input.id);
+      const currency = CurrencySchema.parse(p.currency);
+      const holdings = await ctx.db.query.holding.findMany({
+        where: eq(holding.portfolioId, p.id),
+        orderBy: [asc(holding.symbol), asc(holding.createdAt)],
+      });
+      const uniqueSymbols = Array.from(
+        new Set(holdings.map((h) => h.symbol.toUpperCase())),
+      );
+
+      type PriceInfo = {
+        lastClose: number | null;
+        error: string | null;
+      };
+
+      const priceEntries = await Promise.all(
+        uniqueSymbols.map(async (symbol): Promise<[string, PriceInfo]> => {
+          try {
+            const { candles } = await fetchCandlesWithCurrency(symbol, "1mo", "1d", currency);
+            const last = candles[candles.length - 1];
+            if (!last) return [symbol, { lastClose: null, error: "no data" }];
+            return [symbol, { lastClose: last.close, error: null }];
+          } catch {
+            return [symbol, { lastClose: null, error: "fetch failed" }];
+          }
+        }),
+      );
+      const pricesBySymbol = new Map<string, PriceInfo>(priceEntries);
+
+      const rows = holdings.map((h) => {
+        const info = pricesBySymbol.get(h.symbol.toUpperCase())!;
+        const qty = Number(h.quantity);
+        const cost = Number(h.costBasis);
+        const costTotal = qty * cost;
+        const marketValue = info.lastClose != null ? qty * info.lastClose : null;
+        const unrealizedAbs = marketValue != null ? marketValue - costTotal : null;
+        const unrealizedPct = unrealizedAbs != null && costTotal > 0 ? (unrealizedAbs / costTotal) * 100 : null;
+        return {
+          symbol: h.symbol,
+          quantity: qty,
+          costBasis: cost,
+          lastClose: info.lastClose,
+          marketValue,
+          costTotal,
+          unrealizedAbs,
+          unrealizedPct,
+          weight: null as number | null,
+          confidence: (h.confidence as "high" | "medium" | "low") ?? null,
+        };
+      });
+
+      const totalMV = rows.reduce((s, r) => s + (r.marketValue ?? 0), 0);
+      for (const r of rows) {
+        if (r.marketValue != null && totalMV > 0) {
+          r.weight = (r.marketValue / totalMV) * 100;
+        }
+      }
+      const totalCost = rows.reduce((s, r) => s + r.costTotal, 0);
+      const totalAbs = totalMV - totalCost;
+      const totalPct = totalCost > 0 ? (totalAbs / totalCost) * 100 : null;
+
+      const pdfBuffer = await generatePortfolioReport({
+        title: p.title,
+        currency,
+        asOf: new Date().toLocaleDateString(input.locale, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        rows,
+        totals: {
+          marketValue: totalMV,
+          costTotal: totalCost,
+          unrealizedAbs: totalAbs,
+          unrealizedPct: totalPct,
+        },
+        locale: input.locale,
+      });
+
+      return {
+        base64: pdfBuffer.toString("base64"),
+        filename: `${p.title.replace(/[^a-zA-Z0-9-_ ]/g, "")}-report.pdf`,
+      };
     }),
 });

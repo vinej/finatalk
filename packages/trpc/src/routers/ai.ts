@@ -106,4 +106,33 @@ export const aiRouter = createTRPCRouter({
         ...(input.language ? { language: input.language } : {}),
       });
     }),
+
+  chatScenario: protectedProcedure
+    .input(z.object({
+      messages: z.array(ChatMessageSchema).min(1).max(40),
+      context: z.object({
+        portfolioTitle: z.string().min(1).max(120),
+        currency: CurrencySchema,
+        holdings: z.array(HoldingInputSchema).max(200),
+      }),
+      language: z.string().min(2).max(10).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const fn = ctx.services.chatWithScenarioPlanner;
+      if (!fn) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "AI scenario planner is not configured on this server.",
+        });
+      }
+      return fn({
+        messages: input.messages,
+        context: {
+          portfolioTitle: input.context.portfolioTitle,
+          currency: input.context.currency,
+          holdings: input.context.holdings,
+        },
+        ...(input.language ? { language: input.language } : {}),
+      });
+    }),
 });

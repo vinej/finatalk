@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Check, ChevronDown, ChevronRight, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ChevronRight, Download, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -230,6 +230,23 @@ function PortfolioDetailPage() {
       toast.success(t("portfolio.holdingDeleted"));
     },
     onError: (e) => toast.error(e.message),
+  });
+
+  const reportMutation = trpc.portfolio.generateReport.useMutation({
+    onSuccess: (data) => {
+      const binary = atob(data.base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = data.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("portfolio.reportGenerated"));
+    },
+    onError: (e) => toast.error(e.message ?? t("portfolio.reportFailed")),
   });
 
   const rows = valuationQuery.data?.rows ?? [];
@@ -507,6 +524,20 @@ function PortfolioDetailPage() {
           )}
         </div>
         <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => reportMutation.mutate({ id: portfolioId, locale: i18n.language })}
+            disabled={reportMutation.isPending || holdings.length === 0}
+          >
+            {reportMutation.isPending ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-1 h-4 w-4" />
+            )}
+            {t("portfolio.downloadReport")}
+          </Button>
           <Button type="button" size="sm" variant="outline" onClick={() => setChatOpen(true)}>
             <MessageSquare className="mr-1 h-4 w-4" />
             {t("portfolio.askAi")}

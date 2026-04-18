@@ -8,6 +8,7 @@ import { portfolioAdvisorAgent } from "./agents/portfolio-advisor";
 import { analysisGeneratorAgent } from "./agents/analysis-generator";
 import { portfolioGeneratorAgent } from "./agents/portfolio-generator";
 import { researchAdvisorAgent } from "./agents/research-advisor";
+import { scenarioPlannerAgent } from "./agents/scenario-planner";
 
 type IndicatorSpec = RunAnalysisInput["indicators"][number];
 
@@ -19,6 +20,7 @@ export const mastra = new Mastra({
     analysisGeneratorAgent,
     portfolioGeneratorAgent,
     researchAdvisorAgent,
+    scenarioPlannerAgent,
   },
 });
 
@@ -331,4 +333,38 @@ export async function chatWithResearchAdvisor(
     confidence,
     provider: process.env.AI_PROVIDER ?? "anthropic",
   };
+}
+
+// ── Scenario planner ────────────────────────────────────────────────────
+
+export type ChatWithScenarioPlannerArgs = {
+  messages: ChatMessage[];
+  context: {
+    portfolioTitle: string;
+    currency: string;
+    holdings: PortfolioAdvisorHolding[];
+  };
+  language?: string;
+};
+
+export async function chatWithScenarioPlanner(
+  args: ChatWithScenarioPlannerArgs,
+): Promise<{ response: string; provider: string }> {
+  const { messages, context, language = "en" } = args;
+  const contextBlock = {
+    userLanguage: language,
+    portfolio: {
+      title: context.portfolioTitle,
+      currency: context.currency,
+      holdings: context.holdings,
+    },
+  };
+  const history = trimHistory(messages);
+  const preamble: ChatMessage = {
+    role: "user",
+    content:
+      `Context about the user's portfolio for scenario analysis (do not quote verbatim, use to ground your answers):\n${JSON.stringify(contextBlock)}`,
+  };
+  const result = await scenarioPlannerAgent.generate([preamble, ...history]);
+  return { response: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
 }

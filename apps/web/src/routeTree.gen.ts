@@ -20,6 +20,7 @@ import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthDashboardWatchlistRouteImport } from './routes/_auth/dashboard_.watchlist'
 import { Route as AuthDashboardStrategiesRouteImport } from './routes/_auth/dashboard_.strategies'
 import { Route as AuthDashboardSettingsRouteImport } from './routes/_auth/dashboard_.settings'
+import { Route as AuthDashboardScreenerRouteImport } from './routes/_auth/dashboard_.screener'
 import { Route as AuthDashboardResearchRouteImport } from './routes/_auth/dashboard_.research'
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
@@ -82,6 +83,11 @@ const AuthDashboardSettingsRoute = AuthDashboardSettingsRouteImport.update({
   path: '/dashboard/settings',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardScreenerRoute = AuthDashboardScreenerRouteImport.update({
+  id: '/dashboard_/screener',
+  path: '/dashboard/screener',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardResearchRoute = AuthDashboardResearchRouteImport.update({
   id: '/dashboard_/research',
   path: '/dashboard/research',
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
+  '/dashboard/screener': typeof AuthDashboardScreenerRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
   '/dashboard/strategies': typeof AuthDashboardStrategiesRoute
   '/dashboard/watchlist': typeof AuthDashboardWatchlistRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/research': typeof AuthDashboardResearchRoute
+  '/dashboard/screener': typeof AuthDashboardScreenerRoute
   '/dashboard/settings': typeof AuthDashboardSettingsRoute
   '/dashboard/strategies': typeof AuthDashboardStrategiesRoute
   '/dashboard/watchlist': typeof AuthDashboardWatchlistRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
   '/_auth/dashboard_/research': typeof AuthDashboardResearchRoute
+  '/_auth/dashboard_/screener': typeof AuthDashboardScreenerRoute
   '/_auth/dashboard_/settings': typeof AuthDashboardSettingsRoute
   '/_auth/dashboard_/strategies': typeof AuthDashboardStrategiesRoute
   '/_auth/dashboard_/watchlist': typeof AuthDashboardWatchlistRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/dashboard/learn-ta'
     | '/dashboard/portfolios'
     | '/dashboard/research'
+    | '/dashboard/screener'
     | '/dashboard/settings'
     | '/dashboard/strategies'
     | '/dashboard/watchlist'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/dashboard/learn-ta'
     | '/dashboard/portfolios'
     | '/dashboard/research'
+    | '/dashboard/screener'
     | '/dashboard/settings'
     | '/dashboard/strategies'
     | '/dashboard/watchlist'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/learn-ta'
     | '/_auth/dashboard_/portfolios'
     | '/_auth/dashboard_/research'
+    | '/_auth/dashboard_/screener'
     | '/_auth/dashboard_/settings'
     | '/_auth/dashboard_/strategies'
     | '/_auth/dashboard_/watchlist'
@@ -329,6 +341,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardSettingsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/screener': {
+      id: '/_auth/dashboard_/screener'
+      path: '/dashboard/screener'
+      fullPath: '/dashboard/screener'
+      preLoaderRoute: typeof AuthDashboardScreenerRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/research': {
       id: '/_auth/dashboard_/research'
       path: '/dashboard/research'
@@ -389,6 +408,7 @@ interface AuthRouteChildren {
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
   AuthDashboardResearchRoute: typeof AuthDashboardResearchRoute
+  AuthDashboardScreenerRoute: typeof AuthDashboardScreenerRoute
   AuthDashboardSettingsRoute: typeof AuthDashboardSettingsRoute
   AuthDashboardStrategiesRoute: typeof AuthDashboardStrategiesRoute
   AuthDashboardWatchlistRoute: typeof AuthDashboardWatchlistRoute
@@ -403,6 +423,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
   AuthDashboardResearchRoute: AuthDashboardResearchRoute,
+  AuthDashboardScreenerRoute: AuthDashboardScreenerRoute,
   AuthDashboardSettingsRoute: AuthDashboardSettingsRoute,
   AuthDashboardStrategiesRoute: AuthDashboardStrategiesRoute,
   AuthDashboardWatchlistRoute: AuthDashboardWatchlistRoute,
