@@ -258,6 +258,15 @@ function EditForm({
               onChange={(v) => setSpec({ ...spec, signal: v })} />
           </>
         )}
+        {spec.kind === "fib" && (
+          <NumberField
+            label={t("analysis.lookback")}
+            value={spec.lookback ?? 0}
+            min={0}
+            max={2000}
+            onChange={(v) => setSpec({ kind: "fib", ...(v >= 10 ? { lookback: v } : {}) })}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

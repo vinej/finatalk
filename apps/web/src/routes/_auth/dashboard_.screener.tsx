@@ -1,12 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Filter, Loader2, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
+import {
+  loadScreenerState,
+  saveScreenerState,
+  type PersistedScreenerRow,
+} from "@/lib/screener-persistence";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard_/screener")({
@@ -29,32 +35,78 @@ function formatPct(v: number | null) {
 function ScreenerPage() {
   const { t } = useTranslation();
 
-  const [source, setSource] = useState<"portfolio" | "watchlist" | "custom">("portfolio");
-  const [customSymbols, setCustomSymbols] = useState("");
+  const persisted = useMemo(() => loadScreenerState(), []);
+  const [source, setSource] = useState<"portfolio" | "watchlist" | "custom">(persisted?.source ?? "portfolio");
+  const [customSymbols, setCustomSymbols] = useState(persisted?.customSymbols ?? "");
+  const [assetTypeFilter, setAssetTypeFilter] = useState<AssetTypeFilter>(persisted?.assetTypeFilter ?? "all");
+  const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
 
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
-  const [rsiMin, setRsiMin] = useState("");
-  const [rsiMax, setRsiMax] = useState("");
-  const [rsiPeriod, setRsiPeriod] = useState("14");
-  const [aboveSma, setAboveSma] = useState("");
-  const [belowSma, setBelowSma] = useState("");
-  const [maType, setMaType] = useState<"sma" | "ema">("sma");
+  const [priceMin, setPriceMin] = useState(persisted?.priceMin ?? "");
+  const [priceMax, setPriceMax] = useState(persisted?.priceMax ?? "");
+  const [rsiMin, setRsiMin] = useState(persisted?.rsiMin ?? "");
+  const [rsiMax, setRsiMax] = useState(persisted?.rsiMax ?? "");
+  const [rsiPeriod, setRsiPeriod] = useState(persisted?.rsiPeriod ?? "14");
+  const [aboveSma, setAboveSma] = useState(persisted?.aboveSma ?? "");
+  const [belowSma, setBelowSma] = useState(persisted?.belowSma ?? "");
+  const [maType, setMaType] = useState<"sma" | "ema">(persisted?.maType ?? "sma");
 
-  const [sortKey, setSortKey] = useState<SortKey>("symbol");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [sortKey, setSortKey] = useState<SortKey>(persisted?.sortKey ?? "symbol");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(persisted?.sortDir ?? "asc");
+
+  const [cachedResults, setCachedResults] = useState<PersistedScreenerRow[] | null>(
+    persisted?.results ?? null,
+  );
+  const [cachedScannedAt, setCachedScannedAt] = useState<string | null>(
+    persisted?.scannedAt ?? null,
+  );
+
+  useEffect(() => {
+    saveScreenerState({
+      source,
+      customSymbols,
+      priceMin,
+      priceMax,
+      rsiMin,
+      rsiMax,
+      rsiPeriod,
+      aboveSma,
+      belowSma,
+      maType,
+      sortKey,
+      sortDir,
+      assetTypeFilter,
+      exchangeFilter,
+      ...(cachedResults != null ? { results: cachedResults } : {}),
+      ...(cachedScannedAt != null ? { scannedAt: cachedScannedAt } : {}),
+    });
+  }, [
+    source,
+    customSymbols,
+    priceMin,
+    priceMax,
+    rsiMin,
+    rsiMax,
+    rsiPeriod,
+    aboveSma,
+    belowSma,
+    maType,
+    sortKey,
+    sortDir,
+    assetTypeFilter,
+    exchangeFilter,
+    cachedResults,
+    cachedScannedAt,
+  ]);
 
   const sourcesQuery = trpc.screener.getSymbolSources.useQuery(undefined, {
     staleTime: 60_000,
   });
 
-  const symbolsQuery = trpc.market.symbols.useQuery(undefined, {
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: Number.POSITIVE_INFINITY,
-    retry: false,
-  });
-
   const scanMutation = trpc.screener.scan.useMutation({
+    onSuccess: (data) => {
+      setCachedResults(data.results);
+      setCachedScannedAt(data.scannedAt ?? new Date().toISOString());
+    },
     onError: (err) => toast.error(err.message ?? t("screener.scanFailed")),
   });
 
@@ -90,7 +142,7 @@ function ScreenerPage() {
     });
   }
 
-  const results = scanMutation.data?.results ?? [];
+  const results = cachedResults ?? [];
 
   const sortedResults = useMemo(() => {
     const copy = [...results];
@@ -170,19 +222,19 @@ function ScreenerPage() {
               </div>
 
               {source === "custom" && (
-                <div className="flex flex-col gap-1">
-                  <Label className="text-[10px] uppercase text-[var(--color-muted-fg)]">
-                    {t("screener.customSymbols")}
-                  </Label>
-                  <Input
-                    value={customSymbols}
-                    onChange={(e) => setCustomSymbols(e.target.value)}
-                    placeholder="AAPL, MSFT, GOOGL"
-                    className="h-8 w-64"
-                    list="screener-symbol-suggestions"
-                    autoComplete="off"
-                  />
-                </div>
+                <SymbolPicker
+                  inputId="screener-custom-symbols"
+                  listId="screener-symbol-suggestions"
+                  value={customSymbols}
+                  onChange={setCustomSymbols}
+                  placeholder="AAPL, MSFT, GOOGL"
+                  inputClassName="h-8 w-64"
+                  searchTerm={customSymbols.split(/[,;\s]+/).pop() ?? ""}
+                  assetTypeFilter={assetTypeFilter}
+                  onAssetTypeChange={setAssetTypeFilter}
+                  exchangeFilter={exchangeFilter}
+                  onExchangeChange={setExchangeFilter}
+                />
               )}
             </div>
 
@@ -349,15 +401,15 @@ function ScreenerPage() {
         </div>
       )}
 
-      {scanMutation.data && !scanMutation.isPending && (
+      {cachedResults && !scanMutation.isPending && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold">
               {t("screener.results")} ({results.length})
             </CardTitle>
-            {scanMutation.data.scannedAt && (
+            {cachedScannedAt && (
               <span className="text-xs text-[var(--color-muted-fg)]">
-                {new Date(scanMutation.data.scannedAt).toLocaleString()}
+                {new Date(cachedScannedAt).toLocaleString()}
               </span>
             )}
           </CardHeader>
@@ -472,13 +524,6 @@ function ScreenerPage() {
         </Card>
       )}
 
-      <datalist id="screener-symbol-suggestions">
-        {(symbolsQuery.data?.symbols ?? []).slice(0, 200).map((s) => (
-          <option key={s.symbol} value={s.symbol}>
-            {s.name}
-          </option>
-        ))}
-      </datalist>
     </div>
   );
 }

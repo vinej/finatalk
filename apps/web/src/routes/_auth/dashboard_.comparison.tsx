@@ -11,8 +11,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
+import { loadComparisonState, saveComparisonState } from "@/lib/comparison-persistence";
 import { trpc } from "@/lib/trpc";
+
+const SYMBOL_RE = /^[A-Z0-9.\-=^]+$/;
 
 export const Route = createFileRoute("/_auth/dashboard_/comparison")({
   component: ComparisonPage,
@@ -46,37 +49,33 @@ function formatNum(v: number | null, decimals = 2) {
 function ComparisonPage() {
   const { t } = useTranslation();
 
-  const [symbols, setSymbols] = useState<string[]>([]);
+  const persisted = useMemo(() => loadComparisonState(), []);
+  const [symbols, setSymbols] = useState<string[]>(
+    (persisted?.symbols ?? []).filter((s) => SYMBOL_RE.test(s)),
+  );
   const [inputValue, setInputValue] = useState("");
-  const [range, setRange] = useState<Range>("6mo");
-  const [interval, setInterval] = useState<Interval>("1d");
-  const [convertToCad, setConvertToCad] = useState(false);
+  const [range, setRange] = useState<Range>(persisted?.range ?? "6mo");
+  const [interval, setInterval] = useState<Interval>(persisted?.interval ?? "1d");
+  const [convertToCad, setConvertToCad] = useState(persisted?.convertToCad ?? false);
+  const [assetTypeFilter, setAssetTypeFilter] = useState<AssetTypeFilter>(persisted?.assetTypeFilter ?? "all");
+  const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
 
-  const symbolsQuery = trpc.market.symbols.useQuery(undefined, {
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: Number.POSITIVE_INFINITY,
-    retry: false,
-  });
-
-  const symbolSuggestions = useMemo(() => {
-    const raw = symbolsQuery.data?.symbols ?? [];
-    const q = inputValue.trim().toUpperCase();
-    if (!q) return raw.slice(0, 200);
-    const starts: typeof raw = [];
-    const contains: typeof raw = [];
-    for (const s of raw) {
-      if (s.symbol.startsWith(q)) starts.push(s);
-      else if (s.symbol.includes(q) || s.name.toUpperCase().includes(q))
-        contains.push(s);
-      if (starts.length >= 200) break;
-    }
-    return [...starts, ...contains].slice(0, 200);
-  }, [symbolsQuery.data, inputValue]);
+  useEffect(() => {
+    saveComparisonState({
+      symbols,
+      range,
+      interval,
+      convertToCad,
+      assetTypeFilter,
+      exchangeFilter,
+    });
+  }, [symbols, range, interval, convertToCad, assetTypeFilter, exchangeFilter]);
 
   function addSymbol(e: React.FormEvent) {
     e.preventDefault();
     const sym = inputValue.trim().toUpperCase();
     if (!sym || symbols.length >= 5 || symbols.includes(sym)) return;
+    if (!SYMBOL_RE.test(sym)) return;
     setSymbols((prev) => [...prev, sym]);
     setInputValue("");
   }
@@ -108,32 +107,24 @@ function ComparisonPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-end gap-3">
-            <form onSubmit={addSymbol} className="flex items-end gap-2">
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="cmp-symbol"
-                  className="text-[10px] uppercase text-[var(--color-muted-fg)]"
-                >
-                  {t("comparison.addSymbol")}
-                </label>
-                <Input
-                  id="cmp-symbol"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  list="comparison-symbol-suggestions"
-                  autoComplete="off"
-                  className="h-8 w-28 uppercase"
-                  placeholder={t("comparison.placeholder")}
-                  maxLength={20}
-                  disabled={symbols.length >= 5}
-                />
-              </div>
+            <form onSubmit={addSymbol} className="flex flex-wrap items-end gap-3">
+              <SymbolPicker
+                inputId="cmp-symbol"
+                listId="comparison-symbol-suggestions"
+                value={inputValue}
+                onChange={setInputValue}
+                placeholder={t("comparison.placeholder")}
+                maxLength={20}
+                inputClassName="h-8 w-40 uppercase"
+                assetTypeFilter={assetTypeFilter}
+                onAssetTypeChange={setAssetTypeFilter}
+                exchangeFilter={exchangeFilter}
+                onExchangeChange={setExchangeFilter}
+              />
               <Button
                 type="submit"
                 size="sm"
-                disabled={
-                  symbols.length >= 5 || !inputValue.trim()
-                }
+                disabled={symbols.length >= 5 || !inputValue.trim()}
               >
                 <Plus className="mr-1 h-3.5 w-3.5" />
                 {t("comparison.addSymbol")}
@@ -288,14 +279,6 @@ function ComparisonPage() {
         </>
       )}
 
-      <datalist id="comparison-symbol-suggestions">
-        {symbolSuggestions.map((s) => (
-          <option key={s.symbol} value={s.symbol}>
-            {s.name} ({s.exchange})
-            {s.assetType === "etf" ? " · ETF" : ""}
-          </option>
-        ))}
-      </datalist>
     </div>
   );
 }

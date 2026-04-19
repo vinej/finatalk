@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   DEFAULT_SEED,
+  sortIndicators,
   type ActiveIndicator,
   type IndicatorColor,
   type IndicatorSpec,
@@ -48,13 +49,19 @@ type AnalyzeResult = RouterOutputs["market"]["analyze"]["results"][number];
 
 const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
 const INTERVALS = ["1d", "1wk", "1mo"] as const;
+const SYMBOL_RE = /^[A-Z0-9.\-=^]+$/;
+function sanitizeSymbol(s: string | null | undefined): string {
+  if (!s) return "";
+  const u = s.trim().toUpperCase();
+  return SYMBOL_RE.test(u) ? u : "";
+}
 
 function AnalysisPage() {
   const { t, i18n } = useTranslation();
   const search = Route.useSearch();
   const persisted = useMemo(() => loadAnalysisState(), []);
   const [symbolInput, setSymbolInput] = useState(persisted?.symbolInput ?? "AAPL");
-  const [submittedSymbol, setSubmittedSymbol] = useState(persisted?.submittedSymbol ?? "AAPL");
+  const [submittedSymbol, setSubmittedSymbol] = useState(sanitizeSymbol(persisted?.submittedSymbol) || "AAPL");
   const [range, setRange] = useState<(typeof RANGES)[number]>(persisted?.range ?? "6mo");
   const [interval, setInterval] = useState<(typeof INTERVALS)[number]>(persisted?.interval ?? "1d");
   const [convertToCad, setConvertToCad] = useState(persisted?.convertToCad ?? false);
@@ -128,11 +135,12 @@ function AnalysisPage() {
     exchangeFilter,
   ]);
 
-  const indicators = useMemo(() => activeIndicators.map((a) => a.spec), [activeIndicators]);
-  const colors = useMemo(() => activeIndicators.map((a) => a.color), [activeIndicators]);
+  const sortedActiveIndicators = useMemo(() => sortIndicators(activeIndicators), [activeIndicators]);
+  const indicators = useMemo(() => sortedActiveIndicators.map((a) => a.spec), [sortedActiveIndicators]);
+  const colors = useMemo(() => sortedActiveIndicators.map((a) => a.color), [sortedActiveIndicators]);
   const visibleColors = useMemo(
-    () => activeIndicators.filter((a) => !hiddenIds.has(a.localId)).map((a) => a.color),
-    [activeIndicators, hiddenIds],
+    () => sortedActiveIndicators.filter((a) => !hiddenIds.has(a.localId)).map((a) => a.color),
+    [sortedActiveIndicators, hiddenIds],
   );
 
   function toggleHidden(localId: string) {
@@ -211,7 +219,7 @@ function AnalysisPage() {
   const appliedSymbolRef = useRef<string | null>(null);
   useEffect(() => {
     if (search.analysisId) return;
-    const sym = search.symbol?.toUpperCase();
+    const sym = sanitizeSymbol(search.symbol);
     if (!sym || appliedSymbolRef.current === sym) return;
     appliedSymbolRef.current = sym;
     setSymbolInput(sym);
@@ -230,7 +238,8 @@ function AnalysisPage() {
     (async () => {
       try {
         const data = await utils.client.analysis.getAnalysis.query({ id: search.analysisId! });
-        const sym = (data.symbol || search.symbol || "").toUpperCase();
+        const rawSym = (data.symbol || search.symbol || "").toUpperCase();
+        const sym = sanitizeSymbol(rawSym);
         if (sym) {
           setSymbolInput(sym);
           setSubmittedSymbol(sym);
@@ -250,7 +259,7 @@ function AnalysisPage() {
   }, [search.analysisId, search.symbol, utils, t]);
 
   function onSummarize() {
-    const visibleIndicators = activeIndicators
+    const visibleIndicators = sortedActiveIndicators
       .filter((a) => !hiddenIds.has(a.localId))
       .map((a) => a.spec);
     summarizeMutation.mutate({
@@ -294,9 +303,11 @@ function AnalysisPage() {
   }, [symbolsQuery.data, commodityEntries]);
 
   const submittedSymbolMeta = useMemo(() => {
-    const match = mergedSymbols.find((s) => s.symbol === submittedSymbol);
-    return match ?? null;
-  }, [mergedSymbols, submittedSymbol]);
+    const local = mergedSymbols.find((s) => s.symbol === submittedSymbol);
+    if (local) return local;
+    const live = liveSearchQuery.data?.symbols.find((s) => s.symbol === submittedSymbol);
+    return live ?? null;
+  }, [mergedSymbols, submittedSymbol, liveSearchQuery.data]);
 
   const availableExchanges = useMemo(() => {
     const set = new Set<string>();
@@ -355,8 +366,9 @@ function AnalysisPage() {
   }
 
   function loadAnalysis(data: AnalysisLoadData) {
+    const sym = sanitizeSymbol(data.symbol);
     setSymbolInput(data.symbol);
-    setSubmittedSymbol(data.symbol);
+    setSubmittedSymbol(sym);
     setActiveIndicators(data.items);
     setHiddenIds(new Set());
     setLoadedAnalysisId(data.id);
@@ -395,7 +407,20 @@ function AnalysisPage() {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = symbolInput.trim().toUpperCase();
-    if (trimmed) setSubmittedSymbol(trimmed);
+    if (!trimmed) return;
+    if (!SYMBOL_RE.test(trimmed)) {
+      const match = suggestions.find(
+        (s) => s.name.toUpperCase() === trimmed || s.symbol.toUpperCase() === trimmed,
+      );
+      if (match) {
+        setSymbolInput(match.symbol);
+        setSubmittedSymbol(match.symbol);
+        return;
+      }
+      toast.error(t("analysis.pickFromList"));
+      return;
+    }
+    setSubmittedSymbol(trimmed);
   }
 
   return (
@@ -639,7 +664,7 @@ function AnalysisPage() {
             <CardContent className="flex flex-col gap-3">
               <IndicatorLibrary onAdd={addIndicator} />
               <IndicatorList
-                items={activeIndicators}
+                items={sortedActiveIndicators}
                 hiddenIds={hiddenIds}
                 onToggleHidden={toggleHidden}
                 onChange={updateIndicator}
@@ -743,7 +768,7 @@ function AnalysisPage() {
             <MarketChart
               candles={query.data.candles}
               results={query.data.results.filter(
-                (_, i) => activeIndicators[i] && !hiddenIds.has(activeIndicators[i].localId),
+                (_, i) => sortedActiveIndicators[i] && !hiddenIds.has(sortedActiveIndicators[i].localId),
               )}
               colors={visibleColors}
             />
@@ -939,6 +964,27 @@ function interpretResult(
     return { text: t("analysis.hint.obvHint"), tone: TONE_MUTED };
   }
 
+  if (kind === "vwap") {
+    const v = num(last.value);
+    if (v == null || lastClose == null) return null;
+    if (lastClose > v) return { text: t("analysis.hint.aboveVwap"), tone: TONE_POS };
+    if (lastClose < v) return { text: t("analysis.hint.belowVwap"), tone: TONE_NEG };
+    return { text: t("analysis.hint.atVwap"), tone: TONE_MUTED };
+  }
+
+  if (kind === "fib") {
+    const hi = num(last.swingHigh);
+    const lo = num(last.swingLow);
+    if (hi == null || lo == null || lastClose == null || hi <= lo) return null;
+    const retracement = ((hi - lastClose) / (hi - lo)) * 100;
+    if (retracement <= 0) return { text: t("analysis.hint.fibAboveHigh"), tone: TONE_POS };
+    if (retracement >= 100) return { text: t("analysis.hint.fibBelowLow"), tone: TONE_NEG };
+    const pctLabel = `${retracement.toFixed(1)}%`;
+    if (retracement < 38.2) return { text: `${t("analysis.hint.fibShallow")} (${pctLabel})`, tone: TONE_POS };
+    if (retracement <= 61.8) return { text: `${t("analysis.hint.fibGolden")} (${pctLabel})`, tone: TONE_WARN };
+    return { text: `${t("analysis.hint.fibDeep")} (${pctLabel})`, tone: TONE_NEG };
+  }
+
   return null;
 }
 
@@ -958,6 +1004,18 @@ function latestEntry(result: AnalyzeResult): Record<string, unknown> | undefined
       ? { macd: last.macd, signal: last.signal, event: lastEvent?.direction ?? null }
       : undefined;
   }
+  if (result.kind === "fib") {
+    if (result.series == null) return undefined;
+    const s = result.series;
+    return {
+      direction: s.direction,
+      swingHigh: s.swingHigh,
+      swingLow: s.swingLow,
+      level382: s.levels.find((l) => l.ratio === 0.382)?.price,
+      level500: s.levels.find((l) => l.ratio === 0.5)?.price,
+      level618: s.levels.find((l) => l.ratio === 0.618)?.price,
+    };
+  }
   return result.series[result.series.length - 1];
 }
 
@@ -971,6 +1029,10 @@ function cellLabel(result: AnalyzeResult): string {
       return `STOCH ${result.spec.period}/${result.spec.signal}/${result.spec.smooth}`;
     case "obv":
       return "OBV";
+    case "vwap":
+      return "VWAP";
+    case "fib":
+      return result.spec.lookback != null ? `FIB (${result.spec.lookback})` : "FIB";
     case "psar":
       return `PSAR ${result.spec.step}/${result.spec.max}`;
     case "maCross":
@@ -995,6 +1057,9 @@ function formatLast(kind: string, last: Record<string, number | unknown>): strin
   if (kind === "macdCross") {
     const ev = last.event === "bull" ? " ↑" : last.event === "bear" ? " ↓" : "";
     return `${fmt(last.macd)} / ${fmt(last.signal)}${ev}`;
+  }
+  if (kind === "fib") {
+    return `${fmt(last.level382)} / ${fmt(last.level500)} / ${fmt(last.level618)}`;
   }
   return fmt(last.value);
 }

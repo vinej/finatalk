@@ -37,7 +37,9 @@ const EN: BuySellGuide = {
         "- **Pullback to rising moving average** — in a confirmed uptrend (ADX > 25, price above 200-day MA), a dip to the 20- or 50-day MA with oversold stochastics and a reversal candle is a high-quality add point.\n" +
         "- **Golden cross confirmed** — 50-day MA crosses above 200-day MA with ADX rising. Avoid if the cross happens on a tight, flat pair — that's not a trend.\n" +
         "- **MACD zero-line cross up** — bullish MACD crossovers are stronger when the MACD line is below zero than when it's already extended above.\n" +
-        "- **PSAR flip to below price** + rising ADX — trend-following entry trigger.",
+        "- **PSAR flip to below price** + rising ADX — trend-following entry trigger.\n" +
+        "- **VWAP reclaim (intraday)** — price breaks back above a rising VWAP on volume after an early dip. This is the textbook institutional buy trigger: desks and algos target VWAP for execution, so a reclaim means buyers are outpaying the day's volume-weighted average. Pullbacks that hold VWAP support in an uptrending session are high-quality adds.\n" +
+        "- **Fibonacci retracement into a key level** — after a strong up-move, pullbacks into the 38.2%, 50%, or 61.8% retracement (the 'golden zone' 50–61.8% is the most watched) are frequent long entry points. The edge is largely self-fulfilling: enough discretionary traders place orders at those levels that reactions cluster there. Confirm with a reversal candle or oversold oscillator — the level alone is not a trigger. Works best on liquid instruments and clear, single-leg swings.",
     },
     {
       id: "exit",
@@ -50,7 +52,9 @@ const EN: BuySellGuide = {
         "- **Death cross confirmed** — 50-day crosses below 200-day MA, ADX rising. Lagging but reliable regime-change signal for long-term holders.\n" +
         "- **MACD bearish cross above zero** — strongest when MACD has been extended well above zero and then crosses its signal line down.\n" +
         "- **Trailing stop triggered** — the most underrated exit. ATR-based stop (e.g. 2× ATR below recent swing high) lets winners run while capping give-back.\n" +
-        "- **Volatility expansion on bad news** — a 3σ move on negative catalyst usually continues 1–3 days; don't try to catch the first bounce.",
+        "- **Volatility expansion on bad news** — a 3σ move on negative catalyst usually continues 1–3 days; don't try to catch the first bounce.\n" +
+        "- **Loss of VWAP from above (intraday)** — price spent the session above VWAP, then breaks down through it on rising volume. Early warning that control has flipped from buyers to sellers; a failed attempt to reclaim VWAP from below confirms the change and often sets up a trend-day down.\n" +
+        "- **Failed Fibonacci bounce / break of 61.8%** — price retraces to a Fib level (38.2% or 50%), tries to hold, then closes back through it on volume. A close beyond 61.8% of the prior swing invalidates the retracement thesis — the move is no longer a pullback, it's a reversal. Tight invalidation makes Fib levels useful for stop placement even if you don't enter on them.",
     },
     {
       id: "confirmation",
@@ -61,6 +65,8 @@ const EN: BuySellGuide = {
         "- **Pair a momentum oscillator with price structure** — RSI oversold is better at support than in mid-range.\n" +
         "- **Volume confirms price** — breakouts without volume usually fail. Distribution (price up, volume drying up) precedes tops.\n" +
         "- **Multi-timeframe agreement** — a daily buy signal aligned with a weekly uptrend has much higher odds than a daily signal fighting the weekly trend.\n" +
+        "- **VWAP as intraday bias filter** — trading on the same side of VWAP as your signal aligns you with the day's volume-weighted consensus (what institutions are paying). Fighting VWAP with a single-stock setup is low-probability; wait for the reclaim or the break before taking the trigger.\n" +
+        "- **Fibonacci as a confluence amplifier, not a standalone** — Fib retracements (38.2 / 50 / 61.8%) work mostly through self-fulfilling behavior: many discretionary traders act on the same levels. Treat them as magnets, not triggers. A Fib level that coincides with a prior support, the 200-day MA, or a trendline is a far higher-quality zone than a Fib level in open space. Pure quant models rarely rely on Fibs alone — use them to *refine* entries and stops, not to replace trend or momentum signals.\n" +
         "- **Avoid redundant confirmation** — RSI, Stoch, Williams %R, StochRSI all say essentially the same thing. Confluence means *different* signal families agreeing (trend + momentum + volume + structure).",
     },
     {
@@ -116,6 +122,8 @@ const EN: BuySellGuide = {
     { title: "Investopedia — Combining Fundamental and Technical Analysis", url: "https://www.investopedia.com/articles/trading/07/tech_fund_analysis.asp" },
     { title: "Investopedia — Position Sizing in Investment", url: "https://www.investopedia.com/terms/p/positionsizing.asp" },
     { title: "Investopedia — Risk/Reward Ratio", url: "https://www.investopedia.com/terms/r/riskrewardratio.asp" },
+    { title: "Investopedia — Volume-Weighted Average Price (VWAP)", url: "https://www.investopedia.com/terms/v/vwap.asp" },
+    { title: "Investopedia — Fibonacci Retracement Levels", url: "https://www.investopedia.com/terms/f/fibonacciretracement.asp" },
     { title: "Investopedia — Post-Earnings Announcement Drift (PEAD)", url: "https://www.investopedia.com/terms/p/postearnings-announcement-drift-pead.asp" },
     { title: "StockCharts ChartSchool — Trading Strategies", url: "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models" },
     { title: "Fidelity — Combining Fundamentals and Technicals", url: "https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-and-fundamental-analysis" },
@@ -149,7 +157,9 @@ const FR: BuySellGuide = {
         "- **Repli sur moyenne mobile haussière** — en tendance haussière confirmée (ADX > 25, prix au-dessus de la MM200), un repli sur la MM20 ou MM50 avec stochastique en survente et bougie de retournement est un excellent point de renforcement.\n" +
         "- **Golden cross confirmé** — MM50 passe au-dessus de la MM200 avec ADX qui monte. À ignorer si le croisement survient sur un couple plat — ce n'est pas une tendance.\n" +
         "- **MACD franchit zéro à la hausse** — un croisement MACD haussier est plus fort quand la ligne MACD est sous zéro qu'au-dessus.\n" +
-        "- **PSAR qui bascule sous le prix** + ADX qui monte — déclencheur d'entrée en suivi de tendance.",
+        "- **PSAR qui bascule sous le prix** + ADX qui monte — déclencheur d'entrée en suivi de tendance.\n" +
+        "- **Reconquête du VWAP (intraday)** — le prix repasse au-dessus d'un VWAP haussier sur volume après un creux en séance. C'est le déclencheur d'achat institutionnel par excellence : pupitres et algos visent le VWAP à l'exécution, donc une reconquête signifie que les acheteurs surpaient la moyenne pondérée du jour. Un repli qui tient le VWAP en séance haussière est un excellent point de renforcement.\n" +
+        "- **Retracement de Fibonacci sur niveau clé** — après une impulsion haussière, les replis vers 38,2 %, 50 % ou 61,8 % (la « zone d'or » 50–61,8 % est la plus surveillée) sont des points d'entrée longs fréquents. L'edge est en grande partie auto-réalisateur : suffisamment de traders discrétionnaires placent des ordres sur ces niveaux pour que les réactions s'y concentrent. Confirmez avec une bougie de retournement ou un oscillateur en survente — le niveau seul n'est pas un déclencheur. Fonctionne mieux sur des instruments liquides et des impulsions nettes en une seule patte.",
     },
     {
       id: "exit",
@@ -162,7 +172,9 @@ const FR: BuySellGuide = {
         "- **Death cross confirmé** — MM50 sous MM200, ADX qui monte. Signal tardif mais fiable de changement de régime pour les porteurs long terme.\n" +
         "- **MACD croisement baissier au-dessus de zéro** — plus fort quand le MACD est étendu bien au-dessus de zéro puis coupe sa ligne de signal à la baisse.\n" +
         "- **Stop suiveur déclenché** — la sortie la plus sous-estimée. Un stop basé sur l'ATR (p. ex. 2× ATR sous le plus haut récent) laisse courir les gagnants tout en limitant le give-back.\n" +
-        "- **Expansion de volatilité sur mauvaise nouvelle** — un mouvement de 3σ sur catalyseur négatif continue souvent 1–3 jours ; ne pas essayer d'attraper le premier rebond.",
+        "- **Expansion de volatilité sur mauvaise nouvelle** — un mouvement de 3σ sur catalyseur négatif continue souvent 1–3 jours ; ne pas essayer d'attraper le premier rebond.\n" +
+        "- **Perte du VWAP par le dessus (intraday)** — le prix a passé la séance au-dessus du VWAP puis casse en dessous sur volume qui grimpe. Signal précoce que le contrôle est passé des acheteurs aux vendeurs ; une tentative ratée de reconquérir le VWAP par le dessous confirme le changement et déclenche souvent une journée de tendance baissière.\n" +
+        "- **Rebond Fibonacci raté / cassure du 61,8 %** — le prix retrace sur un niveau Fib (38,2 % ou 50 %), tente de tenir, puis reclôt en dessous sur volume. Une clôture au-delà du 61,8 % de l'impulsion précédente invalide la thèse de retracement — le mouvement n'est plus un repli, c'est un retournement. L'invalidation nette rend les niveaux Fib utiles pour placer les stops, même sans entrer dessus.",
     },
     {
       id: "confirmation",
@@ -173,6 +185,8 @@ const FR: BuySellGuide = {
         "- **Associez oscillateur de momentum et structure de prix** — RSI survendu est bien meilleur sur support qu'en milieu de fourchette.\n" +
         "- **Le volume confirme le prix** — les cassures sans volume échouent souvent. La distribution (prix qui monte, volume qui s'assèche) précède les sommets.\n" +
         "- **Accord multi-horizons** — un signal d'achat journalier aligné avec une tendance haussière hebdomadaire a de bien meilleures chances qu'un signal journalier contre la tendance hebdo.\n" +
+        "- **VWAP comme filtre de biais intraday** — trader du même côté du VWAP que votre signal vous aligne avec le consensus pondéré par le volume de la séance (ce que paient les institutions). Aller contre le VWAP avec un setup single-stock est à faible probabilité ; attendez la reconquête ou la cassure avant d'exécuter le déclencheur.\n" +
+        "- **Fibonacci comme amplificateur de confluence, pas comme signal autonome** — les retracements Fib (38,2 / 50 / 61,8 %) fonctionnent surtout par auto-réalisation : beaucoup de traders discrétionnaires agissent sur les mêmes niveaux. Traitez-les comme des aimants, pas des déclencheurs. Un niveau Fib qui coïncide avec un support antérieur, la MM200 ou une ligne de tendance est une zone bien plus qualitative qu'un Fib dans le vide. Les modèles quantitatifs purs s'appuient rarement sur les Fibs seuls — utilisez-les pour *affiner* entrées et stops, pas pour remplacer les signaux de tendance ou de momentum.\n" +
         "- **Évitez la confirmation redondante** — RSI, Stoch, Williams %R, StochRSI disent essentiellement la même chose. La confluence, c'est *différentes* familles de signaux (tendance + momentum + volume + structure) qui s'accordent.",
     },
     {
@@ -228,6 +242,8 @@ const FR: BuySellGuide = {
     { title: "Investopedia — Combining Fundamental and Technical Analysis (anglais)", url: "https://www.investopedia.com/articles/trading/07/tech_fund_analysis.asp" },
     { title: "Investopedia — Position Sizing (anglais)", url: "https://www.investopedia.com/terms/p/positionsizing.asp" },
     { title: "Investopedia — Ratio risque/rendement (anglais)", url: "https://www.investopedia.com/terms/r/riskrewardratio.asp" },
+    { title: "Investopedia — Volume-Weighted Average Price (VWAP) (anglais)", url: "https://www.investopedia.com/terms/v/vwap.asp" },
+    { title: "Investopedia — Fibonacci Retracement Levels (anglais)", url: "https://www.investopedia.com/terms/f/fibonacciretracement.asp" },
     { title: "Investopedia — Post-Earnings Announcement Drift (anglais)", url: "https://www.investopedia.com/terms/p/postearnings-announcement-drift-pead.asp" },
     { title: "StockCharts ChartSchool — Trading Strategies (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models" },
     { title: "Fidelity — Combining Fundamentals and Technicals (anglais)", url: "https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-and-fundamental-analysis" },

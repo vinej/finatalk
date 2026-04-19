@@ -187,6 +187,15 @@ const TA_GUIDE_EN: Record<IndicatorKind, TaGuideEntry> = {
       { title: "StockCharts — On Balance Volume (OBV)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/on-balance-volume-obv" },
     ],
   },
+  vwap: {
+    when: "Use Volume-Weighted Average Price as a fair-price benchmark — it's the line institutional desks and algo execution target when filling large orders. Most useful intraday, but on a daily chart the cumulative VWAP still acts as a long-horizon average cost basis for the range shown.",
+    how: "For every bar, accumulate (typical price × volume) and volume, then plot their ratio (typical price = (high + low + close) / 3). No period parameter: the average runs from the first candle of the loaded range. Plotted as an overlay on the price pane.",
+    analyse: "Price above VWAP = buyers in control / bullish bias; price below = sellers in control / bearish bias. Pullbacks into VWAP in an uptrend are classic 'value' entries for intraday traders; rejections at VWAP from below confirm distribution. A flat VWAP with price whipping across it = range day, skip directional trades. Pair with volume spikes to read conviction.",
+    links: [
+      { title: "Investopedia — Volume-Weighted Average Price (VWAP)", url: "https://www.investopedia.com/terms/v/vwap.asp" },
+      { title: "StockCharts — VWAP", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/vwap-intraday" },
+    ],
+  },
   psar: {
     when: "Use Parabolic SAR on clearly trending instruments for a visual trailing stop and trend-direction read. Avoid it in ranging markets — it whipsaws.",
     how: "Dots plotted below price in an uptrend and above price in a downtrend. The gap accelerates (step starts at 0.02, grows by 0.02 up to max 0.2) each bar a new extreme forms, tightening the stop as the trend matures.",
@@ -213,6 +222,15 @@ const TA_GUIDE_EN: Record<IndicatorKind, TaGuideEntry> = {
     links: [
       { title: "Investopedia — MACD", url: "https://www.investopedia.com/terms/m/macd.asp" },
       { title: "StockCharts — MACD (Moving Average Convergence/Divergence)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/moving-average-convergence-divergence-macd" },
+    ],
+  },
+  fib: {
+    when: "Use Fibonacci Retracement when a clear swing — a visible rally or sell-off — is printed on the chart and you want to project the most-watched pullback zones before the next leg. It is the go-to tool for discretionary swing traders plotting entries on a retracement.",
+    how: "The tool takes the highest high and lowest low of the loaded range (or the last N bars if a lookback is set) and draws horizontal lines at 23.6%, 38.2%, 50%, 61.8%, and 78.6% between them. Direction is auto-detected: if the high came after the low, lines project downward as retracements of an uptrend; if the low came last, they project upward as retracements of a downtrend. The 50% line isn't strictly a Fibonacci ratio but is conventionally included.",
+    analyse: "Price tagging 38.2% after a strong impulse often holds — it's the 'shallow' retracement typical of trending names. 50%–61.8% is the 'golden pocket' watched by most desks: reactions here are frequent but never guaranteed, so wait for a confirming candle before acting. A clean break below 78.6% in an uptrend retracement usually means the swing is invalidated. Remember: the levels work partly because so many traders watch them — it's more self-fulfilling prophecy than market physics. Always combine with structure, volume, and another signal family.",
+    links: [
+      { title: "Investopedia — Fibonacci Retracement Levels", url: "https://www.investopedia.com/terms/f/fibonacciretracement.asp" },
+      { title: "StockCharts — Fibonacci Retracements", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/fibonacci-retracements" },
     ],
   },
 };
@@ -363,6 +381,15 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
       { title: "Wikipédia — On Balance Volume", url: "https://fr.wikipedia.org/wiki/On_Balance_Volume" },
     ],
   },
+  vwap: {
+    when: "Utilisez le VWAP (cours moyen pondéré par le volume) comme référence de « juste prix » — c'est la ligne que visent les pupitres institutionnels et les algos d'exécution quand ils font passer de gros ordres. Surtout utile en intraday, mais sur un graphique journalier le VWAP cumulé reste un bon prix de revient moyen de la plage affichée.",
+    how: "Pour chaque bougie, on accumule (prix typique × volume) et le volume, puis on trace le rapport (prix typique = (haut + bas + clôture) / 3). Pas de paramètre de période : la moyenne démarre à la première bougie de la plage chargée. Tracé en superposition sur le panneau des prix.",
+    analyse: "Prix au-dessus du VWAP = acheteurs aux commandes / biais haussier ; prix en dessous = vendeurs aux commandes / biais baissier. Les replis vers le VWAP en tendance haussière sont des points d'entrée « value » classiques pour les intraday traders ; un rejet au VWAP par le dessous confirme la distribution. Un VWAP plat que le prix traverse dans les deux sens = séance en range, évitez les trades directionnels. Combinez avec les pics de volume pour lire la conviction.",
+    links: [
+      { title: "Investopedia — Volume-Weighted Average Price (VWAP)", url: "https://www.investopedia.com/terms/v/vwap.asp" },
+      { title: "StockCharts — VWAP (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/vwap-intraday" },
+    ],
+  },
   psar: {
     when: "Utilisez le Parabolic SAR sur des instruments clairement tendanciels pour un stop suiveur visuel et une lecture de direction. À éviter en marché en range — il fait trop d'allers-retours.",
     how: "Points tracés sous le prix en tendance haussière et au-dessus en tendance baissière. L'écart accélère (pas initial 0,02, augmente de 0,02 jusqu'à un max de 0,2) à chaque nouvel extrême, resserrant le stop à mesure que la tendance mûrit.",
@@ -389,6 +416,15 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
     links: [
       { title: "Investopedia — MACD", url: "https://www.investopedia.com/terms/m/macd.asp" },
       { title: "Wikipédia — MACD", url: "https://fr.wikipedia.org/wiki/MACD" },
+    ],
+  },
+  fib: {
+    when: "Utilisez le retracement de Fibonacci quand un swing clair — un rallye ou une chute visibles — apparaît sur le graphique et que vous voulez projeter les zones de repli les plus surveillées avant la prochaine jambe. C'est l'outil de référence des swing traders discrétionnaires pour placer des entrées sur retracement.",
+    how: "L'outil prend le plus haut et le plus bas de la plage chargée (ou des N dernières barres si un lookback est défini) et trace des lignes horizontales à 23,6 %, 38,2 %, 50 %, 61,8 % et 78,6 % entre les deux. La direction est détectée automatiquement : si le plus haut arrive après le plus bas, les lignes projettent un retracement d'une tendance haussière ; si le plus bas est postérieur, elles projettent un retracement d'une tendance baissière. Le niveau 50 % n'est pas strictement un ratio de Fibonacci mais est inclus par convention.",
+    analyse: "Un prix qui touche 38,2 % après une impulsion forte tient souvent — c'est le repli « peu profond » typique des titres en tendance. La zone 50 %–61,8 % est la « golden pocket » surveillée par la majorité des pupitres : les réactions y sont fréquentes mais jamais garanties, attendez une bougie de confirmation avant d'exécuter. Une cassure nette sous 78,6 % en retracement haussier invalide généralement le swing. Rappel : les niveaux fonctionnent en partie parce que beaucoup de traders les surveillent — c'est davantage une prophétie auto-réalisatrice qu'une loi du marché. Combinez toujours avec la structure, le volume et une autre famille de signaux.",
+    links: [
+      { title: "Investopedia — Fibonacci Retracement Levels (anglais)", url: "https://www.investopedia.com/terms/f/fibonacciretracement.asp" },
+      { title: "Wikipédia — Retracements de Fibonacci", url: "https://fr.wikipedia.org/wiki/Retracement_de_Fibonacci" },
     ],
   },
 };

@@ -31,6 +31,11 @@ export const IndicatorSpec = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("stochRsi"), period: z.number().int().min(2).max(500) }),
   z.object({ kind: z.literal("williamsR"), period: z.number().int().min(2).max(500) }),
   z.object({ kind: z.literal("obv") }),
+  z.object({ kind: z.literal("vwap") }),
+  z.object({
+    kind: z.literal("fib"),
+    lookback: z.number().int().min(10).max(2000).optional(),
+  }),
   z.object({
     kind: z.literal("psar"),
     step: z.number().min(0.001).max(0.5),

@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
 import { trpc } from "@/lib/trpc";
+
+const SYMBOL_RE = /^[A-Z0-9.\-=^]+$/;
 
 export const Route = createFileRoute("/_auth/dashboard_/watchlist")({
   component: WatchlistPage,
@@ -51,6 +54,9 @@ function WatchlistPage() {
     for (const s of symbolsQuery.data?.symbols ?? []) m.set(s.symbol, s.name);
     return m;
   }, [symbolsQuery.data]);
+
+  const [assetTypeFilter, setAssetTypeFilter] = useState<AssetTypeFilter>("all");
+  const [exchangeFilter, setExchangeFilter] = useState<string>("all");
 
   const addItem = trpc.watchlist.addItem.useMutation({
     onSuccess: () => {
@@ -98,6 +104,10 @@ function WatchlistPage() {
     e.preventDefault();
     const sym = newSymbol.trim().toUpperCase();
     if (!sym) return;
+    if (!SYMBOL_RE.test(sym)) {
+      toast.error(t("analysis.pickFromList"));
+      return;
+    }
     addItem.mutate({ symbol: sym });
   }
 
@@ -124,35 +134,25 @@ function WatchlistPage() {
           <CardTitle className="text-sm font-semibold">{t("watchlist.symbols")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={submitAdd} className="mb-4 flex items-end gap-2">
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="wl-symbol" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
-                {t("watchlist.addSymbol")}
-              </Label>
-              <Input
-                id="wl-symbol"
-                value={newSymbol}
-                onChange={(e) => setNewSymbol(e.target.value)}
-                list="wl-symbol-suggestions"
-                autoComplete="off"
-                className="h-8 w-32 uppercase"
-                placeholder="AAPL"
-                maxLength={20}
-              />
-            </div>
+          <form onSubmit={submitAdd} className="mb-4 flex flex-wrap items-end gap-3">
+            <SymbolPicker
+              inputId="wl-symbol"
+              listId="wl-symbol-suggestions"
+              value={newSymbol}
+              onChange={setNewSymbol}
+              placeholder="AAPL"
+              maxLength={20}
+              inputClassName="h-8 w-40 uppercase"
+              assetTypeFilter={assetTypeFilter}
+              onAssetTypeChange={setAssetTypeFilter}
+              exchangeFilter={exchangeFilter}
+              onExchangeChange={setExchangeFilter}
+            />
             <Button type="submit" size="sm" disabled={addItem.isPending || !newSymbol.trim()}>
               <Plus className="mr-1 h-3.5 w-3.5" />
               {t("watchlist.add")}
             </Button>
           </form>
-
-          <datalist id="wl-symbol-suggestions">
-            {(symbolsQuery.data?.symbols ?? []).slice(0, 200).map((s) => (
-              <option key={s.symbol} value={s.symbol}>
-                {s.name}
-              </option>
-            ))}
-          </datalist>
 
           {items.length === 0 ? (
             <p className="py-4 text-center text-xs text-[var(--color-muted-fg)]">{t("watchlist.empty")}</p>

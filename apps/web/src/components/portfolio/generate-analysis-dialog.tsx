@@ -29,7 +29,10 @@ function summarizeSpec(spec: ActiveIndicator["spec"]): string {
     case "psar":
       return `${kindLabel(spec.kind)} ${spec.step}/${spec.max}`;
     case "obv":
+    case "vwap":
       return kindLabel(spec.kind);
+    case "fib":
+      return spec.lookback != null ? `${kindLabel(spec.kind)} (${spec.lookback})` : kindLabel(spec.kind);
     default:
       return `${kindLabel(spec.kind)} ${(spec as { period: number }).period}`;
   }

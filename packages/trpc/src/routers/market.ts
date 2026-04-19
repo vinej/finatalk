@@ -150,6 +150,14 @@ type AdxSeries = { time: number; adx: number; pdi: number; mdi: number }[];
 type CrossEvent = { time: number; direction: "bull" | "bear"; price: number };
 type MaCrossSeries = { fast: LineSeries; slow: LineSeries; events: CrossEvent[] };
 type MacdCrossSeries = { macd: MacdSeries; events: CrossEvent[] };
+type FibSeries = {
+  direction: "up" | "down";
+  swingHigh: number;
+  swingHighTime: number;
+  swingLow: number;
+  swingLowTime: number;
+  levels: { ratio: number; price: number }[];
+} | null;
 
 type IndicatorResult =
   | { kind: "sma"; spec: Extract<IndicatorSpecT, { kind: "sma" }>; series: LineSeries }
@@ -168,6 +176,8 @@ type IndicatorResult =
   | { kind: "stochRsi"; spec: Extract<IndicatorSpecT, { kind: "stochRsi" }>; series: LineSeries }
   | { kind: "williamsR"; spec: Extract<IndicatorSpecT, { kind: "williamsR" }>; series: LineSeries }
   | { kind: "obv"; spec: Extract<IndicatorSpecT, { kind: "obv" }>; series: LineSeries }
+  | { kind: "vwap"; spec: Extract<IndicatorSpecT, { kind: "vwap" }>; series: LineSeries }
+  | { kind: "fib"; spec: Extract<IndicatorSpecT, { kind: "fib" }>; series: FibSeries }
   | { kind: "psar"; spec: Extract<IndicatorSpecT, { kind: "psar" }>; series: LineSeries }
   | { kind: "maCross"; spec: Extract<IndicatorSpecT, { kind: "maCross" }>; series: MaCrossSeries }
   | { kind: "macdCross"; spec: Extract<IndicatorSpecT, { kind: "macdCross" }>; series: MacdCrossSeries };
@@ -211,6 +221,18 @@ export function indicatorTail(r: IndicatorResult): {
       tail: r.series.macd.slice(-5),
       events: r.series.events.slice(-5),
     };
+  }
+  if (r.kind === "fib") {
+    if (r.series == null) return { last: null, tail: [] };
+    const s = r.series;
+    const last: Record<string, number> = {
+      swingHigh: s.swingHigh,
+      swingLow: s.swingLow,
+      level382: s.levels.find((l) => l.ratio === 0.382)?.price ?? Number.NaN,
+      level500: s.levels.find((l) => l.ratio === 0.5)?.price ?? Number.NaN,
+      level618: s.levels.find((l) => l.ratio === 0.618)?.price ?? Number.NaN,
+    };
+    return { last, tail: [last] };
   }
   return {
     last: r.series.at(-1) ?? null,
@@ -331,6 +353,46 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
         if (v != null) series.push({ time: c.time, value: Number(v) });
       }
       return { kind: "obv", spec, series };
+    }
+    case "vwap": {
+      const series: LineSeries = [];
+      let cumPV = 0;
+      let cumV = 0;
+      for (const c of candles) {
+        const typical = (c.high + c.low + c.close) / 3;
+        cumPV += typical * c.volume;
+        cumV += c.volume;
+        if (cumV > 0) series.push({ time: c.time, value: cumPV / cumV });
+      }
+      return { kind: "vwap", spec, series };
+    }
+    case "fib": {
+      const window =
+        spec.lookback != null && spec.lookback < candles.length
+          ? candles.slice(-spec.lookback)
+          : candles;
+      if (window.length < 2) return { kind: "fib", spec, series: null };
+      let hi = -Infinity;
+      let lo = Infinity;
+      let hiT = window[0]!.time;
+      let loT = window[0]!.time;
+      for (const c of window) {
+        if (c.high > hi) { hi = c.high; hiT = c.time; }
+        if (c.low < lo) { lo = c.low; loT = c.time; }
+      }
+      const range = hi - lo;
+      if (range <= 0) return { kind: "fib", spec, series: null };
+      const direction: "up" | "down" = hiT >= loT ? "up" : "down";
+      const ratios = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+      const levels = ratios.map((r) => ({
+        ratio: r,
+        price: direction === "up" ? hi - range * r : lo + range * r,
+      }));
+      return {
+        kind: "fib",
+        spec,
+        series: { direction, swingHigh: hi, swingHighTime: hiT, swingLow: lo, swingLowTime: loT, levels },
+      };
     }
     case "psar": {
       const psar = new PSAR({ accelerationStep: spec.step, accelerationMax: spec.max });

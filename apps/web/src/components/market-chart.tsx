@@ -111,7 +111,8 @@ export function MarketChart({
         r.kind === "ema" ||
         r.kind === "rma" ||
         r.kind === "wma" ||
-        r.kind === "dema"
+        r.kind === "dema" ||
+        r.kind === "vwap"
       ) {
         const s = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 2 });
         s.setData(r.series.map((p) => ({ time: p.time as Time, value: p.value })));
@@ -211,6 +212,23 @@ export function MarketChart({
         }));
         if (markers.length > 0) {
           markersRef.current.push(createSeriesMarkers(candle, markers));
+        }
+      } else if (r.kind === "fib") {
+        if (r.series) {
+          const lineStyles: Record<string, number> = {};
+          for (const lvl of r.series.levels) {
+            const pct = (lvl.ratio * 100).toFixed(1).replace(/\.0$/, "");
+            const isKey = lvl.ratio === 0.382 || lvl.ratio === 0.5 || lvl.ratio === 0.618;
+            candle.createPriceLine({
+              price: lvl.price,
+              color: lineColor,
+              lineWidth: isKey ? 2 : 1,
+              lineStyle: isKey ? 2 : 3,
+              axisLabelVisible: true,
+              title: `${pct}%`,
+            });
+            lineStyles[pct] = isKey ? 2 : 3;
+          }
         }
       } else if (r.kind === "macdCross") {
         const mc =
