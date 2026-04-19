@@ -42,6 +42,7 @@
     "learning": "Apprentissage",
     "symbols": "Symboles",
     "research": "Recherche",
+    "advisor": "Conseiller IA",
     "tax": "Conseiller fiscal",
     "templates": "Modèles",
     "settings": "Paramètres"
@@ -121,7 +122,8 @@
     "colName": "Nom",
     "colSector": "Secteur",
     "colSubSector": "Sous-industrie",
-    "colHq": "Siège social"
+    "colHq": "Siège social",
+    "analyzeIndex": "Analyser l'indice"
   },
   "commodities": {
     "title": "Matières premières",
@@ -433,6 +435,11 @@
     "performanceTitle": "Performance",
     "performanceHint": "Clôture de chaque titre normalisée à 100 en début de période.",
     "performanceNoData": "Aucune donnée de prix pour l'instant.",
+    "benchmarkTitle": "Portefeuille vs indice de référence",
+    "benchmarkPortfolioLabel": "Portefeuille",
+    "benchmarkSummaryTitle": "Rendement sur la période",
+    "benchmarkNoneSelected": "Sélectionnez un indice de référence pour comparer.",
+    "benchmarkHint": "La valeur du portefeuille est calculée à partir des quantités actuelles et de la clôture de chaque jour, puis normalisée à 100 en début de période.",
     "analysisInfo": "Description de l'analyse",
     "noDescription": "Aucune description pour l'instant.",
     "updateSummary": "Mettre à jour avec l'IA",
@@ -466,6 +473,19 @@
     "confidenceMedium": "Confiance moyenne",
     "confidenceLow": "Confiance faible",
     "confidenceTooltip": "Auto-évaluation qualitative de l'IA basée sur la couverture des sources."
+  },
+  "advisor": {
+    "title": "Conseiller IA",
+    "subtitle": "Posez des questions ouvertes sur les marchés, les tendances macro, les secteurs et les comparaisons entre marchés.",
+    "chatTitle": "Conseiller de marché",
+    "placeholder": "Posez n'importe quelle question sur les marchés, secteurs, macro…",
+    "send": "Envoyer",
+    "thinking": "Réflexion en cours…",
+    "failed": "Impossible de joindre le conseiller de marché.",
+    "empty": "Posez vos questions au conseiller sur les marchés, la macro, les secteurs ou les comparaisons entre marchés.",
+    "examplePrompt1": "Pensez-vous que le marché américain va surperformer le marché canadien dans les 12 prochains mois ?",
+    "examplePrompt2": "Quelle est la tendance actuelle des actions du secteur de l'énergie ?",
+    "examplePrompt3": "Quel est l'impact de la hausse des taux sur les actions de croissance vs de valeur ?"
   },
   "dashboard": {
     "welcome": "Bienvenue, {{name}} !",

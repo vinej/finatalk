@@ -23,6 +23,7 @@ import {
   chatWithScenarioPlanner,
   chatWithTaxAdvisor,
   generateMorningBriefing,
+  chatWithMarketAdvisor,
 } from "./mastra";
 
 const REQUIRED_ENV = ["APP_URL", "DATABASE_URL", "BETTER_AUTH_URL", "BETTER_AUTH_SECRET", "ENCRYPTION_KEY"] as const;
@@ -182,6 +183,7 @@ app.use(
         chatWithScenarioPlanner,
         chatWithTaxAdvisor,
         generateBriefing: generateMorningBriefing,
+        chatWithMarketAdvisor,
       }),
     onError({ path, error }) {
       const expected = new Set(["UNAUTHORIZED", "FORBIDDEN", "BAD_REQUEST", "NOT_FOUND", "TOO_MANY_REQUESTS", "CONFLICT"]);

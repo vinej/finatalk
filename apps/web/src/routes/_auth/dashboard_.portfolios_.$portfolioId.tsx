@@ -7,6 +7,10 @@ import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portf
 import { GenerateAnalysisDialog } from "@/components/portfolio/generate-analysis-dialog";
 import { PortfolioChatDrawer } from "@/components/portfolio/portfolio-chat-drawer";
 import { PortfolioPerformanceChart, type PerformanceRange } from "@/components/portfolio/portfolio-performance-chart";
+import {
+  PortfolioVsBenchmarkChart,
+  type BenchmarkKey,
+} from "@/components/portfolio/portfolio-vs-benchmark-chart";
 import { ConfidenceBadge } from "@/components/confidence-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,6 +115,9 @@ function PortfolioDetailPage() {
   const [refreshingConfidence, setRefreshingConfidence] = useState(false);
   const [confidenceProgress, setConfidenceProgress] = useState("");
   const [performanceRange, setPerformanceRange] = useState<PerformanceRange>("6mo");
+  const [benchmarkRange, setBenchmarkRange] = useState<PerformanceRange>("6mo");
+  const [selectedBenchmarks, setSelectedBenchmarks] = useState<BenchmarkKey[]>(["sp500"]);
+  const [benchmarkCollapsed, setBenchmarkCollapsed] = useState(true);
   const confidenceAbortRef = useRef(false);
   const confidenceInitRef = useRef(false);
 
@@ -374,6 +381,16 @@ function PortfolioDetailPage() {
     return out;
   }, [segments]);
 
+  const benchmarkHoldings = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const r of rows) {
+      const qty = r.holding.quantity;
+      if (!Number.isFinite(qty) || qty <= 0) continue;
+      totals.set(r.holding.symbol, (totals.get(r.holding.symbol) ?? 0) + qty);
+    }
+    return [...totals.entries()].map(([symbol, quantity]) => ({ symbol, quantity }));
+  }, [rows]);
+
   function sortValue(r: ValuationRow, key: SortKey): string | number | null {
     switch (key) {
       case "symbol":
@@ -613,6 +630,38 @@ function PortfolioDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {benchmarkHoldings.length > 0 && (
+        <Card className="mb-4">
+          <CardHeader
+            className="cursor-pointer select-none"
+            onClick={() => setBenchmarkCollapsed((v) => !v)}
+          >
+            <div className="flex items-center gap-2">
+              {benchmarkCollapsed ? (
+                <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+              )}
+              <CardTitle className="text-sm font-semibold">
+                {t("portfolio.benchmarkTitle")}
+              </CardTitle>
+            </div>
+          </CardHeader>
+          {!benchmarkCollapsed && (
+            <CardContent>
+              <PortfolioVsBenchmarkChart
+                holdings={benchmarkHoldings}
+                currency={currency}
+                range={benchmarkRange}
+                onRangeChange={setBenchmarkRange}
+                selected={selectedBenchmarks}
+                onSelectedChange={setSelectedBenchmarks}
+              />
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       <DividendSection symbols={[...new Set(holdings.map((h) => h.symbol.toUpperCase()))]} holdings={holdings} currency={currency} />
 

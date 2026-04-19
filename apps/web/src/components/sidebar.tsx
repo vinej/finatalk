@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Coins, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Percent, PercentCircle, Receipt, ScanSearch, Settings, Wheat } from "lucide-react";
+import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Coins, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,7 @@ export function Sidebar() {
     { key: "calendar", to: "/dashboard/calendar", label: t("nav.calendar"), icon: CalendarDays },
     { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
+    { key: "advisor", to: "/dashboard/advisor", label: t("nav.advisor"), icon: Sparkles },
     { key: "tax", to: "/dashboard/tax", label: t("nav.tax"), icon: Receipt },
     { key: "templates", to: "/dashboard/templates", label: t("nav.templates"), icon: Copy },
   ] as const;

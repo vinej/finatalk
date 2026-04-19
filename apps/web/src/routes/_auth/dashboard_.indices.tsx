@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, Search } from "lucide-react";
+import { LineChart, Loader2, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +12,17 @@ export const Route = createFileRoute("/_auth/dashboard_/indices")({
 
 type IndexKey = "sp500" | "nasdaq" | "dowjones" | "tsx" | "tsx60";
 
-const INDICES: { key: IndexKey; labelKey: string; description: string }[] = [
-  { key: "sp500", labelKey: "indices.sp500", description: "S&P 500" },
-  { key: "nasdaq", labelKey: "indices.nasdaq", description: "Nasdaq 100" },
-  { key: "dowjones", labelKey: "indices.dowjones", description: "Dow Jones 30" },
-  { key: "tsx", labelKey: "indices.tsx", description: "S&P/TSX Composite" },
-  { key: "tsx60", labelKey: "indices.tsx60", description: "S&P/TSX 60" },
+const INDICES: {
+  key: IndexKey;
+  labelKey: string;
+  description: string;
+  yahooSymbol: string;
+}[] = [
+  { key: "sp500", labelKey: "indices.sp500", description: "S&P 500", yahooSymbol: "^GSPC" },
+  { key: "nasdaq", labelKey: "indices.nasdaq", description: "Nasdaq 100", yahooSymbol: "^NDX" },
+  { key: "dowjones", labelKey: "indices.dowjones", description: "Dow Jones 30", yahooSymbol: "^DJI" },
+  { key: "tsx", labelKey: "indices.tsx", description: "S&P/TSX Composite", yahooSymbol: "^GSPTSE" },
+  { key: "tsx60", labelKey: "indices.tsx60", description: "S&P/TSX 60", yahooSymbol: "XIU.TO" },
 ];
 
 function IndicesPage() {
@@ -88,6 +93,16 @@ function IndicesPage() {
             {t(idx.labelKey)}
           </button>
         ))}
+        <div className="ml-auto">
+          <Link
+            to="/dashboard/analysis"
+            search={{ symbol: INDICES.find((i) => i.key === activeIndex)?.yahooSymbol }}
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] hover:bg-[var(--color-accent)]/40"
+          >
+            <LineChart className="h-4 w-4" />
+            {t("indices.analyzeIndex")}
+          </Link>
+        </div>
       </div>
 
       {query.isPending ? (

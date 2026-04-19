@@ -124,6 +124,11 @@ export type GenerateBriefingFn = (args: {
   language?: string;
 }) => Promise<{ briefing: string; provider: string }>;
 
+export type ChatWithMarketAdvisorFn = (args: {
+  messages: ChatMessage[];
+  language?: string;
+}) => Promise<{ response: string; provider: string }>;
+
 export type TRPCServices = {
   summarizeChart?: SummarizeChartFn;
   chatWithAdvisor?: ChatWithAdvisorFn;
@@ -134,6 +139,7 @@ export type TRPCServices = {
   chatWithScenarioPlanner?: ChatWithScenarioPlannerFn;
   chatWithTaxAdvisor?: ChatWithTaxAdvisorFn;
   generateBriefing?: GenerateBriefingFn;
+  chatWithMarketAdvisor?: ChatWithMarketAdvisorFn;
 };
 
 export async function createTRPCContext(

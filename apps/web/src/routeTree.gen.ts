@@ -36,6 +36,7 @@ import { Route as AuthDashboardComparisonRouteImport } from './routes/_auth/dash
 import { Route as AuthDashboardCommoditiesRouteImport } from './routes/_auth/dashboard_.commodities'
 import { Route as AuthDashboardCalendarRouteImport } from './routes/_auth/dashboard_.calendar'
 import { Route as AuthDashboardAnalysisRouteImport } from './routes/_auth/dashboard_.analysis'
+import { Route as AuthDashboardAdvisorRouteImport } from './routes/_auth/dashboard_.advisor'
 import { Route as AuthDashboardPortfoliosPortfolioIdRouteImport } from './routes/_auth/dashboard_.portfolios_.$portfolioId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -174,6 +175,11 @@ const AuthDashboardAnalysisRoute = AuthDashboardAnalysisRouteImport.update({
   path: '/dashboard/analysis',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardAdvisorRoute = AuthDashboardAdvisorRouteImport.update({
+  id: '/dashboard_/advisor',
+  path: '/dashboard/advisor',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardPortfoliosPortfolioIdRoute =
   AuthDashboardPortfoliosPortfolioIdRouteImport.update({
     id: '/dashboard_/portfolios_/$portfolioId',
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/advisor': typeof AuthDashboardAdvisorRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/dashboard/advisor': typeof AuthDashboardAdvisorRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/two-factor': typeof TwoFactorRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/dashboard_/advisor': typeof AuthDashboardAdvisorRoute
   '/_auth/dashboard_/analysis': typeof AuthDashboardAnalysisRoute
   '/_auth/dashboard_/calendar': typeof AuthDashboardCalendarRoute
   '/_auth/dashboard_/commodities': typeof AuthDashboardCommoditiesRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/advisor'
     | '/dashboard/analysis'
     | '/dashboard/calendar'
     | '/dashboard/commodities'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/dashboard'
+    | '/dashboard/advisor'
     | '/dashboard/analysis'
     | '/dashboard/calendar'
     | '/dashboard/commodities'
@@ -339,6 +350,7 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/verify-email'
     | '/_auth/dashboard'
+    | '/_auth/dashboard_/advisor'
     | '/_auth/dashboard_/analysis'
     | '/_auth/dashboard_/calendar'
     | '/_auth/dashboard_/commodities'
@@ -562,6 +574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardAnalysisRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/advisor': {
+      id: '/_auth/dashboard_/advisor'
+      path: '/dashboard/advisor'
+      fullPath: '/dashboard/advisor'
+      preLoaderRoute: typeof AuthDashboardAdvisorRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/portfolios_/$portfolioId': {
       id: '/_auth/dashboard_/portfolios_/$portfolioId'
       path: '/dashboard/portfolios/$portfolioId'
@@ -574,6 +593,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthDashboardAdvisorRoute: typeof AuthDashboardAdvisorRoute
   AuthDashboardAnalysisRoute: typeof AuthDashboardAnalysisRoute
   AuthDashboardCalendarRoute: typeof AuthDashboardCalendarRoute
   AuthDashboardCommoditiesRoute: typeof AuthDashboardCommoditiesRoute
@@ -598,6 +618,7 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthDashboardAdvisorRoute: AuthDashboardAdvisorRoute,
   AuthDashboardAnalysisRoute: AuthDashboardAnalysisRoute,
   AuthDashboardCalendarRoute: AuthDashboardCalendarRoute,
   AuthDashboardCommoditiesRoute: AuthDashboardCommoditiesRoute,

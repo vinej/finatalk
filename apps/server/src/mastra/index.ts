@@ -11,6 +11,7 @@ import { researchAdvisorAgent } from "./agents/research-advisor";
 import { scenarioPlannerAgent } from "./agents/scenario-planner";
 import { taxAdvisorAgent } from "./agents/tax-advisor";
 import { morningBriefingAgent } from "./agents/morning-briefing";
+import { marketAdvisorAgent } from "./agents/market-advisor";
 
 type IndicatorSpec = RunAnalysisInput["indicators"][number];
 
@@ -25,6 +26,7 @@ export const mastra = new Mastra({
     scenarioPlannerAgent,
     taxAdvisorAgent,
     morningBriefingAgent,
+    marketAdvisorAgent,
   },
 });
 
@@ -437,4 +439,29 @@ export async function generateMorningBriefing(
   };
   const result = await morningBriefingAgent.generate([preamble]);
   return { briefing: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
+}
+
+// ── Market advisor ──────────────────────────────────────────────────────
+
+export type ChatWithMarketAdvisorArgs = {
+  messages: ChatMessage[];
+  language?: string;
+};
+
+export async function chatWithMarketAdvisor(
+  args: ChatWithMarketAdvisorArgs,
+): Promise<{ response: string; provider: string }> {
+  const { messages, language = "en" } = args;
+  const contextBlock = {
+    userLanguage: language,
+    today: new Date().toISOString().slice(0, 10),
+  };
+  const history = trimHistory(messages);
+  const preamble: ChatMessage = {
+    role: "user",
+    content:
+      `Context for this conversation (do not quote verbatim, use to ground your answers):\n${JSON.stringify(contextBlock)}`,
+  };
+  const result = await marketAdvisorAgent.generate([preamble, ...history]);
+  return { response: result.text, provider: process.env.AI_PROVIDER ?? "anthropic" };
 }

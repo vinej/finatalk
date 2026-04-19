@@ -159,6 +159,25 @@ export const aiRouter = createTRPCRouter({
       });
     }),
 
+  chatMarket: protectedProcedure
+    .input(z.object({
+      messages: z.array(ChatMessageSchema).min(1).max(40),
+      language: z.string().min(2).max(10).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const fn = ctx.services.chatWithMarketAdvisor;
+      if (!fn) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "AI market advisor is not configured on this server.",
+        });
+      }
+      return fn({
+        messages: input.messages,
+        ...(input.language ? { language: input.language } : {}),
+      });
+    }),
+
   generateBriefing: protectedProcedure
     .input(z.object({
       portfolios: z.array(z.object({

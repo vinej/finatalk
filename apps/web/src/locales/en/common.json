@@ -42,6 +42,7 @@
     "learning": "Learning",
     "symbols": "Symbols",
     "research": "Research",
+    "advisor": "AI Advisor",
     "tax": "Tax Advisor",
     "templates": "Templates",
     "settings": "Settings"
@@ -121,7 +122,8 @@
     "colName": "Name",
     "colSector": "Sector",
     "colSubSector": "Sub-industry",
-    "colHq": "Headquarters"
+    "colHq": "Headquarters",
+    "analyzeIndex": "Analyze index"
   },
   "commodities": {
     "title": "Commodities",
@@ -433,6 +435,11 @@
     "performanceTitle": "Performance",
     "performanceHint": "Each stock's close normalized to 100 at the start of the range.",
     "performanceNoData": "No price data yet.",
+    "benchmarkTitle": "Portfolio vs benchmark",
+    "benchmarkPortfolioLabel": "Portfolio",
+    "benchmarkSummaryTitle": "Return over range",
+    "benchmarkNoneSelected": "Select a benchmark to compare.",
+    "benchmarkHint": "Portfolio value is computed from current quantities and each day's close, then normalized to 100 at the start of the range.",
     "analysisInfo": "Analysis description",
     "noDescription": "No description yet.",
     "updateSummary": "Update summary with AI",
@@ -466,6 +473,19 @@
     "confidenceMedium": "Medium confidence",
     "confidenceLow": "Low confidence",
     "confidenceTooltip": "Qualitative self-assessment by the AI based on source coverage."
+  },
+  "advisor": {
+    "title": "AI Advisor",
+    "subtitle": "Ask open-ended questions about markets, macro trends, sectors, and cross-market comparisons.",
+    "chatTitle": "Market advisor",
+    "placeholder": "Ask anything about markets, sectors, macro…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "failed": "Couldn't reach the market advisor.",
+    "empty": "Ask the advisor about markets, macro, sectors, or cross-market comparisons.",
+    "examplePrompt1": "Do you think the US market will outperform the Canadian market in the next 12 months?",
+    "examplePrompt2": "How are energy stocks trending right now?",
+    "examplePrompt3": "What's the impact of rising rates on growth vs value stocks?"
   },
   "dashboard": {
     "welcome": "Welcome, {{name}}!",
