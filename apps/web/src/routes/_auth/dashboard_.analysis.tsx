@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AiDisclaimer } from "@/components/ai/disclaimer";
 import { ChatDrawer } from "@/components/ai/chat-drawer";
+import { Markdown } from "@/components/ai/markdown";
 import { MarketChart } from "@/components/market-chart";
 import { IndicatorLibrary } from "@/components/analysis/indicator-library";
 import { IndicatorList } from "@/components/analysis/indicator-list";
@@ -617,9 +618,7 @@ function AnalysisPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {loadedAnalysisDescription ? (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-fg)]">
-                  {loadedAnalysisDescription}
-                </p>
+                <Markdown className="text-[var(--color-fg)]">{loadedAnalysisDescription}</Markdown>
               ) : (
                 <p className="text-xs text-[var(--color-muted-fg)]">
                   {t("analysis.analysisDescription")}
@@ -653,7 +652,7 @@ function AnalysisPage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 md:grid-cols-4">
                 {query.data.results.map((r, i) => (
-                  <LatestCell key={i} result={r} />
+                  <LatestCell key={i} result={r} lastClose={query.data.candles.at(-1)?.close ?? null} />
                 ))}
               </div>
             </CardContent>
@@ -728,16 +727,179 @@ function AnalysisPage() {
   );
 }
 
-function LatestCell({ result }: { result: AnalyzeResult }) {
+function LatestCell({ result, lastClose }: { result: AnalyzeResult; lastClose: number | null }) {
+  const { t } = useTranslation();
   const last = latestEntry(result);
   const label = cellLabel(result);
+  const hint = last ? interpretResult(result, last, lastClose, t) : null;
 
   return (
     <div className="rounded-md border border-[var(--color-border)] p-3">
       <div className="text-xs text-[var(--color-muted-fg)]">{label}</div>
       <div className="mt-1 font-mono">{last ? formatLast(result.kind, last) : "—"}</div>
+      {hint && <div className={"mt-1 text-xs " + hint.tone}>{hint.text}</div>}
     </div>
   );
+}
+
+type Hint = { text: string; tone: string };
+const TONE_POS = "text-[#10b981]";
+const TONE_NEG = "text-[#ef4444]";
+const TONE_WARN = "text-[#f59e0b]";
+const TONE_MUTED = "text-[var(--color-muted-fg)]";
+
+function interpretResult(
+  result: AnalyzeResult,
+  last: Record<string, unknown>,
+  lastClose: number | null,
+  t: (k: string) => string,
+): Hint | null {
+  const kind = result.kind;
+  const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+  if (kind === "sma" || kind === "ema" || kind === "rma" || kind === "wma" || kind === "dema") {
+    const v = num(last.value);
+    if (v == null || lastClose == null) return null;
+    const pct = ((lastClose - v) / v) * 100;
+    if (lastClose > v) return { text: t("analysis.hint.priceAbove") + ` (+${pct.toFixed(1)}%)`, tone: TONE_POS };
+    return { text: t("analysis.hint.priceBelow") + ` (${pct.toFixed(1)}%)`, tone: TONE_NEG };
+  }
+
+  if (kind === "rsi") {
+    const v = num(last.value);
+    if (v == null) return null;
+    if (v >= 70) return { text: t("analysis.hint.overbought"), tone: TONE_WARN };
+    if (v <= 30) return { text: t("analysis.hint.oversold"), tone: TONE_WARN };
+    if (v >= 55) return { text: t("analysis.hint.bullishBias"), tone: TONE_POS };
+    if (v <= 45) return { text: t("analysis.hint.bearishBias"), tone: TONE_NEG };
+    return { text: t("analysis.hint.neutral"), tone: TONE_MUTED };
+  }
+
+  if (kind === "stochRsi") {
+    const v = num(last.value);
+    if (v == null) return null;
+    const scaled = v > 1 ? v : v * 100;
+    if (scaled >= 80) return { text: t("analysis.hint.overbought"), tone: TONE_WARN };
+    if (scaled <= 20) return { text: t("analysis.hint.oversold"), tone: TONE_WARN };
+    return { text: t("analysis.hint.neutral"), tone: TONE_MUTED };
+  }
+
+  if (kind === "stoch") {
+    const k = num(last.k);
+    const d = num(last.d);
+    if (k == null) return null;
+    if (k >= 80) return { text: t("analysis.hint.overbought"), tone: TONE_WARN };
+    if (k <= 20) return { text: t("analysis.hint.oversold"), tone: TONE_WARN };
+    if (d != null) {
+      if (k > d) return { text: t("analysis.hint.bullishBias"), tone: TONE_POS };
+      if (k < d) return { text: t("analysis.hint.bearishBias"), tone: TONE_NEG };
+    }
+    return { text: t("analysis.hint.neutral"), tone: TONE_MUTED };
+  }
+
+  if (kind === "williamsR") {
+    const v = num(last.value);
+    if (v == null) return null;
+    if (v >= -20) return { text: t("analysis.hint.overbought"), tone: TONE_WARN };
+    if (v <= -80) return { text: t("analysis.hint.oversold"), tone: TONE_WARN };
+    return { text: t("analysis.hint.neutral"), tone: TONE_MUTED };
+  }
+
+  if (kind === "mom") {
+    const v = num(last.value);
+    if (v == null) return null;
+    if (v > 0) return { text: t("analysis.hint.momentumUp"), tone: TONE_POS };
+    if (v < 0) return { text: t("analysis.hint.momentumDown"), tone: TONE_NEG };
+    return { text: t("analysis.hint.neutral"), tone: TONE_MUTED };
+  }
+
+  if (kind === "roc") {
+    const v = num(last.value);
+    if (v == null) return null;
+    if (v > 0) return { text: t("analysis.hint.gaining") + ` (+${v.toFixed(1)}%)`, tone: TONE_POS };
+    if (v < 0) return { text: t("analysis.hint.losing") + ` (${v.toFixed(1)}%)`, tone: TONE_NEG };
+    return { text: t("analysis.hint.flat"), tone: TONE_MUTED };
+  }
+
+  if (kind === "macd") {
+    const m = num(last.macd);
+    const s = num(last.signal);
+    const h = num(last.histogram);
+    if (m == null || s == null) return null;
+    if (m > s && (h ?? 0) > 0) return { text: t("analysis.hint.bullishCross"), tone: TONE_POS };
+    if (m < s && (h ?? 0) < 0) return { text: t("analysis.hint.bearishCross"), tone: TONE_NEG };
+    return { text: t("analysis.hint.neutral"), tone: TONE_MUTED };
+  }
+
+  if (kind === "macdCross") {
+    const ev = last.event;
+    if (ev === "bull") return { text: t("analysis.hint.bullishCross"), tone: TONE_POS };
+    if (ev === "bear") return { text: t("analysis.hint.bearishCross"), tone: TONE_NEG };
+    return { text: t("analysis.hint.noRecentCross"), tone: TONE_MUTED };
+  }
+
+  if (kind === "maCross") {
+    const ev = last.event;
+    const fast = num(last.fast);
+    const slow = num(last.slow);
+    if (ev === "bull") return { text: t("analysis.hint.goldenCross"), tone: TONE_POS };
+    if (ev === "bear") return { text: t("analysis.hint.deathCross"), tone: TONE_NEG };
+    if (fast != null && slow != null) {
+      if (fast > slow) return { text: t("analysis.hint.fastAboveSlow"), tone: TONE_POS };
+      if (fast < slow) return { text: t("analysis.hint.fastBelowSlow"), tone: TONE_NEG };
+    }
+    return null;
+  }
+
+  if (kind === "bbands") {
+    const upper = num(last.upper);
+    const lower = num(last.lower);
+    const middle = num(last.middle);
+    if (upper == null || lower == null || middle == null || lastClose == null) return null;
+    const width = upper - lower;
+    if (width <= 0) return null;
+    const pos = (lastClose - lower) / width;
+    if (pos >= 0.95) return { text: t("analysis.hint.nearUpperBand"), tone: TONE_WARN };
+    if (pos <= 0.05) return { text: t("analysis.hint.nearLowerBand"), tone: TONE_WARN };
+    if (pos >= 0.5) return { text: t("analysis.hint.bullishBias"), tone: TONE_POS };
+    return { text: t("analysis.hint.bearishBias"), tone: TONE_NEG };
+  }
+
+  if (kind === "atr") {
+    const v = num(last.value);
+    if (v == null || lastClose == null || lastClose === 0) return null;
+    const pct = (v / lastClose) * 100;
+    if (pct >= 3) return { text: t("analysis.hint.highVolatility") + ` (${pct.toFixed(1)}%)`, tone: TONE_WARN };
+    if (pct <= 1) return { text: t("analysis.hint.lowVolatility") + ` (${pct.toFixed(1)}%)`, tone: TONE_MUTED };
+    return { text: t("analysis.hint.moderateVolatility") + ` (${pct.toFixed(1)}%)`, tone: TONE_MUTED };
+  }
+
+  if (kind === "adx") {
+    const adx = num(last.adx);
+    const pdi = num(last.pdi);
+    const mdi = num(last.mdi);
+    if (adx == null) return null;
+    if (adx < 20) return { text: t("analysis.hint.noTrend"), tone: TONE_MUTED };
+    const strong = adx >= 40;
+    if (pdi != null && mdi != null) {
+      if (pdi > mdi) return { text: (strong ? t("analysis.hint.strongUptrend") : t("analysis.hint.uptrend")), tone: TONE_POS };
+      if (mdi > pdi) return { text: (strong ? t("analysis.hint.strongDowntrend") : t("analysis.hint.downtrend")), tone: TONE_NEG };
+    }
+    return { text: t("analysis.hint.trending"), tone: TONE_MUTED };
+  }
+
+  if (kind === "psar") {
+    const v = num(last.value);
+    if (v == null || lastClose == null) return null;
+    if (v < lastClose) return { text: t("analysis.hint.uptrend"), tone: TONE_POS };
+    return { text: t("analysis.hint.downtrend"), tone: TONE_NEG };
+  }
+
+  if (kind === "obv") {
+    return { text: t("analysis.hint.obvHint"), tone: TONE_MUTED };
+  }
+
+  return null;
 }
 
 function latestEntry(result: AnalyzeResult): Record<string, unknown> | undefined {

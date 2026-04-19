@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Markdown } from "@/components/ai/markdown";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard")({
@@ -143,7 +144,7 @@ function DashboardPage() {
             )}
             {briefing ? (
               <div className="space-y-2">
-                <div className="whitespace-pre-wrap text-sm">{briefing}</div>
+                <Markdown>{briefing}</Markdown>
                 <p className="text-[10px] text-[var(--color-muted-fg)]">{t("briefing.disclaimer")}</p>
               </div>
             ) : !briefingMutation.isPending ? (

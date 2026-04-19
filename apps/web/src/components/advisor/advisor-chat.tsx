@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AiDisclaimer } from "@/components/ai/disclaimer";
+import { Markdown } from "@/components/ai/markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -53,10 +54,10 @@ export function AdvisorChat() {
   ];
 
   return (
-    <div className="flex flex-col">
-      <div className="min-h-[240px] px-4 py-3">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
-          <div className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center text-sm text-[var(--color-muted-fg)]">
+          <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 text-center text-sm text-[var(--color-muted-fg)]">
             <p>{t("advisor.empty")}</p>
             <div className="flex flex-col gap-1.5">
               {examples.map((ex) => (
@@ -80,13 +81,13 @@ export function AdvisorChat() {
               <li key={i}>
                 <div
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap",
+                    "rounded-md px-3 py-2 text-sm leading-relaxed",
                     m.role === "user"
-                      ? "ml-8 bg-[var(--color-accent)] text-[var(--color-fg)]"
+                      ? "ml-8 whitespace-pre-wrap bg-[var(--color-accent)] text-[var(--color-fg)]"
                       : "mr-8 border border-[var(--color-border)]",
                   )}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
                 </div>
               </li>
             ))}

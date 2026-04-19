@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AiDisclaimer } from "@/components/ai/disclaimer";
+import { Markdown } from "@/components/ai/markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -26,10 +27,14 @@ export function PortfolioChatDrawer({
   open,
   onOpenChange,
   context,
+  initialPrompt,
+  onInitialPromptConsumed,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   context: PortfolioContext;
+  initialPrompt?: string | null;
+  onInitialPromptConsumed?: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const [mode, setMode] = useState<Mode>("advisor");
@@ -80,6 +85,24 @@ export function PortfolioChatDrawer({
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
+
+  useEffect(() => {
+    if (!open || !initialPrompt) return;
+    setMode("advisor");
+    const next: ChatMessage[] = [{ role: "user", content: initialPrompt }];
+    setAdvisorMessages(next);
+    advisorChat.mutate({
+      messages: next,
+      context: {
+        portfolioTitle: context.portfolioTitle,
+        currency: context.currency,
+        holdings: context.holdings,
+      },
+      language: i18n.language,
+    });
+    onInitialPromptConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialPrompt]);
 
   function send() {
     const text = input.trim();
@@ -184,13 +207,13 @@ export function PortfolioChatDrawer({
                 <li
                   key={i}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap",
+                    "rounded-md px-3 py-2 text-sm leading-relaxed",
                     m.role === "user"
-                      ? "ml-8 bg-[var(--color-accent)] text-[var(--color-fg)]"
+                      ? "ml-8 whitespace-pre-wrap bg-[var(--color-accent)] text-[var(--color-fg)]"
                       : "mr-8 border border-[var(--color-border)]",
                   )}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
                 </li>
               ))}
               {isPending && (

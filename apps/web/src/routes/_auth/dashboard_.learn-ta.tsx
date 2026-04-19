@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KINDS, kindDescription, kindFullName, kindLabel, kindOneliner, type IndicatorKind } from "@/lib/indicator-defaults";
@@ -13,6 +14,13 @@ export const Route = createFileRoute("/_auth/dashboard_/learn-ta")({
 function LearnTAPage() {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
+  const sortedKinds = useMemo(
+    () =>
+      [...KINDS].sort((a, b) =>
+        kindLabel(a).localeCompare(kindLabel(b), lang, { sensitivity: "base" }),
+      ),
+    [lang],
+  );
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <Card>
@@ -36,7 +44,7 @@ function LearnTAPage() {
         </CardHeader>
         <CardContent>
           <ul className="flex flex-col divide-y divide-[var(--color-border)]">
-            {KINDS.map((kind) => (
+            {sortedKinds.map((kind) => (
               <li key={kind} className="py-2 first:pt-0 last:pb-0">
                 <a
                   href={`#${kind}`}
@@ -58,7 +66,7 @@ function LearnTAPage() {
         </CardContent>
       </Card>
 
-      {KINDS.map((kind) => (
+      {sortedKinds.map((kind) => (
         <IndicatorSection key={kind} kind={kind} lang={lang} />
       ))}
     </div>

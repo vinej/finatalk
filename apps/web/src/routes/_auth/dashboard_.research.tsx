@@ -15,7 +15,7 @@ function ResearchPage() {
   const [symbol, setSymbol] = useState("");
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4">
+    <div className="mx-auto flex h-full min-h-0 max-w-4xl flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>{t("research.title")}</CardTitle>
@@ -37,11 +37,11 @@ function ResearchPage() {
         </CardContent>
       </Card>
 
-      <Card className="flex flex-col">
+      <Card className="flex flex-1 min-h-0 flex-col">
         <CardHeader className="border-b border-[var(--color-border)] pb-3">
           <CardTitle className="text-base">{t("research.chatTitle")}</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col p-0">
+        <CardContent className="flex flex-1 min-h-0 flex-col p-0">
           <ResearchChat symbol={symbol} />
         </CardContent>
       </Card>

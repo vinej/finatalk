@@ -11,17 +11,17 @@ function AdvisorPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4">
+    <div className="mx-auto flex h-full min-h-0 max-w-4xl flex-col gap-4">
       <div>
         <h1 className="text-lg font-semibold">{t("advisor.title")}</h1>
         <p className="text-sm text-[var(--color-muted-fg)]">{t("advisor.subtitle")}</p>
       </div>
 
-      <Card className="flex flex-col">
+      <Card className="flex flex-1 min-h-0 flex-col">
         <CardHeader className="border-b border-[var(--color-border)] pb-3">
           <CardTitle className="text-base">{t("advisor.chatTitle")}</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col p-0">
+        <CardContent className="flex flex-1 min-h-0 flex-col p-0">
           <AdvisorChat />
         </CardContent>
       </Card>

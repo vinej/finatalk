@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AiDisclaimer } from "@/components/ai/disclaimer";
+import { Markdown } from "@/components/ai/markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -131,13 +132,13 @@ export function ChatDrawer({
                 <li
                   key={i}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap",
+                    "rounded-md px-3 py-2 text-sm leading-relaxed",
                     m.role === "user"
-                      ? "ml-8 bg-[var(--color-accent)] text-[var(--color-fg)]"
+                      ? "ml-8 whitespace-pre-wrap bg-[var(--color-accent)] text-[var(--color-fg)]"
                       : "mr-8 border border-[var(--color-border)]",
                   )}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
                 </li>
               ))}
               {chat.isPending && (

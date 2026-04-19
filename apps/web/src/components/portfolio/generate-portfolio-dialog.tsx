@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Markdown } from "@/components/ai/markdown";
 import { trpc } from "@/lib/trpc";
 
 type DraftHolding = {
@@ -207,9 +208,9 @@ export function GeneratePortfolioDialog({ open, onClose, onCreated }: Props) {
               <Label className="text-xs uppercase text-[var(--color-muted-fg)]">
                 {t("portfolio.rationale")}
               </Label>
-              <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-sm text-[var(--color-muted-fg)]">
-                {rationale}
-              </p>
+              <div className="max-h-32 overflow-y-auto rounded border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-[var(--color-muted-fg)]">
+                <Markdown>{rationale}</Markdown>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1">

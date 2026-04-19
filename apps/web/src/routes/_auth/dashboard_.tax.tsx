@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Markdown } from "@/components/ai/markdown";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard_/tax")({
@@ -82,7 +83,7 @@ function TaxPage() {
   }, [portfolioContext]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto flex h-full min-h-0 max-w-4xl flex-col gap-6">
       <header className="flex items-center gap-3">
         <Receipt className="h-5 w-5 text-[var(--color-muted-fg)]" />
         <h1 className="text-lg font-semibold">{t("tax.title")}</h1>
@@ -114,12 +115,12 @@ function TaxPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="flex flex-1 min-h-0 flex-col">
         <CardHeader>
           <CardTitle className="text-sm font-semibold">{t("tax.advisor")}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div ref={scrollRef} className="mb-3 flex max-h-[500px] flex-col gap-3 overflow-y-auto">
+        <CardContent className="flex flex-1 min-h-0 flex-col">
+          <div ref={scrollRef} className="mb-3 flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto">
             {messages.length === 0 && (
               <p className="py-8 text-center text-xs text-[var(--color-muted-fg)]">{t("tax.empty")}</p>
             )}
@@ -127,13 +128,13 @@ function TaxPage() {
               <div
                 key={i}
                 className={
-                  "max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap " +
+                  "max-w-[85%] rounded-lg px-3 py-2 text-sm " +
                   (m.role === "user"
-                    ? "ml-auto bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
+                    ? "ml-auto whitespace-pre-wrap bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
                     : "bg-[var(--color-accent)]")
                 }
               >
-                {m.content}
+                {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
               </div>
             ))}
             {chatMutation.isPending && (

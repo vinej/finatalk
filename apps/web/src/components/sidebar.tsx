@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Coins, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
+import { ArrowUpDown, BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Coins, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useLastPortfolioId } from "@/lib/portfolio-persistence";
+import { trpc } from "@/lib/trpc";
 
 const LEARNING_COLLAPSED_KEY = "finatalk:sidebar-learning-collapsed";
 const SYMBOLS_COLLAPSED_KEY = "finatalk:sidebar-symbols-collapsed";
@@ -11,6 +12,8 @@ const SYMBOLS_COLLAPSED_KEY = "finatalk:sidebar-symbols-collapsed";
 export function Sidebar() {
   const { t } = useTranslation();
   const lastPortfolioId = useLastPortfolioId();
+  const portfoliosQuery = trpc.portfolio.listPortfolios.useQuery();
+  const showTax = portfoliosQuery.data?.some((p) => p.manageTransactions) ?? false;
 
   const [learningCollapsed, setLearningCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -50,7 +53,9 @@ export function Sidebar() {
     { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
     { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
     { key: "advisor", to: "/dashboard/advisor", label: t("nav.advisor"), icon: Sparkles },
-    { key: "tax", to: "/dashboard/tax", label: t("nav.tax"), icon: Receipt },
+    ...(showTax
+      ? [{ key: "tax", to: "/dashboard/tax", label: t("nav.tax"), icon: Receipt } as const]
+      : []),
     { key: "templates", to: "/dashboard/templates", label: t("nav.templates"), icon: Copy },
   ] as const;
 
@@ -62,6 +67,7 @@ export function Sidebar() {
 
   const learningItems = [
     { key: "learn-ta", to: "/dashboard/learn-ta", label: t("nav.learnTa"), icon: BookOpen },
+    { key: "learn-buy-sell", to: "/dashboard/learn-buy-sell", label: t("nav.learnBuySell"), icon: ArrowUpDown },
     { key: "learn-investment", to: "/dashboard/learn-investment", label: t("nav.learnInvestment"), icon: GraduationCap },
     { key: "learn-rates", to: "/dashboard/learn-rates", label: t("nav.learnRates"), icon: PercentCircle },
     { key: "learn-fees", to: "/dashboard/learn-fees", label: t("nav.learnFees"), icon: Coins },

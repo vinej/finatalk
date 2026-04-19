@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Check, ChevronDown, ChevronRight, DollarSign, Download, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ChevronRight, ClipboardCheck, DollarSign, Download, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
 import { GenerateAnalysisDialog } from "@/components/portfolio/generate-analysis-dialog";
 import { PortfolioChatDrawer } from "@/components/portfolio/portfolio-chat-drawer";
+import { Markdown } from "@/components/ai/markdown";
 import { PortfolioPerformanceChart, type PerformanceRange } from "@/components/portfolio/portfolio-performance-chart";
 import {
   PortfolioVsBenchmarkChart,
@@ -86,6 +87,7 @@ function PortfolioDetailPage() {
   const [sortKey, setSortKey] = useState<SortKey>("symbol");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatInitialPrompt, setChatInitialPrompt] = useState<string | null>(null);
   const [txHoldingId, setTxHoldingId] = useState<string | null>(null);
   const [editingHoldingId, setEditingHoldingId] = useState<string | null>(null);
   const [holdingDraft, setHoldingDraft] = useState({
@@ -557,7 +559,28 @@ function PortfolioDetailPage() {
             )}
             {t("portfolio.downloadReport")}
           </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => setChatOpen(true)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setChatInitialPrompt(t("portfolio.reviewPrompt"));
+              setChatOpen(true);
+            }}
+            disabled={holdings.length === 0}
+          >
+            <ClipboardCheck className="mr-1 h-4 w-4" />
+            {t("portfolio.reviewPortfolio")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setChatInitialPrompt(null);
+              setChatOpen(true);
+            }}
+          >
             <MessageSquare className="mr-1 h-4 w-4" />
             {t("portfolio.askAi")}
           </Button>
@@ -665,13 +688,28 @@ function PortfolioDetailPage() {
 
       <DividendSection symbols={[...new Set(holdings.map((h) => h.symbol.toUpperCase()))]} holdings={holdings} currency={currency} />
 
-      <TaxSummarySection portfolioId={portfolioId} currency={currency} />
+      {p.manageTransactions && <TaxSummarySection portfolioId={portfolioId} currency={currency} />}
 
       <div>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold">{t("portfolio.holdings")}</CardTitle>
             <div className="flex items-center gap-2">
+              <label
+                className="flex cursor-pointer items-center gap-1.5 rounded-md border border-[var(--color-border)] px-2 py-1 text-xs"
+                title={t("portfolio.manageTransactionsHint")}
+              >
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5"
+                  checked={p.manageTransactions}
+                  onChange={(e) =>
+                    updatePortfolio.mutate({ id: portfolioId, manageTransactions: e.target.checked })
+                  }
+                  disabled={updatePortfolio.isPending}
+                />
+                <span>{t("portfolio.manageTransactions")}</span>
+              </label>
               {confidenceProgress && (
                 <span className="text-xs text-[var(--color-muted-fg)]">{confidenceProgress}</span>
               )}
@@ -871,15 +909,17 @@ function PortfolioDetailPage() {
                         </td>
                         <td className="px-2 py-2 text-right">
                           <div className="flex justify-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title={t("tx.transactions")}
-                              onClick={() => setTxHoldingId(txHoldingId === h.id ? null : h.id)}
-                              aria-label={t("tx.transactions")}
-                            >
-                              <DollarSign className="h-3.5 w-3.5" />
-                            </Button>
+                            {p.manageTransactions && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                title={t("tx.transactions")}
+                                onClick={() => setTxHoldingId(txHoldingId === h.id ? null : h.id)}
+                                aria-label={t("tx.transactions")}
+                              >
+                                <DollarSign className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -899,15 +939,17 @@ function PortfolioDetailPage() {
                             >
                               <FileText className="h-3.5 w-3.5" />
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title={t("portfolio.editHolding")}
-                              onClick={() => startEditHolding(h)}
-                              aria-label={t("portfolio.editHolding")}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
+                            {!p.manageTransactions && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                title={t("portfolio.editHolding")}
+                                onClick={() => startEditHolding(h)}
+                                aria-label={t("portfolio.editHolding")}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1048,7 +1090,12 @@ function PortfolioDetailPage() {
 
       <PortfolioChatDrawer
         open={chatOpen}
-        onOpenChange={setChatOpen}
+        onOpenChange={(o) => {
+          setChatOpen(o);
+          if (!o) setChatInitialPrompt(null);
+        }}
+        initialPrompt={chatInitialPrompt}
+        onInitialPromptConsumed={() => setChatInitialPrompt(null)}
         context={{
           portfolioTitle: p.title,
           currency: p.currency,
@@ -1239,8 +1286,10 @@ function AnalysisInfoDialog({
       title={title ?? t("portfolio.analysisInfo")}
     >
       <div className="flex flex-col gap-3">
-        <div className="min-h-[60px] whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-fg)]">
-          {localDesc || (
+        <div className="min-h-[60px] text-[var(--color-fg)]">
+          {localDesc ? (
+            <Markdown>{localDesc}</Markdown>
+          ) : (
             <span className="italic text-[var(--color-muted-fg)]">
               {t("portfolio.noDescription")}
             </span>
