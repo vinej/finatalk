@@ -11,6 +11,7 @@ import { screenerRouter } from "./routers/screener";
 import { templateRouter } from "./routers/template";
 import { newsRouter } from "./routers/news";
 import { ratesRouter } from "./routers/rates";
+import { learningRouter } from "./routers/learning";
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   template: templateRouter,
   news: newsRouter,
   rates: ratesRouter,
+  learning: learningRouter,
 });
 
 export type AppRouter = typeof appRouter;

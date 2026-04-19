@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpDown, BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Coins, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
+import { ArrowUpDown, BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Coins, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, NotebookPen, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -72,6 +72,7 @@ export function Sidebar() {
     { key: "learn-rates", to: "/dashboard/learn-rates", label: t("nav.learnRates"), icon: PercentCircle },
     { key: "learn-fees", to: "/dashboard/learn-fees", label: t("nav.learnFees"), icon: Coins },
     { key: "strategies", to: "/dashboard/strategies", label: t("nav.strategies"), icon: Lightbulb },
+    { key: "my-learning", to: "/dashboard/my-learning", label: t("nav.myLearning"), icon: NotebookPen },
   ] as const;
 
   const settingsItem = { key: "settings", to: "/dashboard/settings", label: t("nav.settings"), icon: Settings } as const;

@@ -4,3 +4,4 @@ export * from "./portfolio";
 export * from "./research";
 export * from "./notification";
 export * from "./watchlist";
+export * from "./learning";

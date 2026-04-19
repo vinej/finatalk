@@ -27,6 +27,7 @@ import { Route as AuthDashboardResearchRouteImport } from './routes/_auth/dashbo
 import { Route as AuthDashboardRatesRouteImport } from './routes/_auth/dashboard_.rates'
 import { Route as AuthDashboardPortfoliosRouteImport } from './routes/_auth/dashboard_.portfolios'
 import { Route as AuthDashboardNewsRouteImport } from './routes/_auth/dashboard_.news'
+import { Route as AuthDashboardMyLearningRouteImport } from './routes/_auth/dashboard_.my-learning'
 import { Route as AuthDashboardLearnTaRouteImport } from './routes/_auth/dashboard_.learn-ta'
 import { Route as AuthDashboardLearnRatesRouteImport } from './routes/_auth/dashboard_.learn-rates'
 import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth/dashboard_.learn-investment'
@@ -129,6 +130,11 @@ const AuthDashboardNewsRoute = AuthDashboardNewsRouteImport.update({
   path: '/dashboard/news',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardMyLearningRoute = AuthDashboardMyLearningRouteImport.update({
+  id: '/dashboard_/my-learning',
+  path: '/dashboard/my-learning',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardLearnTaRoute = AuthDashboardLearnTaRouteImport.update({
   id: '/dashboard_/learn-ta',
   path: '/dashboard/learn-ta',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
+  '/dashboard/my-learning': typeof AuthDashboardMyLearningRoute
   '/dashboard/news': typeof AuthDashboardNewsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/rates': typeof AuthDashboardRatesRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/dashboard/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/dashboard/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/dashboard/learn-ta': typeof AuthDashboardLearnTaRoute
+  '/dashboard/my-learning': typeof AuthDashboardMyLearningRoute
   '/dashboard/news': typeof AuthDashboardNewsRoute
   '/dashboard/portfolios': typeof AuthDashboardPortfoliosRoute
   '/dashboard/rates': typeof AuthDashboardRatesRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/_auth/dashboard_/learn-investment': typeof AuthDashboardLearnInvestmentRoute
   '/_auth/dashboard_/learn-rates': typeof AuthDashboardLearnRatesRoute
   '/_auth/dashboard_/learn-ta': typeof AuthDashboardLearnTaRoute
+  '/_auth/dashboard_/my-learning': typeof AuthDashboardMyLearningRoute
   '/_auth/dashboard_/news': typeof AuthDashboardNewsRoute
   '/_auth/dashboard_/portfolios': typeof AuthDashboardPortfoliosRoute
   '/_auth/dashboard_/rates': typeof AuthDashboardRatesRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/dashboard/learn-investment'
     | '/dashboard/learn-rates'
     | '/dashboard/learn-ta'
+    | '/dashboard/my-learning'
     | '/dashboard/news'
     | '/dashboard/portfolios'
     | '/dashboard/rates'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/dashboard/learn-investment'
     | '/dashboard/learn-rates'
     | '/dashboard/learn-ta'
+    | '/dashboard/my-learning'
     | '/dashboard/news'
     | '/dashboard/portfolios'
     | '/dashboard/rates'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard_/learn-investment'
     | '/_auth/dashboard_/learn-rates'
     | '/_auth/dashboard_/learn-ta'
+    | '/_auth/dashboard_/my-learning'
     | '/_auth/dashboard_/news'
     | '/_auth/dashboard_/portfolios'
     | '/_auth/dashboard_/rates'
@@ -524,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardNewsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/my-learning': {
+      id: '/_auth/dashboard_/my-learning'
+      path: '/dashboard/my-learning'
+      fullPath: '/dashboard/my-learning'
+      preLoaderRoute: typeof AuthDashboardMyLearningRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/learn-ta': {
       id: '/_auth/dashboard_/learn-ta'
       path: '/dashboard/learn-ta'
@@ -624,6 +643,7 @@ interface AuthRouteChildren {
   AuthDashboardLearnInvestmentRoute: typeof AuthDashboardLearnInvestmentRoute
   AuthDashboardLearnRatesRoute: typeof AuthDashboardLearnRatesRoute
   AuthDashboardLearnTaRoute: typeof AuthDashboardLearnTaRoute
+  AuthDashboardMyLearningRoute: typeof AuthDashboardMyLearningRoute
   AuthDashboardNewsRoute: typeof AuthDashboardNewsRoute
   AuthDashboardPortfoliosRoute: typeof AuthDashboardPortfoliosRoute
   AuthDashboardRatesRoute: typeof AuthDashboardRatesRoute
@@ -650,6 +670,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardLearnInvestmentRoute: AuthDashboardLearnInvestmentRoute,
   AuthDashboardLearnRatesRoute: AuthDashboardLearnRatesRoute,
   AuthDashboardLearnTaRoute: AuthDashboardLearnTaRoute,
+  AuthDashboardMyLearningRoute: AuthDashboardMyLearningRoute,
   AuthDashboardNewsRoute: AuthDashboardNewsRoute,
   AuthDashboardPortfoliosRoute: AuthDashboardPortfoliosRoute,
   AuthDashboardRatesRoute: AuthDashboardRatesRoute,

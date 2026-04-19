@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   STRATEGY_GENERAL_LINKS,
   STRATEGY_GUIDE,
   STRATEGY_KINDS,
+  type StrategyEntry,
   type StrategyKind,
   type StrategyLink,
 } from "@/lib/strategy-guide";
@@ -15,11 +17,18 @@ export const Route = createFileRoute("/_auth/dashboard_/strategies")({
   component: StrategiesPage,
 });
 
+type TabKey = "overview" | "steps";
+
 function StrategiesPage() {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
+  const [activeKind, setActiveKind] = useState<StrategyKind>(STRATEGY_KINDS[0]);
+  const [tab, setTab] = useState<TabKey>("overview");
+
+  const entry = STRATEGY_GUIDE[lang][activeKind];
+
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>{t("learnStrategies.title")}</CardTitle>
@@ -38,54 +47,196 @@ function StrategiesPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("learnStrategies.tableOfContents")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="flex flex-wrap gap-2">
-            {STRATEGY_KINDS.map((kind) => (
-              <li key={kind}>
-                <a
-                  href={`#${kind}`}
-                  className="rounded-md border border-[var(--color-border)] px-2.5 py-1 text-sm hover:bg-[var(--color-accent)]"
-                >
-                  {STRATEGY_GUIDE[lang][kind].label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      {STRATEGY_KINDS.map((kind) => (
-        <StrategySection key={kind} kind={kind} lang={lang} />
-      ))}
+      <div className="grid gap-4 md:grid-cols-[240px_1fr]">
+        <StrategyMenu
+          activeKind={activeKind}
+          onSelect={(k) => {
+            setActiveKind(k);
+            setTab("overview");
+          }}
+          lang={lang}
+        />
+        <StrategyPanel entry={entry} tab={tab} onTabChange={setTab} />
+      </div>
     </div>
   );
 }
 
-function StrategySection({ kind, lang }: { kind: StrategyKind; lang: Lang }) {
+function StrategyMenu({
+  activeKind,
+  onSelect,
+  lang,
+}: {
+  activeKind: StrategyKind;
+  onSelect: (k: StrategyKind) => void;
+  lang: Lang;
+}) {
   const { t } = useTranslation();
-  const entry = STRATEGY_GUIDE[lang][kind];
   return (
-    <Card id={kind} className="scroll-mt-4">
+    <Card className="self-start">
+      <CardHeader>
+        <CardTitle className="text-base">{t("learnStrategies.tableOfContents")}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="flex flex-col gap-1">
+          {STRATEGY_KINDS.map((kind) => {
+            const active = kind === activeKind;
+            return (
+              <li key={kind}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(kind)}
+                  className={`w-full rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors ${
+                    active
+                      ? "border-[var(--color-border)] bg-[var(--color-accent)] font-medium"
+                      : "border-transparent hover:bg-[var(--color-accent)]/60"
+                  }`}
+                >
+                  {STRATEGY_GUIDE[lang][kind].label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StrategyPanel({
+  entry,
+  tab,
+  onTabChange,
+}: {
+  entry: StrategyEntry;
+  tab: TabKey;
+  onTabChange: (t: TabKey) => void;
+}) {
+  const { t } = useTranslation();
+  const hasSteps =
+    !!entry.coreIdea || (entry.steps && entry.steps.length > 0) || !!entry.whyItWorks;
+
+  return (
+    <Card>
       <CardHeader>
         <CardTitle>{entry.label}</CardTitle>
         <p className="text-sm text-[var(--color-muted-fg)]">{entry.summary}</p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <Block label={t("learnStrategies.description")} text={entry.description} />
-        <Block label={t("learnStrategies.whenToUse")} text={entry.whenToUse} />
-        <Block label={t("learnStrategies.prosAndCons")} text={entry.prosAndCons} />
-        <div>
-          <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-            {t("learnStrategies.furtherReading")}
-          </div>
-          <LinkChips links={entry.links} />
+        <div
+          role="tablist"
+          className="flex gap-1 border-b border-[var(--color-border)]"
+        >
+          <TabButton
+            active={tab === "overview"}
+            onClick={() => onTabChange("overview")}
+            label={t("learnStrategies.tabOverview")}
+          />
+          {hasSteps && (
+            <TabButton
+              active={tab === "steps"}
+              onClick={() => onTabChange("steps")}
+              label={t("learnStrategies.tabSteps")}
+            />
+          )}
         </div>
+
+        {tab === "overview" || !hasSteps ? (
+          <OverviewTab entry={entry} />
+        ) : (
+          <StepsTab entry={entry} />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={`-mb-px rounded-t-md border-b-2 px-3 py-1.5 text-sm transition-colors ${
+        active
+          ? "border-[var(--color-fg)] font-medium"
+          : "border-transparent text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function OverviewTab({ entry }: { entry: StrategyEntry }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-4">
+      <Block label={t("learnStrategies.description")} text={entry.description} />
+      <Block label={t("learnStrategies.whenToUse")} text={entry.whenToUse} />
+      <Block label={t("learnStrategies.prosAndCons")} text={entry.prosAndCons} />
+      <div>
+        <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
+          {t("learnStrategies.furtherReading")}
+        </div>
+        <LinkChips links={entry.links} />
+      </div>
+    </div>
+  );
+}
+
+function StepsTab({ entry }: { entry: StrategyEntry }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-4">
+      {entry.coreIdea && (
+        <Block label={t("learnStrategies.coreIdea")} text={entry.coreIdea} />
+      )}
+      {entry.indicatorsUsed && entry.indicatorsUsed.length > 0 && (
+        <div>
+          <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
+            {t("learnStrategies.indicatorsUsed")}
+          </div>
+          <ul className="flex flex-wrap gap-2">
+            {entry.indicatorsUsed.map((ind) => (
+              <li
+                key={ind}
+                className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/30 px-2.5 py-1 text-sm"
+              >
+                {ind}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {entry.steps && entry.steps.length > 0 && (
+        <ol className="flex flex-col gap-3">
+          {entry.steps.map((step, idx) => (
+            <li
+              key={idx}
+              className="rounded-md border border-[var(--color-border)] p-3"
+            >
+              <div className="mb-1 text-sm font-medium">{step.title}</div>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--color-muted-fg)]">
+                {step.body}
+              </p>
+            </li>
+          ))}
+        </ol>
+      )}
+      {entry.whyItWorks && (
+        <Block label={t("learnStrategies.whyItWorks")} text={entry.whyItWorks} />
+      )}
+    </div>
   );
 }
 
