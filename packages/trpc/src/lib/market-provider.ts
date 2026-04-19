@@ -98,6 +98,34 @@ export async function fetchChartWithFallback(
   return { data: { candles, currency }, provider: "yahoo" };
 }
 
+export type AssetType = "equity" | "etf" | "mutualfund" | "index" | "crypto" | "currency" | "future" | "option" | null;
+
+const QUOTE_TYPE_MAP: Record<string, Exclude<AssetType, null>> = {
+  EQUITY: "equity",
+  ETF: "etf",
+  MUTUALFUND: "mutualfund",
+  INDEX: "index",
+  CRYPTOCURRENCY: "crypto",
+  CURRENCY: "currency",
+  FUTURE: "future",
+  OPTION: "option",
+};
+
+export async function resolveAssetType(symbol: string): Promise<AssetType> {
+  const sym = symbol.trim().toUpperCase();
+  if (!sym) return null;
+  try {
+    const q = await yf.quote(sym);
+    const raw = typeof (q as { quoteType?: unknown }).quoteType === "string"
+      ? (q as { quoteType: string }).quoteType.toUpperCase()
+      : null;
+    if (raw && QUOTE_TYPE_MAP[raw]) return QUOTE_TYPE_MAP[raw];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchFxRatesWithFallback(
   fromCcy: string,
   toCcy: string,

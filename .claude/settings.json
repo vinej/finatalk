@@ -50,7 +50,8 @@
       "Bash(node -e \"const d=require\\('C:/Users/jyv/AppData/Local/Temp/obb-openapi.json'\\); const p=d.paths['/api/v1/fixedincome/spreads/tcm'].get; console.log\\('Params:', JSON.stringify\\(p.parameters.map\\(x=>\\({name:x.name,default:x.schema?.default,enum:x.schema?.enum}\\)\\),null,2\\)\\);\")",
       "Bash(curl -s \"http://localhost:6900/api/v1/fixedincome/government/yield_curve?provider=fred&date=2025-04-18\")",
       "Bash(node -e \"let s=''; process.stdin.on\\('data',c=>s+=c\\); process.stdin.on\\('end',\\(\\)=>{const d=JSON.parse\\(s\\); console.log\\('Len:', d.results?.length, 'First:', JSON.stringify\\(d.results?.[0]\\)\\);}\\);\")",
-      "Bash(pnpm --filter @finatalk/openbb typecheck)"
+      "Bash(pnpm --filter @finatalk/openbb typecheck)",
+      "Bash(node -e \"const Y = require\\('yahoo-finance2'\\).default; const yf = new Y\\({ validation: { logErrors: false } }\\); yf.search\\('VFIAX', { quotesCount: 10, newsCount: 0 }\\).then\\(r => { console.log\\('count:', r.quotes ? r.quotes.length : 'no quotes'\\); console.log\\(JSON.stringify\\(r.quotes, null, 2\\).slice\\(0, 2000\\)\\); }\\).catch\\(e => console.error\\('ERR', e.message\\)\\);\")"
     ]
   }
 }

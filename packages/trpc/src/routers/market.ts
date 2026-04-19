@@ -109,11 +109,26 @@ export async function fetchCandlesWithCurrency(
   interval: z.infer<typeof IntervalSchema>,
   convertTo: string | null,
 ): Promise<{ candles: Candle[]; nativeCurrency: string; displayCurrency: string }> {
-  const { data } = await fetchChartWithFallback(symbol, range, interval);
+  let data;
+  try {
+    ({ data } = await fetchChartWithFallback(symbol, range, interval));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Failed to fetch chart";
+    if (/no data found|delisted/i.test(msg)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `No historical chart data available for ${symbol}. Some mutual funds and indexes expose quotes but not chart history.`,
+      });
+    }
+    throw err;
+  }
   const nativeCurrency = data.currency;
   let candles = data.candles;
   if (candles.length === 0) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: `No data for ${symbol}` });
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `No historical chart data available for ${symbol}. Some mutual funds and indexes expose quotes but not chart history.`,
+    });
   }
   const target = convertTo ? convertTo.toUpperCase() : null;
   if (!target || target === nativeCurrency) {
@@ -381,7 +396,7 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
   }
 }
 
-export type AssetType = "stock" | "etf" | "commodity";
+export type AssetType = "stock" | "etf" | "commodity" | "mutualfund";
 export type SymbolEntry = { symbol: string; name: string; exchange: string; assetType: AssetType };
 
 let cachedSymbols: { data: SymbolEntry[]; fetchedAt: number } | null = null;
@@ -489,6 +504,55 @@ export const marketRouter = createTRPCRouter({
         }
       }
       return { symbols: cachedSymbols.data, fetchedAt: cachedSymbols.fetchedAt };
+    }),
+
+  searchSymbols: protectedProcedure
+    .input(z.object({
+      query: z.string().min(1).max(64),
+      assetType: z.enum(["all", "stock", "etf", "commodity", "mutualfund"]).optional(),
+      limit: z.number().int().min(1).max(25).optional(),
+    }))
+    .query(async ({ input }) => {
+      const limit = input.limit ?? 15;
+      try {
+        const res = await yf.search(input.query, {
+          quotesCount: 20,
+          newsCount: 0,
+          enableFuzzyQuery: false,
+        });
+        const quotes = Array.isArray(res?.quotes) ? res.quotes : [];
+        const exchangeMap: Record<string, string> = {
+          NMS: "NASDAQ", NGM: "NASDAQ", NCM: "NASDAQ", NAS: "NASDAQ",
+          NYQ: "NYSE", ASE: "NYSE MKT", PCX: "NYSE ARCA",
+          BATS: "BATS", IEX: "IEX",
+          TOR: "TSX", VAN: "TSXV", CNQ: "CSE", NEO: "NEO",
+        };
+        const out: SymbolEntry[] = [];
+        for (const q of quotes) {
+          const sym = (q as { symbol?: string }).symbol;
+          if (!sym) continue;
+          const qt = String((q as { quoteType?: string }).quoteType ?? "").toUpperCase();
+          let assetType: AssetType;
+          if (qt === "ETF") assetType = "etf";
+          else if (qt === "MUTUALFUND") assetType = "mutualfund";
+          else if (qt === "FUTURE" || qt === "COMMODITY") assetType = "commodity";
+          else if (qt === "EQUITY") assetType = "stock";
+          else continue;
+          if (input.assetType && input.assetType !== "all" && input.assetType !== assetType) continue;
+          const name =
+            (q as { shortname?: string; longname?: string; name?: string }).shortname ??
+            (q as { longname?: string }).longname ??
+            (q as { name?: string }).name ??
+            sym;
+          const exchRaw = String((q as { exchange?: string }).exchange ?? "").toUpperCase();
+          const exchange = exchangeMap[exchRaw] ?? exchRaw ?? "";
+          out.push({ symbol: sym, name, exchange, assetType });
+          if (out.length >= limit) break;
+        }
+        return { symbols: out };
+      } catch {
+        return { symbols: [] as SymbolEntry[] };
+      }
     }),
 
   candles: protectedProcedure

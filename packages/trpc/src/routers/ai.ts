@@ -14,6 +14,12 @@ const ChatMessageSchema = z.object({
   content: z.string().min(1).max(8000),
 });
 
+const AssetTypeSchema = z.enum(["equity", "etf", "mutualfund", "index", "crypto", "currency", "future", "option"]);
+
+const HoldingContextSchema = HoldingInputSchema.extend({
+  assetType: AssetTypeSchema.nullable().optional(),
+});
+
 export const aiRouter = createTRPCRouter({
   summarizeChart: protectedProcedure
     .input(z.object({
@@ -84,7 +90,7 @@ export const aiRouter = createTRPCRouter({
       context: z.object({
         portfolioTitle: z.string().min(1).max(120),
         currency: CurrencySchema,
-        holdings: z.array(HoldingInputSchema).max(200),
+        holdings: z.array(HoldingContextSchema).max(200),
       }),
       language: z.string().min(2).max(10).optional(),
     }))

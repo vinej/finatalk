@@ -22,7 +22,7 @@ export type PersistedAnalysisState = {
   analystCollapsed?: boolean;
   ownershipCollapsed?: boolean;
   shortInterestCollapsed?: boolean;
-  assetTypeFilter?: "all" | "stock" | "etf" | "commodity";
+  assetTypeFilter?: "all" | "stock" | "etf" | "commodity" | "mutualfund";
   exchangeFilter?: string;
 };
 

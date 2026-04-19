@@ -70,7 +70,7 @@ function AnalysisPage() {
   const [analystCollapsed, setAnalystCollapsed] = useState<boolean>(persisted?.analystCollapsed ?? false);
   const [ownershipCollapsed, setOwnershipCollapsed] = useState<boolean>(persisted?.ownershipCollapsed ?? false);
   const [shortInterestCollapsed, setShortInterestCollapsed] = useState<boolean>(persisted?.shortInterestCollapsed ?? false);
-  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf" | "commodity">(persisted?.assetTypeFilter ?? "all");
+  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf" | "commodity" | "mutualfund">(persisted?.assetTypeFilter ?? "all");
   const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
 
@@ -155,6 +155,30 @@ function AnalysisPage() {
     gcTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const q = symbolInput.trim();
+    if (q.length < 1) {
+      setDebouncedSearch("");
+      return;
+    }
+    const h = setTimeout(() => setDebouncedSearch(q), 250);
+    return () => clearTimeout(h);
+  }, [symbolInput]);
+
+  const liveSearchQuery = trpc.market.searchSymbols.useQuery(
+    {
+      query: debouncedSearch,
+      assetType: assetTypeFilter,
+      limit: 20,
+    },
+    {
+      enabled: debouncedSearch.length >= 1,
+      staleTime: 60_000,
+      retry: false,
+    },
+  );
 
   const updateAnalysisMutation = trpc.analysis.updateAnalysis.useMutation({
     onSuccess: () => utils.analysis.listAnalyses.invalidate(),
@@ -287,6 +311,8 @@ function AnalysisPage() {
         : mergedSymbols.filter((s) => s.assetType === assetTypeFilter);
     const all = exchangeFilter === "all" ? byType : byType.filter((s) => s.exchange === exchangeFilter);
     const q = symbolInput.trim().toUpperCase();
+    const liveRaw = liveSearchQuery.data?.symbols ?? [];
+    const live = exchangeFilter === "all" ? liveRaw : liveRaw.filter((s) => s.exchange === exchangeFilter);
     if (!q) return all.slice(0, 200);
     const starts: typeof all = [];
     const contains: typeof all = [];
@@ -295,8 +321,16 @@ function AnalysisPage() {
       else if (s.symbol.includes(q) || s.name.toUpperCase().includes(q)) contains.push(s);
       if (starts.length >= 200) break;
     }
-    return [...starts, ...contains].slice(0, 200);
-  }, [mergedSymbols, symbolInput, assetTypeFilter, exchangeFilter]);
+    const merged = [...starts, ...contains];
+    const seen = new Set(merged.map((s) => s.symbol));
+    for (const s of live) {
+      if (!seen.has(s.symbol)) {
+        seen.add(s.symbol);
+        merged.push(s);
+      }
+    }
+    return merged.slice(0, 200);
+  }, [mergedSymbols, symbolInput, assetTypeFilter, exchangeFilter, liveSearchQuery.data]);
 
   useEffect(() => {
     if (query.error) toast.error(query.error.message ?? t("analysis.fetchFailed"));
@@ -438,12 +472,13 @@ function AnalysisPage() {
               <select
                 id="assetType"
                 value={assetTypeFilter}
-                onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf" | "commodity")}
+                onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf" | "commodity" | "mutualfund")}
                 className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
               >
                 <option value="all">{t("analysis.assetAll")}</option>
                 <option value="stock">{t("analysis.assetStock")}</option>
                 <option value="etf">{t("analysis.assetEtf")}</option>
+                <option value="mutualfund">{t("analysis.assetMutualFund")}</option>
                 <option value="commodity">{t("analysis.assetCommodity")}</option>
               </select>
             </div>
@@ -475,10 +510,15 @@ function AnalysisPage() {
               <datalist id="symbol-suggestions">
                 {suggestions.map((s) => (
                   <option key={s.symbol} value={s.symbol}>
-                    {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : s.assetType === "commodity" ? " · Futures" : ""}
+                    {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : s.assetType === "commodity" ? " · Futures" : s.assetType === "mutualfund" ? " · Fund" : ""}
                   </option>
                 ))}
               </datalist>
+              {assetTypeFilter === "mutualfund" && suggestions.length === 0 && (
+                <p className="text-xs text-[var(--color-muted-foreground)]">
+                  {t("analysis.mutualFundHint")}
+                </p>
+              )}
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="range">{t("analysis.range")}</Label>

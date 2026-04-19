@@ -13,6 +13,7 @@ import {
 import { RangeSchema, SymbolSchema } from "../schemas/indicator";
 import { generatePortfolioReport } from "../lib/pdf-report";
 import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
+import { resolveAssetType } from "../lib/market-provider";
 
 const CHART_PALETTE = [
   "#3b82f6", "#10b981", "#f59e0b", "#ef4444",
@@ -141,6 +142,7 @@ function serializeHolding(row: Holding) {
     purchaseDate: row.purchaseDate,
     analysisId: row.analysisId ?? null,
     confidence: (row.confidence as "high" | "medium" | "low") ?? null,
+    assetType: (row.assetType as "equity" | "etf" | "mutualfund" | "index" | "crypto" | "currency" | "future" | "option") ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -290,13 +292,16 @@ export const portfolioRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await findOwnedPortfolio(ctx, input.portfolioId);
       const id = randomUUID();
+      const symbol = input.holding.symbol.toUpperCase();
+      const assetType = await resolveAssetType(symbol);
       await ctx.db.insert(holding).values({
         id,
         portfolioId: input.portfolioId,
-        symbol: input.holding.symbol.toUpperCase(),
+        symbol,
         quantity: String(input.holding.quantity),
         costBasis: String(input.holding.costBasis),
         purchaseDate: input.holding.purchaseDate,
+        assetType: assetType ?? null,
       });
       await ctx.db
         .update(portfolio)
@@ -314,6 +319,7 @@ export const portfolioRouter = createTRPCRouter({
       const { holding: current, portfolio: p } = await findOwnedHolding(ctx, input.id);
       const nextSymbol = input.holding.symbol.toUpperCase();
       const symbolChanged = current.symbol.toUpperCase() !== nextSymbol;
+      const nextAssetType = symbolChanged ? await resolveAssetType(nextSymbol) : undefined;
       await ctx.db
         .update(holding)
         .set({
@@ -322,6 +328,7 @@ export const portfolioRouter = createTRPCRouter({
           costBasis: String(input.holding.costBasis),
           purchaseDate: input.holding.purchaseDate,
           ...(symbolChanged && current.analysisId ? { analysisId: null } : {}),
+          ...(symbolChanged ? { assetType: nextAssetType ?? null } : {}),
           updatedAt: new Date(),
         })
         .where(eq(holding.id, input.id));

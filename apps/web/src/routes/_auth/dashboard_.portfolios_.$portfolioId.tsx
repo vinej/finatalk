@@ -852,6 +852,21 @@ function PortfolioDetailPage() {
                               ({r.nativeCurrency})
                             </span>
                           )}
+                          {h.assetType === "mutualfund" && (
+                            <span
+                              className="ml-1 inline-block rounded bg-[var(--color-accent)] px-1 text-[10px] text-[var(--color-muted-fg)]"
+                              title={t("portfolio.mutualFundTooltip")}
+                            >
+                              {t("portfolio.mutualFundBadge")}
+                            </span>
+                          )}
+                          {h.assetType === "etf" && (
+                            <span
+                              className="ml-1 inline-block rounded bg-[var(--color-accent)] px-1 text-[10px] text-[var(--color-muted-fg)]"
+                            >
+                              ETF
+                            </span>
+                          )}
                           {r.error && (
                             <span className="ml-1 inline-block rounded bg-[var(--color-destructive)]/10 px-1 text-[10px] text-[var(--color-destructive)]">
                               !
@@ -1104,6 +1119,7 @@ function PortfolioDetailPage() {
             quantity: h.quantity,
             costBasis: h.costBasis,
             purchaseDate: h.purchaseDate,
+            ...(h.assetType ? { assetType: h.assetType } : {}),
           })),
         }}
       />

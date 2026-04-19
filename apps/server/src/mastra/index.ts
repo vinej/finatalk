@@ -156,6 +156,7 @@ export type PortfolioAdvisorHolding = {
   quantity: number;
   costBasis: number;
   purchaseDate: string;
+  assetType?: "equity" | "etf" | "mutualfund" | "index" | "crypto" | "currency" | "future" | "option" | null | undefined;
 };
 
 export type ChatWithPortfolioAdvisorArgs = {
