@@ -40,6 +40,11 @@ export const STRATEGY_KINDS = [
   "supportResistancePullback",
   "openingRangeBreakout",
   "vwapStrategy",
+  "volumeProfileRotation",
+  "orderBlockRetest",
+  "pivotPointReaction",
+  "liqSweepReversal",
+  "donchianTurtleBreakout",
 ] as const;
 
 export type StrategyKind = (typeof STRATEGY_KINDS)[number];
@@ -695,7 +700,7 @@ const STRATEGY_GUIDE_EN: Record<StrategyKind, StrategyEntry> = {
       "Use Trend Pullback when you have a clearly trending instrument (ADX > 20 is a useful sanity check), liquid price action (no illiquid microcaps), and you can wait patiently for the setup. Best suited to swing trades (days to weeks) using 20/50 EMAs on daily candles, or intraday trades using VWAP as the anchor. Skip it on choppy, range-bound markets — the strategy will whipsaw and hurt.",
     prosAndCons:
       "Pros: high-probability setups because you require three independent confirmations (trend, pullback, reversal), well-defined stop-loss placement (below swing low), pairs with clear risk/reward rules, works across timeframes. Cons: you miss the strongest moves (the ones that never pull back), lots of setups that 'almost' trigger but don't, requires patience and discipline, fails in choppy regimes, and intraday version requires active screen time.",
-    indicatorsUsed: ["20 EMA (short-term trend)", "50 EMA (trend filter)", "RSI (14) (timing/momentum)", "VWAP (intraday anchor)"],
+    indicatorsUsed: ["20 EMA (short-term trend)", "50 EMA (trend filter)", "RSI (14) (timing/momentum)", "VWAP (intraday anchor)", "Keltner Channels (ATR-scaled dynamic support on the pullback)", "Aroon or Vortex (trend-strength confirmation)", "Trend Intensity Index (regime filter — skip trades when TII is low)"],
     coreIdea:
       "You don't chase price. You wait for a clear trend, then a pullback, then a confirmation to rejoin the trend.",
     steps: [
@@ -749,7 +754,7 @@ const STRATEGY_GUIDE_EN: Record<StrategyKind, StrategyEntry> = {
       "Use breakouts on liquid instruments with clear range structure — consolidation after a prior trend, tight ranges after news digestion, technical patterns (triangles, flags, cup-and-handle). Works best when implied volatility is low (the range is coiled) and there's a catalyst on the horizon. Avoid breakouts in illiquid names where the move can be engineered.",
     prosAndCons:
       "Pros: catches the start of big directional moves, rule-based and easy to define, naturally defines a stop (below the broken level), works across timeframes. Cons: fake breakouts are extremely common (especially intraday), whipsaws in low-conviction markets, requires patience to wait for real signals, poor risk/reward if you chase far from the level.",
-    indicatorsUsed: ["Horizontal support/resistance", "Volume (confirmation)", "ATR (stop sizing)", "RSI or MACD (optional momentum filter)"],
+    indicatorsUsed: ["Horizontal support/resistance", "Donchian Channels (N-bar high/low as the range)", "Volume (confirmation)", "Volume Oscillator, A/D Line, CMF (participation quality)", "Chaikin Volatility (range contraction before break)", "ATR (stop sizing)", "RSI or MACD (optional momentum filter)"],
     coreIdea:
       "Price breaking out of a tight range with strong volume signals that one side has won. Trade in the direction of the break, not against it.",
     steps: [
@@ -801,7 +806,7 @@ const STRATEGY_GUIDE_EN: Record<StrategyKind, StrategyEntry> = {
       "Use mean reversion on instruments in clear ranging regimes — no strong directional trend, stable ADX below 20, well-defined support and resistance. Works best on indices, large-cap stocks, and major FX pairs during low-volatility periods. Avoid it during earnings season for individual names, and in anything with a strong directional catalyst.",
     prosAndCons:
       "Pros: high win rate (often 60–70%), well-defined entries and exits, simple rules, works great in choppy markets where breakout strategies fail. Cons: average win is smaller than average loss (one big trend move can wipe out many small wins), dangerous in trending markets where 'oversold gets more oversold', requires regime awareness.",
-    indicatorsUsed: ["RSI (14)", "Bollinger Bands (20, 2σ)", "ADX (regime filter)", "20-period moving average"],
+    indicatorsUsed: ["RSI (14)", "Bollinger Bands (20, 2σ)", "Bollinger %B (normalised)", "Price Z-Score (|Z| > 2)", "Keltner Channels (ATR-scaled alternative)", "ADX (regime filter)", "Hurst Exponent (H < 0.5 = mean-reverting regime)", "20-period moving average"],
     coreIdea:
       "Extreme moves exhaust themselves. Buy fear, sell greed — but only when the market is ranging, never in a strong trend.",
     steps: [
@@ -854,7 +859,7 @@ const STRATEGY_GUIDE_EN: Record<StrategyKind, StrategyEntry> = {
       "Use crossovers on trending instruments (indices, sector ETFs, momentum leaders) for swing or position trading. Work best on weekly or daily timeframes where the lag matters less. A very common pattern: use 50/200 EMA crossover as a regime filter (only trade longs above the golden cross) and combine with a faster entry trigger like a pullback or breakout.",
     prosAndCons:
       "Pros: extremely simple rules, fully systematic (easy to automate and backtest), objective, no interpretation needed, great as a trend filter. Cons: signals are late by design, very poor in sideways/choppy markets (lots of whipsaws), gives back large chunks on reversals, doesn't tell you about risk sizing or targets.",
-    indicatorsUsed: ["Short EMA (e.g. 20 or 50)", "Long EMA (e.g. 100 or 200)"],
+    indicatorsUsed: ["Short EMA (e.g. 20 or 50)", "Long EMA (e.g. 100 or 200)", "Aroon (Up/Down crossover as confirmation)", "Vortex (+VI / −VI crossover)", "Trend Intensity Index (regime filter)"],
     coreIdea:
       "When a fast moving average rises above a slow one, the short-term momentum is beating the long-term average — a trend shift. Trade with the slope.",
     steps: [
@@ -1051,6 +1056,269 @@ const STRATEGY_GUIDE_EN: Record<StrategyKind, StrategyEntry> = {
     links: [
       { title: "Investopedia — VWAP", url: "https://www.investopedia.com/terms/v/vwap.asp" },
       { title: "Investopedia — Using VWAP in trading", url: "https://www.investopedia.com/articles/trading/11/trading-with-vwap-mvwap.asp" },
+    ],
+  },
+
+  volumeProfileRotation: {
+    label: "Volume Profile Rotation (VAL / POC / VAH)",
+    summary: "Trade inside the Value Area — buy dips to VAL, fade pushes to VAH, target POC. Exploits rotation around the most-accepted prices.",
+    description:
+      "Volume Profile carves the market into zones of acceptance (Value Area) and rejection (Low-Volume Nodes). In rotational regimes, price oscillates between Value Area Low (VAL) and Value Area High (VAH), repeatedly gravitating back to the Point of Control (POC) — the bin with the highest traded volume. The rotation strategy buys dips to VAL with a reversal, takes profit at POC, and scales out at VAH; the short side mirrors. Most effective when the market is clearly range-bound (ADX < 20) and the profile has a single, well-formed POC (normal distribution shape). On bimodal profiles or trend days, skip — those are structural shifts, not rotations.",
+    whenToUse:
+      "Use on liquid instruments in rotational regimes — index futures, large-cap stocks, major FX pairs — when ADX is low and the current Volume Profile shows a single, clearly identifiable POC. Works on session profiles (intraday) and multi-day/week profiles (swing). Avoid on days with strong catalysts, earnings windows, or when the profile is bimodal (two competing POCs) — the edge collapses when rotation breaks down.",
+    prosAndCons:
+      "Pros: objectively derived levels (VAL/POC/VAH come from volume, not hand-drawn), tight mechanical invalidation (acceptance beyond the Value Area kills the thesis), works across timeframes, high win-rate in stable ranges, naturally defines a target (POC) and a stretch target (opposite edge). Cons: fails badly in trends (price stays pinned at one extreme), POC can migrate mid-session as new volume stacks at a different price, requires diligent regime filtering, the 70% Value Area threshold is somewhat arbitrary.",
+    indicatorsUsed: ["Volume Profile (POC, VAH, VAL)", "ADX (regime filter)", "RSI (confirmation at extremes)", "Reversal candle patterns"],
+    coreIdea:
+      "Price rotates around the prices where the most volume traded. Fade the edges of the Value Area when momentum fails, target POC.",
+    steps: [
+      {
+        title: "Step 1: Confirm rotational regime",
+        body:
+          "Check: ADX < 20, Bollinger Bands relatively flat, current Volume Profile has a single well-defined POC (clearly higher-volume than neighbouring bins). If the profile is bimodal or ADX is rising, the instrument is in transition — skip.",
+      },
+      {
+        title: "Step 2: Mark VAL, POC, VAH",
+        body:
+          "The Volume Profile indicator renders all three. Note the exact prices. These are your trigger and target levels for the session (or the swing window). Recompute if you roll to a new period.",
+      },
+      {
+        title: "Step 3: Wait for the edge tag + reversal",
+        body:
+          "Long setup: price tags VAL, prints a rejection candle (hammer, bullish engulfing) and RSI < 35. Short setup: mirror at VAH with RSI > 65. Don't chase — require BOTH the tag AND a confirmation candle on your execution timeframe.",
+      },
+      {
+        title: "Step 4: Enter with tight stop beyond the edge",
+        body:
+          "Long: entry at reversal candle close, stop below VAL minus a small ATR buffer. Short: mirror above VAH. Invalidation is mechanical: if price accepts outside the Value Area (closes beyond with follow-through), rotation is over — exit immediately.",
+      },
+      {
+        title: "Step 5: Primary target — POC",
+        body:
+          "Scale out 50–75% at POC. This is the bread-and-butter exit; the full move to the opposite edge only plays out ~30% of the time. Move the stop to breakeven on the remainder once POC is reached.",
+      },
+      {
+        title: "Step 6: Runner — opposite edge, or exit on POC flip",
+        body:
+          "Leave a runner toward VAH (long) or VAL (short). If POC flips from support to resistance mid-trade (price fails to reclaim it from below, or holds above it from above — opposite of what the thesis requires), rotation is breaking. Close the runner regardless of P/L.",
+      },
+    ],
+    whyItWorks:
+      "The Value Area represents ~70% of traded volume — by construction, it's where participants are comfortable transacting. POC is the session's centre of gravity because that's where the most positions were opened and need to be defended. Market makers and inventory-balancing algorithms actively push price back toward POC when it strays, producing the rotational behaviour the strategy exploits. The edge collapses the moment a genuine catalyst arrives and price *accepts* outside the prior Value Area — that's by definition a regime change, and rotation traders must exit immediately.",
+    links: [
+      { title: "Investopedia — Volume Profile / VWAP", url: "https://www.investopedia.com/terms/v/volume-weighted-average-price-vwap.asp" },
+      { title: "CME Group — Market Profile basics", url: "https://www.cmegroup.com/education/courses/introduction-to-market-profile.html" },
+      { title: "TradingView — Volume Profile help", url: "https://www.tradingview.com/support/solutions/43000502040-volume-profile/" },
+    ],
+  },
+
+  orderBlockRetest: {
+    label: "Order Block Retest (SMC)",
+    summary: "Trade pullbacks into unmitigated order blocks in the direction of the higher-timeframe trend. Tight stops, excellent R:R when filtered by HTF bias.",
+    description:
+      "An Order Block is the last opposite-colour candle before a strong impulse — a footprint of where institutions likely accumulated (bullish OB) or distributed (bearish OB) before driving the market. In a Smart Money Concepts (SMC) framework, unmitigated order blocks in the direction of the higher-timeframe trend are high-probability retest zones: price returns to the block, reacts, and continues in the trend direction. The strategy enters on the first clean retest with a reversal trigger (ideally a liquidity sweep or FVG inside the block), stops just beyond the block's far side, and targets the prior swing. Works best on liquid instruments with clear HTF structure.",
+    whenToUse:
+      "Use on liquid instruments showing clear trending structure on the higher timeframe (D1 for H1 entries, W1 for D1 entries). Suitable for both swing and intraday. Avoid in chop — too many impulses that reverse create noisy 'blocks' with no follow-through. Skip blocks that have already been touched (mitigated): the edge is largely spent. Most powerful when the retest happens at a higher-timeframe S/R, Pivot level, or Value Area edge.",
+    prosAndCons:
+      "Pros: very tight stops (immediately beyond the block's opposite side), objective rules, naturally aligned with HTF trend, dramatically enhanced by stacking with liquidity sweeps and FVGs. Cons: requires patience — many high-quality blocks never get retested; forcing low-quality entries ruins the edge. Very timeframe-sensitive — blocks on short timeframes are noisy. Demands higher-timeframe bias discipline; fighting the HTF trend destroys the edge.",
+    indicatorsUsed: ["Order Blocks", "HTF trend filter (50/200 EMA)", "Liquidity Sweeps", "Fair Value Gaps", "ATR (stop sizing)"],
+    coreIdea:
+      "Institutions can't fill their full size in one move. They leave a footprint (the order block), push price away, then return to fill remaining orders. Enter on that return in the direction of the HTF trend.",
+    steps: [
+      {
+        title: "Step 1: Set the higher-timeframe bias",
+        body:
+          "Long only above the 50 EMA on the higher timeframe (D1 for H1 entries, W1 for D1 entries); short only below. Fighting the HTF bias destroys the strategy's edge — this filter is non-negotiable.",
+      },
+      {
+        title: "Step 2: Mark unmitigated blocks in bias direction",
+        body:
+          "The Order Block indicator flags unmitigated zones. Prefer blocks that also coincide with a prior S/R cluster, a Pivot level, or the Value Area edge. Skip any block that has already been touched — it's spent.",
+      },
+      {
+        title: "Step 3: Wait for the retest (don't anticipate)",
+        body:
+          "Price must actually return to the block's range. Set an alert at the block's edge and wait. Many high-quality blocks never retest — accept that and move on. Do not enter in anticipation of a retest.",
+      },
+      {
+        title: "Step 4: Require a confirmation trigger inside the block",
+        body:
+          "Block alone = watch. Block + trigger = setup. Preferred triggers: a liquidity sweep of a local low (for bullish OB) into the block, a Fair Value Gap that forms inside the block, or a clean bullish engulfing / hammer on the execution timeframe. Any one is enough; two stacked is ideal.",
+      },
+      {
+        title: "Step 5: Enter with stop beyond the block",
+        body:
+          "Long: entry at the reversal candle close, stop below the block's low minus a small ATR buffer. Short: mirror above the block's high. If price closes through the block, the institutional position is already filled — exit without hesitation.",
+      },
+      {
+        title: "Step 6: Target prior swing; scale and trail",
+        body:
+          "Primary target: the prior swing high (or low). Scale out 50% there, move stop to breakeven, let the runner target the next HTF level (S/R, Pivot, Value Area edge). Exit before any known catalyst (earnings, FOMC) regardless of P/L — order blocks provide no edge across fundamental shocks.",
+      },
+    ],
+    whyItWorks:
+      "Large participants accumulate positions over multiple fills at a price zone, then push price away in an impulse — the move that creates the block. To complete unfilled size, they often need price to return to the same zone, producing the characteristic retest. The block is the structural footprint of that process. Combined with HTF bias, pending institutional orders stack at the retest level — yielding the sharp reaction the strategy enters. Without HTF bias, the statistical edge disappears because blocks form in ranges too, where follow-through is random.",
+    links: [
+      { title: "Babypips — Order Blocks explained", url: "https://www.babypips.com/learn/forex/what-is-an-order-block" },
+      { title: "Investopedia — Supply and Demand Zones", url: "https://www.investopedia.com/articles/forex/101215/forex-trading-primer-supply-and-demand.asp" },
+    ],
+  },
+
+  pivotPointReaction: {
+    label: "Pivot Point Reaction (Floor Trader Pivots)",
+    summary: "Use PP as the period's bias line. Fade reactions at R1/S1 in range regimes; treat R2/S2 and R3/S3 as extension targets on trend days.",
+    description:
+      "Pivot Points compute the next period's key levels from the prior period's H/L/C: PP (bias line), R1/S1, R2/S2, R3/S3 (or the Fibonacci / Camarilla variants). Floor traders used them before electronic markets; institutional algorithms still reference them today. The strategy uses PP as the session/week bias filter — long bias above PP, short below — then fades reactions at R1/S1 when momentum stalls and runs with breakouts toward R2/S2/R3/S3 when momentum holds. Simple, mechanical, and particularly effective on index futures, major FX pairs, and liquid large-cap stocks during normal volatility.",
+    whenToUse:
+      "Use on deeply liquid instruments with consistent participation — index futures (ES/NQ), major FX, liquid large caps. Weekly pivots for daily charts, monthly for weekly. Best in normal-volatility regimes; in extreme vol (VIX > 30 or post-catalyst) pivots get overrun and the strategy whipsaws. Camarilla's tighter levels suit intraday mean-reversion; classic pivots suit swing bias; Fibonacci pivots sit in between.",
+    prosAndCons:
+      "Pros: fully pre-computed (no judgment in placing levels), mechanical entries and targets, recognised by institutions so flow actually clusters at the levels, naturally defines stops (next level beyond), works across asset classes. Cons: less useful on illiquid instruments, regularly overrun on strong catalyst days, pure classical pivots have no built-in regime filter (must be overlaid with ADX or a trend filter), arbitrary formula choice (classic vs Fib vs Camarilla) can curve-fit if chopped and changed.",
+    indicatorsUsed: ["Pivot Points (classic / Fibonacci / Camarilla)", "ADX (regime filter)", "Volume (confirmation)", "Reversal candles"],
+    coreIdea:
+      "Pre-computed price levels anchor institutional flow for the period. PP is the bias line; R1/S1 are first-reaction zones; R2/S2/R3/S3 are extension targets.",
+    steps: [
+      {
+        title: "Step 1: Plot pivots for the right period",
+        body:
+          "Weekly pivots for daily trading, monthly for weekly swing. Pick the method once and stick with it — classic for a balanced approach, Fibonacci for smoother levels, Camarilla for tight intraday mean-reversion. Switching methods to match the last trade is curve-fitting.",
+      },
+      {
+        title: "Step 2: Set the period bias from PP",
+        body:
+          "Open above PP = bullish bias for the period. Open below PP = bearish bias. Take setups aligned with the bias only — taking counter-bias trades immediately slashes the win rate.",
+      },
+      {
+        title: "Step 3: Fade at R1/S1 with confluence",
+        body:
+          "In bullish bias, the first meaningful pullback often reaches PP or S1. Long on a reversal candle there, ideally stacked with oversold RSI, an unmitigated Order Block, or a prior S/R cluster. Mirror at R1 in bearish bias. Skip if ADX is rising sharply — that signals trend, not rotation.",
+      },
+      {
+        title: "Step 4: Place stop at the next level",
+        body:
+          "Long from S1: stop below S2 (plus ATR buffer). Short from R1: stop above R2. This keeps invalidation mechanical: if the next level is taken, the thesis is wrong. Do not widen the stop because the trade is 'close'.",
+      },
+      {
+        title: "Step 5: Target PP → R1 (or S1) → R2",
+        body:
+          "Scale out at each level. On range days, expect reaction at PP and take profit there. On trend days, R2/R3 (or S2/S3) become the objective targets — let the runner ride with a stop trailed behind the most recent swing.",
+      },
+      {
+        title: "Step 6: Flip bias on decisive PP break",
+        body:
+          "A clean close through PP (opposite of the initial bias, on volume) is the bias-flip signal. Avoid counter-bias trades after a fresh break — the levels now work in reverse. Wait for the next period's pivot recomputation rather than forcing a trade against the new bias.",
+      },
+    ],
+    whyItWorks:
+      "Pivots encode the prior period's range into an objective, widely-published grid. Because the same levels are watched by desks, algos, and retail alike, real order flow clusters at them: stops placed just beyond, limit orders at them, algorithms fading approaches. The self-fulfilling component is strong. Combined with PP as a directional bias filter, the strategy captures the rotational flow of a normal trading period and steps aside on trending breakouts by flipping bias when PP gives way.",
+    links: [
+      { title: "Investopedia — Pivot Points", url: "https://www.investopedia.com/terms/p/pivotpoint.asp" },
+      { title: "StockCharts — Pivot Points", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/pivot-points" },
+    ],
+  },
+
+  liqSweepReversal: {
+    label: "Liquidity Sweep Reversal (Stop-Hunt Fade)",
+    summary: "Fade the fake-out — when price pierces a clear swing high/low and closes back inside, enter against the breakout with a tight stop just beyond the sweep wick.",
+    description:
+      "A liquidity sweep occurs when price briefly exceeds a prior swing high or low — triggering resting stop orders and any limit orders placed just beyond — then reverses back inside the range. The pattern is the footprint of institutional participants running obvious stops to generate the liquidity they need before entering in the opposite direction. The strategy waits for the sweep, requires a rejection close back inside the range, then enters against the breakout direction with a stop just beyond the sweep wick. Very effective at well-watched levels (prior-day highs/lows, session highs, round numbers, Value Area edges) and in low-ADX regimes.",
+    whenToUse:
+      "Use on liquid instruments around well-defined liquidity pools — prior swing highs/lows, prior-day/week extremes, round-number psychological levels, Value Area edges. Works across timeframes, but the higher the timeframe the more reliable. Avoid on strong trend days, immediately after major catalysts, or when ADX is rising — in those regimes, 'sweeps' are often genuine continuations, not reversals. Most powerful when the sweep lands into an order block or bullish/bearish FVG.",
+    prosAndCons:
+      "Pros: extremely tight stops (immediately beyond the wick) produce outstanding risk/reward, objective entry trigger (reversal close back inside), aligns with institutional flow, stacks cleanly with order blocks and FVGs for confluence. Cons: in strong trends, obvious-level 'sweeps' are frequently continuations — fighting them produces losses; requires disciplined regime awareness (ADX / HTF trend) to skip those. Low-volume sweeps are noisier and can be engineered by market makers on illiquid names.",
+    indicatorsUsed: ["Liquidity Sweeps", "HTF trend filter / ADX", "Order Blocks", "Fair Value Gaps", "Volume"],
+    coreIdea:
+      "Liquidity sits where obvious stops live — just beyond prior highs/lows. A sweep that fails to hold means someone big just ran those stops and went the other way.",
+    steps: [
+      {
+        title: "Step 1: Identify a clear liquidity pool",
+        body:
+          "Prior swing high/low with multiple touches, prior-day high/low, round number, Value Area High/Low, or the equal highs/lows of a recent range. The more obvious the level, the more stops are parked beyond it. Skip noisy, mid-range levels.",
+      },
+      {
+        title: "Step 2: Wait for the sweep bar",
+        body:
+          "Price must exceed the level intraday (wick through, trigger the stops). The Liquidity Sweep indicator flags the bar. A bar that closes beyond the level is a breakout, not a sweep — stand down.",
+      },
+      {
+        title: "Step 3: Require a reversal close back inside",
+        body:
+          "The sweep bar (or the next bar on your entry timeframe) must close back inside the prior range, rejecting the excursion. Wait for the candle to finish — front-running the close turns a sweep trade into a directional gamble.",
+      },
+      {
+        title: "Step 4: Confirm with regime + confluence",
+        body:
+          "Best-quality sweeps happen in low-ADX regimes (ADX < 25) and land into an unmitigated Order Block, a Fair Value Gap, or a prior S/R cluster. Sweeps in high-ADX trends are usually continuation, not reversal — skip. Volume above recent average on the reversal bar strengthens the read.",
+      },
+      {
+        title: "Step 5: Enter and set a tight stop beyond the wick",
+        body:
+          "Long (after a low sweep): entry at the reversal candle close, stop below the sweep wick minus a small ATR buffer. Short (after a high sweep): mirror. The wick-tight stop is the strategy's edge — do not widen it.",
+      },
+      {
+        title: "Step 6: Target midpoint → opposite side",
+        body:
+          "First target: 50% back into the prior range. Move stop to breakeven at T1. Runner target: opposite structural level (the other side of the range, or a Pivot / S/R cluster). If momentum stalls mid-move, exit the runner — the sweep edge is front-loaded, not terminal.",
+      },
+    ],
+    whyItWorks:
+      "Obvious levels attract obvious stops. Larger participants who need to fill size push price through those levels to trigger the stops, absorb the resulting flow, and reverse. The rejection wick is the footprint of that absorption. The strategy essentially sides with the institutions who engineered the stop run — against the retail breakout traders who got stopped out. The edge depends on the level being a genuine liquidity pool in a rotational regime; in a trending regime the same sweep is continuation, which is why HTF trend and ADX filters are critical.",
+    links: [
+      { title: "Babypips — Liquidity Grabs / Stop Hunts", url: "https://www.babypips.com/learn/forex/what-is-liquidity" },
+      { title: "Investopedia — Stop Hunting", url: "https://www.investopedia.com/terms/s/stop-hunting.asp" },
+    ],
+  },
+
+  donchianTurtleBreakout: {
+    label: "Donchian Turtle Breakout",
+    summary: "Original 1980s Turtle-trader system — enter on a 20- or 55-day Donchian high, exit on a 10- or 20-day low. Fully mechanical trend-following with ATR-based sizing.",
+    description:
+      "The Turtle system was taught by Richard Dennis to a group of novice traders in 1983 to settle a bet with partner William Eckhardt that trading could be taught. The rules are brutally simple: enter long when price closes above the 20-day Donchian high (System 1) or 55-day high (System 2), exit long when price closes below the 10-day low (System 1) or 20-day low (System 2). Shorts mirror. Position sizing is built into the system — one 'unit' equals 1% of account divided by N, where N is the 20-day ATR. You can pyramid up to 4 units, adding every 0.5N of favourable movement. The edge is pure fat-tail capture: a low win rate (~30–35%) paired with rare but very large winners that pay for many small losses.",
+    whenToUse:
+      "Use on a diversified basket of 10–20 uncorrelated liquid markets — futures, FX, crypto, equity indices, commodities. Single-instrument Turtle is far more volatile and often loses its edge. Works best across long time horizons (years) where the fat-tail multi-month trends have time to materialise. Poor fit for anyone who cannot emotionally tolerate long drawdown stretches; excellent fit for systematic, rules-based traders who can let the system run untouched.",
+    prosAndCons:
+      "Pros: fully mechanical with no discretion, decades of real-money backtested track record, captures fat-tail trends that virtually every other strategy misses, position sizing baked into the rules, identical logic for longs and shorts. Cons: low win rate (30–35%) is psychologically brutal for most traders, requires basket diversification to work — single-instrument Turtle whipsaws hard, drawdowns of 20–40% between trends are normal, historically less effective on equity indices than on commodities/FX/crypto, capital requirement is meaningful because N-unit sizing assumes enough account size to hold 4 units across 10+ markets.",
+    indicatorsUsed: ["Donchian Channels (20/55/10 period)", "ATR (N-unit position sizing)", "Basket correlation matrix"],
+    coreIdea:
+      "Markets spend ~80% of time in noise and ~20% in sustained trends that account for most of the long-term P&L. Accept many small losses in the noise so that when a trend arrives you are positioned early, scaled correctly, and held all the way through.",
+    steps: [
+      {
+        title: "Step 1: Build a diversified basket",
+        body:
+          "Pick 10–20 uncorrelated liquid instruments — e.g. several equity indices, FX majors, treasuries, energy, metals, grains, a couple of crypto. Correlation is the destroyer of Turtle performance: two correlated positions = one position sized at 2x. Recompute correlations quarterly and prune.",
+      },
+      {
+        title: "Step 2: Compute N (20-day ATR) for each instrument",
+        body:
+          "N is the volatility unit that sizes every trade. 1 unit = (1% of account) / (N × contract size). This scales each position to the same dollar volatility regardless of the instrument. If N doubles, your unit count halves — that's the key to surviving vol expansion.",
+      },
+      {
+        title: "Step 3: Entry — Donchian high/low breakout",
+        body:
+          "System 1 (faster): enter long on a close above the 20-day Donchian high, short on a close below the 20-day Donchian low. System 2 (slower): use 55-day channels. Many traders run a blend: System 1 by default, but skip a System 1 signal if the last System 1 trade was a winner (to avoid chasing choppy breakouts after strong trends exhaust).",
+      },
+      {
+        title: "Step 4: Hard stop at 2N and pyramid every 0.5N",
+        body:
+          "Initial stop: 2N below entry (for longs). Add a unit every 0.5N of favourable move, up to 4 total units. Each added unit moves the stop up to 2N below the latest entry. This pyramids risk into winners while capping total exposure.",
+      },
+      {
+        title: "Step 5: Exit — Donchian low (or high for shorts)",
+        body:
+          "System 1 exit: close longs on a close below the 10-day Donchian low, cover shorts on a close above the 10-day high. System 2 exit: 20-day channels. The exit is non-negotiable — no holding, no prayer candles. Mechanical exit is what makes the fat-tail math work.",
+      },
+      {
+        title: "Step 6: Run the system unchanged and track drawdowns honestly",
+        body:
+          "The hardest part of Turtle is doing nothing between trends. Most of the time, small losses accumulate while you wait for the 1–2 fat-tail moves per year per instrument that pay for everything. Tracking drawdowns in a separate journal — and knowing they're normal — is the psychological equipment you need to not bail during a normal 20% equity dip.",
+      },
+    ],
+    whyItWorks:
+      "Asset-price returns are leptokurtic: they have fat tails. A small number of very large moves account for most of the long-term return, while the rest is noise. Donchian breakouts structurally position the system to be long when an instrument starts making new highs and short when it makes new lows — exactly when fat-tail moves start. ATR-based sizing equalises risk across markets, so a quiet bond future and a volatile crypto both contribute the same dollar volatility. Diversification across uncorrelated markets means the system always has multiple 'tries' for the next fat tail — you don't know which instrument will go, but something usually does. The low win rate is a feature, not a bug: it's the price paid for capturing the rare outliers that matter.",
+    links: [
+      { title: "Investopedia — Turtle Trading", url: "https://www.investopedia.com/articles/trading/08/turtle-trading.asp" },
+      { title: "Investopedia — Donchian Channels", url: "https://www.investopedia.com/terms/d/donchianchannels.asp" },
+      { title: "Book — Curtis Faith, Way of the Turtle", url: "https://www.amazon.com/Way-Turtle-Secret-Methods-Legendary/dp/007148664X" },
+      { title: "Original Turtle rules (PDF, archived)", url: "https://web.archive.org/web/20210304144604/https://bigpicture.typepad.com/comments/files/turtlerules.pdf" },
     ],
   },
 };
@@ -1691,7 +1959,7 @@ const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
       "Utilisez le repli sur tendance quand l'instrument est clairement en tendance (ADX > 20 est un bon test de cohérence), l'action des prix est liquide (pas de microcaps illiquides), et que vous pouvez attendre patiemment le setup. Convient mieux aux trades swing (jours à semaines) avec EMA 20/50 sur bougies journalières, ou intraday avec VWAP comme ancrage. Sautez-la sur les marchés oscillants en range — la stratégie va fouetter et faire mal.",
     prosAndCons:
       "Avantages : setups à haute probabilité car vous exigez trois confirmations indépendantes (tendance, repli, retournement), placement de stop-loss bien défini (sous le creux), s'associe à des règles claires de risque/rendement, fonctionne sur plusieurs horizons. Inconvénients : vous manquez les mouvements les plus forts (ceux qui ne se replient jamais), beaucoup de setups qui « presque » se déclenchent mais ne le font pas, exige patience et discipline, échoue en régime oscillant, et la version intraday demande un temps d'écran actif.",
-    indicatorsUsed: ["EMA 20 (tendance court terme)", "EMA 50 (filtre de tendance)", "RSI (14) (timing/momentum)", "VWAP (ancrage intraday)"],
+    indicatorsUsed: ["EMA 20 (tendance court terme)", "EMA 50 (filtre de tendance)", "RSI (14) (timing/momentum)", "VWAP (ancrage intraday)", "Canaux de Keltner (support dynamique basé sur l'ATR au pullback)", "Aroon ou Vortex (confirmation de la force de tendance)", "Trend Intensity Index (filtre de régime — on évite les trades quand le TII est faible)"],
     coreIdea:
       "Vous ne courez pas après le prix. Vous attendez une tendance claire, puis un repli, puis une confirmation pour rejoindre la tendance.",
     steps: [
@@ -1745,7 +2013,7 @@ const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
       "Utilisez les cassures sur des instruments liquides avec une structure de range claire — consolidation après une tendance, ranges serrés après une nouvelle digérée, figures techniques (triangles, drapeaux, tasses avec anse). Fonctionne mieux quand la volatilité implicite est basse (le range est sous tension) et qu'un catalyseur est attendu. Évitez les cassures sur des titres peu liquides où le mouvement peut être manipulé.",
     prosAndCons:
       "Avantages : capte le début de grands mouvements directionnels, règles claires, stop naturel (sous le niveau cassé), fonctionne sur toutes les échelles de temps. Inconvénients : les fausses cassures sont extrêmement fréquentes (surtout intraday), whipsaws dans les marchés à faible conviction, demande de la patience, risque/rendement mauvais si vous chassez loin du niveau.",
-    indicatorsUsed: ["Support/résistance horizontale", "Volume (confirmation)", "ATR (taille du stop)", "RSI ou MACD (filtre de momentum facultatif)"],
+    indicatorsUsed: ["Support/résistance horizontale", "Canaux de Donchian (plus haut/plus bas sur N barres comme range)", "Volume (confirmation)", "Oscillateur de Volume, ligne A/D, CMF (qualité de la participation)", "Chaikin Volatility (contraction du range avant la cassure)", "ATR (taille du stop)", "RSI ou MACD (filtre de momentum facultatif)"],
     coreIdea:
       "Un prix qui casse un range serré avec un volume fort signale qu'un côté a gagné. Tradez dans le sens de la cassure, pas contre elle.",
     steps: [
@@ -1797,7 +2065,7 @@ const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
       "Utilisez le retour à la moyenne sur des instruments en régime de range clair — pas de tendance directionnelle forte, ADX stable sous 20, supports/résistances bien définis. Fonctionne mieux sur les indices, les grandes capitalisations et les paires FX majeures en période de faible volatilité. Évitez-le pendant la saison des résultats pour les titres individuels et sur tout ce qui a un catalyseur directionnel fort.",
     prosAndCons:
       "Avantages : taux de réussite élevé (souvent 60–70 %), entrées et sorties bien définies, règles simples, excellent dans les marchés oscillants où les cassures échouent. Inconvénients : le gain moyen est plus petit que la perte moyenne (un grand mouvement de tendance peut effacer beaucoup de petits gains), dangereux en tendance (« la survente devient plus survendue »), exige une lecture de régime.",
-    indicatorsUsed: ["RSI (14)", "Bandes de Bollinger (20, 2σ)", "ADX (filtre de régime)", "Moyenne mobile 20"],
+    indicatorsUsed: ["RSI (14)", "Bandes de Bollinger (20, 2σ)", "Bollinger %B (normalisé)", "Z-Score du prix (|Z| > 2)", "Canaux de Keltner (alternative basée sur l'ATR)", "ADX (filtre de régime)", "Exposant de Hurst (H < 0,5 = régime de retour à la moyenne)", "Moyenne mobile 20"],
     coreIdea:
       "Les mouvements extrêmes s'épuisent. Acheter la peur, vendre la cupidité — mais seulement quand le marché oscille, jamais en tendance forte.",
     steps: [
@@ -1850,7 +2118,7 @@ const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
       "Utilisez les croisements sur des instruments en tendance (indices, ETF sectoriels, leaders de momentum) pour du swing ou du position trading. Fonctionnent mieux en hebdomadaire ou journalier où le retard importe moins. Pattern très courant : utiliser le croisement 50/200 EMA comme filtre de régime (ne trader les longs qu'au-dessus du golden cross) et combiner avec un déclencheur plus rapide comme un repli ou une cassure.",
     prosAndCons:
       "Avantages : règles extrêmement simples, entièrement systématique (facile à automatiser et backtester), objectif, excellent comme filtre de tendance. Inconvénients : signaux en retard par construction, très mauvais en marché latéral (nombreux whipsaws), rend de gros morceaux sur les retournements, ne dit rien sur la taille de risque ou les cibles.",
-    indicatorsUsed: ["EMA courte (p. ex. 20 ou 50)", "EMA longue (p. ex. 100 ou 200)"],
+    indicatorsUsed: ["EMA courte (p. ex. 20 ou 50)", "EMA longue (p. ex. 100 ou 200)", "Aroon (croisement Up/Down comme confirmation)", "Vortex (croisement +VI / −VI)", "Trend Intensity Index (filtre de régime)"],
     coreIdea:
       "Quand une moyenne rapide monte au-dessus d'une lente, le momentum court terme bat la moyenne long terme — un changement de tendance. Trader avec la pente.",
     steps: [
@@ -2047,6 +2315,269 @@ const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
     links: [
       { title: "Investopedia — VWAP (anglais)", url: "https://www.investopedia.com/terms/v/vwap.asp" },
       { title: "Investopedia — Trading avec VWAP (anglais)", url: "https://www.investopedia.com/articles/trading/11/trading-with-vwap-mvwap.asp" },
+    ],
+  },
+
+  volumeProfileRotation: {
+    label: "Rotation Volume Profile (VAL / POC / VAH)",
+    summary: "Trader à l'intérieur de la Value Area — acheter les replis sur le VAL, fader les poussées sur le VAH, cibler le POC. Exploite la rotation autour des prix les plus acceptés.",
+    description:
+      "Le Volume Profile découpe le marché en zones d'acceptation (Value Area) et de rejet (Low-Volume Nodes). En régime rotationnel, le prix oscille entre le Value Area Low (VAL) et le Value Area High (VAH), revenant sans cesse vers le Point of Control (POC) — le bin au volume traité le plus élevé. La stratégie achète les replis sur le VAL avec retournement, prend profit au POC et allège au VAH ; le short miroire. Plus efficace en marché clairement en range (ADX < 20) avec un profil à POC unique et bien formé (distribution normale). Sur un profil bimodal ou une journée de tendance, à éviter — c'est un changement structurel, pas une rotation.",
+    whenToUse:
+      "À utiliser sur des instruments liquides en régime rotationnel — futures d'indices, grandes capitalisations, paires Forex majeures — quand l'ADX est bas et que le profil courant présente un POC unique clairement identifié. Fonctionne sur profils de séance (intraday) et profils multi-jours / semaines (swing). À éviter les jours à fort catalyseur, les fenêtres de résultats, ou si le profil est bimodal (deux POC concurrents) — l'edge s'effondre dès que la rotation cesse.",
+    prosAndCons:
+      "Avantages : niveaux dérivés objectivement (VAL/POC/VAH viennent du volume, pas d'un tracé manuel), invalidation mécanique serrée (acceptation au-delà de la Value Area tue la thèse), fonctionne sur tous les horizons, taux de réussite élevé dans les ranges stables, cibles naturelles (POC puis bord opposé). Inconvénients : échoue sévèrement en tendance (le prix reste collé à un extrême), le POC peut migrer en séance, exige un filtrage de régime rigoureux, le seuil de 70 % de la Value Area est arbitraire.",
+    indicatorsUsed: ["Volume Profile (POC, VAH, VAL)", "ADX (filtre de régime)", "RSI (confirmation aux extrêmes)", "Bougies de retournement"],
+    coreIdea:
+      "Le prix tourne autour des niveaux où le plus de volume s'est échangé. Fader les bords de la Value Area quand le momentum échoue, cibler le POC.",
+    steps: [
+      {
+        title: "Étape 1 : confirmer un régime rotationnel",
+        body:
+          "Vérifier : ADX < 20, bandes de Bollinger relativement plates, profil courant à POC unique bien défini (volume clairement supérieur aux bins voisins). Si le profil est bimodal ou si l'ADX monte, l'instrument est en transition — passer.",
+      },
+      {
+        title: "Étape 2 : marquer VAL, POC, VAH",
+        body:
+          "L'indicateur Volume Profile les trace. Notez les prix exacts — ce sont vos niveaux de déclenchement et de cible pour la séance (ou la fenêtre de swing). Recalculez au passage de période.",
+      },
+      {
+        title: "Étape 3 : attendre le tag du bord + retournement",
+        body:
+          "Setup long : le prix tague le VAL, imprime une bougie de rejet (marteau, englobante haussière) et RSI < 35. Setup short : miroir au VAH avec RSI > 65. Ne pas courir après — exigez BOTH le tag ET la bougie de confirmation sur votre timeframe d'exécution.",
+      },
+      {
+        title: "Étape 4 : entrée avec stop serré au-delà du bord",
+        body:
+          "Long : entrée à la clôture de la bougie, stop sous le VAL moins un petit buffer ATR. Short : miroir au-dessus du VAH. Invalidation mécanique : si le prix accepte hors de la Value Area (clôture au-delà avec suivi), la rotation est terminée — sortir immédiatement.",
+      },
+      {
+        title: "Étape 5 : cible principale — POC",
+        body:
+          "Allégez 50–75 % au POC. C'est la sortie du pain-quotidien ; le mouvement complet vers le bord opposé ne se produit qu'environ 30 % du temps. Remonter le stop au break-even sur le reste dès l'atteinte du POC.",
+      },
+      {
+        title: "Étape 6 : runner — bord opposé, ou sortie sur bascule du POC",
+        body:
+          "Laissez un runner vers le VAH (long) ou le VAL (short). Si le POC bascule de support à résistance en séance (le prix échoue à le reconquérir par le bas, ou tient au-dessus par le haut — inverse de la thèse), la rotation casse. Fermez le runner quel que soit le P/L.",
+      },
+    ],
+    whyItWorks:
+      "La Value Area représente ~70 % du volume traité — par construction, c'est là où les participants sont à l'aise pour transiger. Le POC est le centre de gravité de la séance parce que c'est là que le plus de positions ont été ouvertes et doivent être défendues. Les teneurs de marché et les algos de rééquilibrage d'inventaire poussent activement le prix vers le POC quand il s'en éloigne, produisant la rotation que la stratégie exploite. L'edge s'effondre dès qu'un vrai catalyseur arrive et que le prix *accepte* hors de la Value Area précédente — c'est par définition un changement de régime, et le trader de rotation doit sortir immédiatement.",
+    links: [
+      { title: "Investopedia — Volume Profile / VWAP (anglais)", url: "https://www.investopedia.com/terms/v/volume-weighted-average-price-vwap.asp" },
+      { title: "CME Group — Market Profile (anglais)", url: "https://www.cmegroup.com/education/courses/introduction-to-market-profile.html" },
+      { title: "TradingView — Volume Profile (anglais)", url: "https://www.tradingview.com/support/solutions/43000502040-volume-profile/" },
+    ],
+  },
+
+  orderBlockRetest: {
+    label: "Retest d'Order Block (SMC)",
+    summary: "Trader les replis dans des order blocks non mitigés dans le sens de la tendance en timeframe supérieure. Stops serrés, excellent R:R si filtré par le biais HTF.",
+    description:
+      "Un Order Block est la dernière bougie de couleur opposée précédant une forte impulsion — l'empreinte laissée par les institutions qui ont probablement accumulé (OB haussier) ou distribué (OB baissier) avant de pousser le marché. Dans le cadre Smart Money Concepts (SMC), les order blocks non mitigés dans le sens de la tendance de la timeframe supérieure sont des zones de retest à haute probabilité : le prix revient dans le bloc, réagit et reprend la direction de la tendance. La stratégie entre au premier retest propre avec un déclencheur de retournement (idéalement un sweep de liquidité ou un FVG à l'intérieur du bloc), stop juste au-delà du bord opposé du bloc, cible le swing précédent. Optimal sur instruments liquides avec structure HTF claire.",
+    whenToUse:
+      "À utiliser sur instruments liquides présentant une structure claire de tendance sur la timeframe supérieure (D1 pour entrées H1, W1 pour entrées D1). Convient pour swing et intraday. À éviter en chop : trop d'impulsions qui s'inversent créent des « blocs » bruyants sans suivi. Ignorer les blocs déjà touchés (mitigés) : l'edge est largement consommé. Plus puissant quand le retest coïncide avec un S/R de timeframe supérieure, un niveau de Pivot, ou un bord de Value Area.",
+    prosAndCons:
+      "Avantages : stops très serrés (immédiatement au-delà du bord opposé), règles objectives, naturellement aligné avec la tendance HTF, amplifié par l'empilement avec les liquidity sweeps et les FVG. Inconvénients : exige de la patience — beaucoup de blocs qualitatifs ne se font jamais retester ; forcer des entrées sur des blocs médiocres ruine l'edge. Très sensible au choix de timeframe — les blocs sur timeframes courtes sont bruyants. Discipline HTF non négociable ; aller contre la tendance HTF détruit l'edge.",
+    indicatorsUsed: ["Order Blocks", "Filtre de tendance HTF (EMA 50/200)", "Liquidity Sweeps", "Fair Value Gaps", "ATR (dimensionnement du stop)"],
+    coreIdea:
+      "Les institutions ne peuvent pas remplir toute leur taille d'un coup. Elles laissent une empreinte (l'order block), poussent le prix, puis reviennent remplir les ordres restants. Entrée à ce retour dans le sens de la tendance HTF.",
+    steps: [
+      {
+        title: "Étape 1 : fixer le biais de timeframe supérieure",
+        body:
+          "Long uniquement au-dessus de l'EMA 50 de la timeframe supérieure (D1 pour H1, W1 pour D1) ; short uniquement en dessous. Aller contre le biais HTF détruit l'edge — ce filtre est non négociable.",
+      },
+      {
+        title: "Étape 2 : marquer les blocs non mitigés dans le sens du biais",
+        body:
+          "L'indicateur Order Block signale les zones non mitigées. Privilégiez les blocs qui coïncident aussi avec un cluster S/R antérieur, un niveau de Pivot ou un bord de Value Area. Ignorez tout bloc déjà touché — il est consommé.",
+      },
+      {
+        title: "Étape 3 : attendre le retest (ne pas anticiper)",
+        body:
+          "Le prix doit réellement revenir dans la plage du bloc. Posez une alerte au bord du bloc et attendez. Beaucoup de blocs qualitatifs ne retestent jamais — acceptez-le et passez. Ne pas entrer en anticipation du retest.",
+      },
+      {
+        title: "Étape 4 : exiger un déclencheur de confirmation dans le bloc",
+        body:
+          "Bloc seul = veille. Bloc + déclencheur = setup. Déclencheurs préférés : un sweep de liquidité d'un creux local (pour OB haussier) dans le bloc, un Fair Value Gap formé à l'intérieur, ou une bougie englobante haussière / marteau propre sur la timeframe d'exécution. Un seul suffit ; deux empilés est idéal.",
+      },
+      {
+        title: "Étape 5 : entrée avec stop au-delà du bloc",
+        body:
+          "Long : entrée à la clôture de la bougie de retournement, stop sous le bas du bloc moins un petit buffer ATR. Short : miroir au-dessus du haut. Si le prix clôture à travers le bloc, la position institutionnelle est déjà remplie — sortir sans hésiter.",
+      },
+      {
+        title: "Étape 6 : cible = swing précédent ; allègement et trailing",
+        body:
+          "Cible principale : le plus haut (ou plus bas) de swing précédent. Allégez 50 % là, remontez le stop au break-even, laissez le runner viser le prochain niveau HTF (S/R, Pivot, bord de Value Area). Sortez avant tout catalyseur connu (résultats, FOMC) quel que soit le P/L — les order blocks n'offrent aucun edge face aux chocs fondamentaux.",
+      },
+    ],
+    whyItWorks:
+      "Les gros participants accumulent leurs positions en plusieurs exécutions sur une zone de prix, puis poussent le prix en impulsion — le mouvement qui crée le bloc. Pour compléter leur taille restante, ils ont souvent besoin que le prix revienne sur la même zone, produisant le retest caractéristique. Le bloc est l'empreinte structurelle de ce processus. Combiné au biais HTF, les ordres institutionnels en attente s'empilent au niveau de retest — d'où la réaction nette que la stratégie capture. Sans biais HTF, l'edge statistique disparaît car les blocs se forment aussi dans les ranges, où le suivi est aléatoire.",
+    links: [
+      { title: "Babypips — Order Blocks (anglais)", url: "https://www.babypips.com/learn/forex/what-is-an-order-block" },
+      { title: "Investopedia — Zones d'offre et de demande (anglais)", url: "https://www.investopedia.com/articles/forex/101215/forex-trading-primer-supply-and-demand.asp" },
+    ],
+  },
+
+  pivotPointReaction: {
+    label: "Réaction sur Pivot Points (pivots de floor trader)",
+    summary: "Utiliser le PP comme ligne de biais de la période. Fader les réactions sur R1/S1 en régime de range ; traiter R2/S2 et R3/S3 comme cibles d'extension les jours de tendance.",
+    description:
+      "Les Pivot Points calculent les niveaux clés de la prochaine période à partir des H/B/C précédents : PP (ligne de biais), R1/S1, R2/S2, R3/S3 (ou variantes Fibonacci / Camarilla). Les traders de floor les utilisaient avant l'électronique ; les algos institutionnels s'y réfèrent encore aujourd'hui. La stratégie utilise le PP comme filtre de biais (biais long au-dessus, short en dessous), puis fade les réactions sur R1/S1 quand le momentum s'essouffle, et suit les cassures vers R2/S2/R3/S3 quand le momentum tient. Simple, mécanique, particulièrement efficace sur futures d'indices, paires Forex majeures et grandes capitalisations liquides en volatilité normale.",
+    whenToUse:
+      "À utiliser sur instruments très liquides à participation constante — futures d'indices (ES/NQ), Forex majeur, grandes capitalisations liquides. Pivots hebdomadaires pour graphes journaliers, mensuels pour hebdomadaires. Meilleur en régime de volatilité normale ; en vol extrême (VIX > 30 ou post-catalyseur) les pivots sont débordés et la stratégie whipsaw. Camarilla (niveaux plus serrés) pour le mean-reversion intraday ; classique pour le biais de swing ; Fibonacci entre les deux.",
+    prosAndCons:
+      "Avantages : niveaux entièrement précalculés (pas de jugement), entrées et cibles mécaniques, reconnus par les institutions donc le flux s'y concentre vraiment, stops naturels (niveau suivant), marche sur toutes les classes d'actifs. Inconvénients : moins utile sur instruments peu liquides, régulièrement débordés les jours à catalyseur, les pivots classiques purs n'ont pas de filtre de régime intégré (il faut superposer ADX ou un filtre de tendance), le choix de formule (classique / Fib / Camarilla) peut mener au curve-fitting si on switche.",
+    indicatorsUsed: ["Pivot Points (classique / Fibonacci / Camarilla)", "ADX (filtre de régime)", "Volume (confirmation)", "Bougies de retournement"],
+    coreIdea:
+      "Des niveaux de prix précalculés ancrent le flux institutionnel pour la période. Le PP est la ligne de biais ; R1/S1 sont les zones de première réaction ; R2/S2/R3/S3 sont les cibles d'extension.",
+    steps: [
+      {
+        title: "Étape 1 : tracer les pivots sur la bonne période",
+        body:
+          "Pivots hebdomadaires pour le trading journalier, mensuels pour le swing hebdomadaire. Choisissez la méthode une fois et tenez-vous-y — classique pour une approche équilibrée, Fibonacci pour des niveaux plus fluides, Camarilla pour le mean-reversion intraday serré. Switcher pour coller au dernier trade = curve-fitting.",
+      },
+      {
+        title: "Étape 2 : fixer le biais de période à partir du PP",
+        body:
+          "Ouverture au-dessus du PP = biais haussier pour la période. Ouverture en dessous = biais baissier. Ne prenez que des setups alignés avec le biais — prendre des trades contre-biais écrase immédiatement le taux de réussite.",
+      },
+      {
+        title: "Étape 3 : fader sur R1/S1 avec confluence",
+        body:
+          "En biais haussier, le premier repli significatif atteint souvent PP ou S1. Long sur une bougie de retournement, idéalement empilé avec RSI survendu, un Order Block non mitigé, ou un cluster S/R antérieur. Miroir sur R1 en biais baissier. Passer si l'ADX monte fortement — ça signale tendance, pas rotation.",
+      },
+      {
+        title: "Étape 4 : placer le stop au niveau suivant",
+        body:
+          "Long depuis S1 : stop sous S2 (plus buffer ATR). Short depuis R1 : stop au-dessus de R2. Cela garde l'invalidation mécanique : si le niveau suivant est pris, la thèse est fausse. Ne pas élargir le stop parce que le trade est « proche ».",
+      },
+      {
+        title: "Étape 5 : cible PP → R1 (ou S1) → R2",
+        body:
+          "Allégez à chaque niveau. En journée de range, attendez-vous à réaction au PP et prenez profit. En journée de tendance, R2/R3 (ou S2/S3) deviennent les cibles objectives — laissez le runner courir avec un stop suiveur sous le dernier swing.",
+      },
+      {
+        title: "Étape 6 : basculer le biais sur cassure nette du PP",
+        body:
+          "Une clôture propre à travers le PP (à l'opposé du biais initial, sur volume) est le signal de bascule de biais. Évitez les trades contre-biais après une cassure fraîche — les niveaux fonctionnent désormais à l'envers. Attendez le recalcul du pivot de la prochaine période plutôt que de forcer un trade contre le nouveau biais.",
+      },
+    ],
+    whyItWorks:
+      "Les pivots encodent la plage de la période précédente en une grille objective et largement publiée. Parce que les mêmes niveaux sont surveillés par les desks, les algos et le retail, un flux d'ordres réel s'y concentre : stops juste au-delà, ordres limit sur les niveaux, algorithmes qui fadent les approches. Le composant auto-réalisateur est fort. Combinée au PP comme filtre de biais directionnel, la stratégie capture la rotation d'une période de trading normale et s'écarte des cassures en tendance en basculant le biais quand le PP cède.",
+    links: [
+      { title: "Investopedia — Pivot Points (anglais)", url: "https://www.investopedia.com/terms/p/pivotpoint.asp" },
+      { title: "StockCharts — Pivot Points (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/pivot-points" },
+    ],
+  },
+
+  liqSweepReversal: {
+    label: "Retournement sur Liquidity Sweep (fade de chasse aux stops)",
+    summary: "Fader le faux signal — quand le prix perce un plus haut/bas de swing et reclôt à l'intérieur, entrer contre la cassure avec un stop serré juste au-delà de la mèche.",
+    description:
+      "Un sweep de liquidité se produit quand le prix dépasse brièvement un plus haut ou plus bas de swing antérieur — déclenchant les ordres stop et les ordres limit placés juste au-delà — puis revient à l'intérieur de la plage. Ce pattern est l'empreinte de participants institutionnels qui chassent les stops évidents pour générer la liquidité nécessaire avant d'entrer dans le sens opposé. La stratégie attend le sweep, exige une clôture de rejet à l'intérieur de la plage, puis entre contre la cassure avec un stop juste au-delà de la mèche. Très efficace sur des niveaux bien surveillés (plus hauts/bas de la veille, sommets de séance, chiffres ronds, bords de Value Area) et en régime d'ADX bas.",
+    whenToUse:
+      "À utiliser sur instruments liquides autour de pools de liquidité bien définis — plus hauts/bas de swing, extrêmes de la veille / semaine, chiffres ronds psychologiques, bords de Value Area. Fonctionne sur tous les horizons, mais plus la timeframe est haute plus c'est fiable. À éviter les jours de forte tendance, immédiatement après un catalyseur majeur, ou quand l'ADX monte — dans ces régimes, les « sweeps » sont souvent de vraies continuations, pas des retournements. Plus puissant quand le sweep tombe dans un order block ou un FVG haussier/baissier.",
+    prosAndCons:
+      "Avantages : stops extrêmement serrés (immédiatement au-delà de la mèche) qui produisent un R:R remarquable, déclencheur d'entrée objectif (clôture de rejet à l'intérieur), aligné avec le flux institutionnel, s'empile proprement avec order blocks et FVG pour la confluence. Inconvénients : en forte tendance, les « sweeps » de niveaux évidents sont fréquemment des continuations — les fader produit des pertes ; exige une conscience de régime disciplinée (ADX / tendance HTF) pour les éviter. Les sweeps à faible volume sont bruyants et peuvent être engineerés par les market makers sur des instruments peu liquides.",
+    indicatorsUsed: ["Liquidity Sweeps", "Filtre de tendance HTF / ADX", "Order Blocks", "Fair Value Gaps", "Volume"],
+    coreIdea:
+      "La liquidité s'empile là où vivent les stops évidents — juste au-delà des plus hauts/bas antérieurs. Un sweep qui échoue à tenir = quelqu'un de gros vient de courir ces stops et est parti dans l'autre sens.",
+    steps: [
+      {
+        title: "Étape 1 : identifier un pool de liquidité clair",
+        body:
+          "Plus haut / bas de swing multi-touches, plus haut / bas de la veille, chiffre rond, Value Area High/Low, ou sommets / creux égaux d'une range récente. Plus le niveau est évident, plus il y a de stops parqués derrière. Ignorer les niveaux bruyants de milieu de plage.",
+      },
+      {
+        title: "Étape 2 : attendre la barre de sweep",
+        body:
+          "Le prix doit dépasser le niveau en séance (mèche à travers, déclenchement des stops). L'indicateur Liquidity Sweep signale la barre. Une barre qui clôture au-delà du niveau est une cassure, pas un sweep — s'abstenir.",
+      },
+      {
+        title: "Étape 3 : exiger une clôture de retournement à l'intérieur",
+        body:
+          "La barre de sweep (ou la suivante sur la timeframe d'entrée) doit reclôt dans la plage, rejetant l'excursion. Attendez la fin de la bougie — front-runner la clôture transforme un trade de sweep en pari directionnel.",
+      },
+      {
+        title: "Étape 4 : confirmer avec régime + confluence",
+        body:
+          "Les sweeps les plus qualitatifs surviennent en régime d'ADX bas (< 25) et tombent dans un Order Block non mitigé, un Fair Value Gap, ou un cluster S/R antérieur. Les sweeps en ADX haut sont généralement des continuations, pas des retournements — passer. Un volume au-dessus de la moyenne récente sur la bougie de retournement renforce la lecture.",
+      },
+      {
+        title: "Étape 5 : entrée et stop serré au-delà de la mèche",
+        body:
+          "Long (après sweep bas) : entrée à la clôture de la bougie de retournement, stop sous la mèche du sweep moins un petit buffer ATR. Short (après sweep haut) : miroir. Le stop serré à la mèche est l'edge de la stratégie — ne pas l'élargir.",
+      },
+      {
+        title: "Étape 6 : cible mi-plage → côté opposé",
+        body:
+          "Première cible : 50 % de retour dans la plage précédente. Stop au break-even à T1. Cible runner : niveau structurel opposé (autre côté de la plage, ou cluster Pivot / S/R). Si le momentum s'essouffle en route, sortir le runner — l'edge du sweep est concentré au début, pas à la fin.",
+      },
+    ],
+    whyItWorks:
+      "Les niveaux évidents attirent les stops évidents. Les gros participants qui ont besoin de remplir de la taille poussent le prix à travers ces niveaux pour déclencher les stops, absorber le flux résultant, puis retourner. La mèche de rejet est l'empreinte de cette absorption. La stratégie se range essentiellement du côté des institutions qui ont ingénieré la chasse aux stops — contre les traders retail qui se sont fait stopper. L'edge dépend de ce que le niveau soit un vrai pool de liquidité en régime rotationnel ; en régime de tendance, le même sweep est une continuation — d'où l'importance des filtres tendance HTF et ADX.",
+    links: [
+      { title: "Babypips — Liquidity Grabs / Stop Hunts (anglais)", url: "https://www.babypips.com/learn/forex/what-is-liquidity" },
+      { title: "Investopedia — Stop Hunting (anglais)", url: "https://www.investopedia.com/terms/s/stop-hunting.asp" },
+    ],
+  },
+
+  donchianTurtleBreakout: {
+    label: "Cassure Donchian / Turtle Trading",
+    summary: "Système original des Turtle traders (années 1980) — entrer sur un plus haut Donchian 20 ou 55 jours, sortir sur un plus bas 10 ou 20 jours. Suivi de tendance mécanique, taille basée sur l'ATR.",
+    description:
+      "Le système Turtle a été enseigné par Richard Dennis à un groupe de novices en 1983 pour régler un pari avec son associé William Eckhardt sur la possibilité d'enseigner le trading. Les règles sont brutalement simples : entrée long à la clôture au-dessus du plus haut Donchian 20 jours (Système 1) ou 55 jours (Système 2) ; sortie long à la clôture sous le plus bas 10 jours (S1) ou 20 jours (S2). Miroir pour les shorts. Le dimensionnement est intégré : une « unité » = 1 % du compte divisé par N, où N est l'ATR 20 jours. On peut pyramider jusqu'à 4 unités, en ajoutant tous les 0,5N de mouvement favorable. L'edge est une pure capture de fat tails : taux de réussite bas (~30–35 %) couplé à des gagnants rares mais très gros qui paient pour de nombreuses petites pertes.",
+    whenToUse:
+      "À utiliser sur un panier diversifié de 10–20 marchés liquides décorrélés — futures, Forex, crypto, indices actions, matières premières. Le Turtle sur instrument unique est beaucoup plus volatile et perd souvent son edge. Fonctionne mieux sur horizons longs (années), où les tendances fat-tail multi-mois ont le temps de se matérialiser. Peu adapté à ceux qui ne peuvent pas tolérer émotionnellement de longues périodes de drawdown ; excellent pour les traders systématiques, rule-based, qui peuvent laisser tourner sans intervenir.",
+    prosAndCons:
+      "Avantages : entièrement mécanique, aucune discrétion, des décennies de résultats en argent réel, capture les tendances fat-tail que quasi toute autre stratégie manque, dimensionnement intégré, logique identique long/short. Inconvénients : taux de réussite bas (30–35 %) psychologiquement éprouvant, nécessite la diversification du panier — le Turtle sur instrument unique whipsaw violemment, drawdowns de 20–40 % entre tendances sont normaux, historiquement moins efficace sur indices actions que sur matières/Forex/crypto, besoin en capital significatif car le N-sizing suppose de pouvoir tenir 4 unités sur 10+ marchés.",
+    indicatorsUsed: ["Donchian Channels (20/55/10 périodes)", "ATR (dimensionnement N)", "Matrice de corrélation du panier"],
+    coreIdea:
+      "Les marchés passent ~80 % du temps dans le bruit et ~20 % en tendances soutenues qui font l'essentiel du P&L long terme. Acceptez de nombreuses petites pertes dans le bruit pour être positionné tôt, correctement dimensionné, et tenir jusqu'au bout quand une tendance arrive.",
+    steps: [
+      {
+        title: "Étape 1 : construire un panier diversifié",
+        body:
+          "Choisissez 10–20 instruments liquides décorrélés — p. ex. plusieurs indices actions, Forex majeur, obligations, énergie, métaux, grains, quelques cryptos. La corrélation détruit la performance Turtle : deux positions corrélées = une position dimensionnée 2×. Recalculez les corrélations trimestriellement et élaguez.",
+      },
+      {
+        title: "Étape 2 : calculer N (ATR 20 jours) pour chaque instrument",
+        body:
+          "N est l'unité de volatilité qui dimensionne chaque trade. 1 unité = (1 % du compte) / (N × taille contrat). Cela met chaque position à la même volatilité en dollars, peu importe l'instrument. Si N double, le nombre d'unités est divisé par deux — la clé pour survivre aux expansions de volatilité.",
+      },
+      {
+        title: "Étape 3 : entrée — cassure Donchian haut/bas",
+        body:
+          "Système 1 (plus rapide) : entrée long à la clôture au-dessus du plus haut Donchian 20 jours, short sous le plus bas 20 jours. Système 2 (plus lent) : canaux 55 jours. Beaucoup mixent : S1 par défaut, mais sautent un signal S1 si le dernier trade S1 était gagnant (pour éviter de courir après les cassures choppy en fin de tendance forte).",
+      },
+      {
+        title: "Étape 4 : stop dur à 2N, pyramider tous les 0,5N",
+        body:
+          "Stop initial : 2N sous l'entrée (pour un long). Ajoutez une unité tous les 0,5N de mouvement favorable, jusqu'à 4 unités totales. Chaque unité ajoutée remonte le stop à 2N sous la dernière entrée. Cela pyramide le risque sur les gagnants tout en plafonnant l'exposition totale.",
+      },
+      {
+        title: "Étape 5 : sortie — plus bas Donchian (ou plus haut pour short)",
+        body:
+          "Sortie S1 : clôturer les longs sous le plus bas Donchian 10 jours, couvrir les shorts au-dessus du plus haut 10 jours. Sortie S2 : canaux 20 jours. La sortie est non négociable — pas de tenue, pas de « bougie de prière ». L'exit mécanique est ce qui fait fonctionner l'arithmétique fat-tail.",
+      },
+      {
+        title: "Étape 6 : faire tourner le système sans modification et suivre les drawdowns honnêtement",
+        body:
+          "Le plus dur du Turtle est de ne rien faire entre les tendances. La plupart du temps, les petites pertes s'accumulent en attendant les 1–2 mouvements fat-tail par an par instrument qui paient tout. Suivre les drawdowns dans un journal séparé — et savoir qu'ils sont normaux — est l'équipement psychologique nécessaire pour ne pas paniquer sur un repli de 20 % normal.",
+      },
+    ],
+    whyItWorks:
+      "Les rendements d'actifs sont leptokurtiques : ils ont des queues épaisses. Un petit nombre de très gros mouvements fait l'essentiel de la performance long terme, le reste est du bruit. Les cassures Donchian positionnent structurellement le système long quand un instrument fait de nouveaux plus hauts et short sur de nouveaux plus bas — exactement quand les mouvements fat-tail commencent. Le dimensionnement basé sur l'ATR égalise le risque entre marchés, pour qu'un future obligataire calme et une crypto volatile contribuent à la même volatilité en dollars. La diversification sur des marchés décorrélés donne toujours plusieurs « essais » pour la prochaine fat tail — vous ne savez pas lequel partira, mais quelque chose part généralement. Le faible taux de réussite est une caractéristique, pas un bug : c'est le prix à payer pour capturer les rares outliers qui comptent.",
+    links: [
+      { title: "Investopedia — Turtle Trading (anglais)", url: "https://www.investopedia.com/articles/trading/08/turtle-trading.asp" },
+      { title: "Investopedia — Donchian Channels (anglais)", url: "https://www.investopedia.com/terms/d/donchianchannels.asp" },
+      { title: "Livre — Curtis Faith, Way of the Turtle (anglais)", url: "https://www.amazon.com/Way-Turtle-Secret-Methods-Legendary/dp/007148664X" },
+      { title: "Règles Turtle originales (PDF, anglais, archivé)", url: "https://web.archive.org/web/20210304144604/https://bigpicture.typepad.com/comments/files/turtlerules.pdf" },
     ],
   },
 };

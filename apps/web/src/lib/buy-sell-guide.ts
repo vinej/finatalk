@@ -39,7 +39,13 @@ const EN: BuySellGuide = {
         "- **MACD zero-line cross up** — bullish MACD crossovers are stronger when the MACD line is below zero than when it's already extended above.\n" +
         "- **PSAR flip to below price** + rising ADX — trend-following entry trigger.\n" +
         "- **VWAP reclaim (intraday)** — price breaks back above a rising VWAP on volume after an early dip. This is the textbook institutional buy trigger: desks and algos target VWAP for execution, so a reclaim means buyers are outpaying the day's volume-weighted average. Pullbacks that hold VWAP support in an uptrending session are high-quality adds.\n" +
-        "- **Fibonacci retracement into a key level** — after a strong up-move, pullbacks into the 38.2%, 50%, or 61.8% retracement (the 'golden zone' 50–61.8% is the most watched) are frequent long entry points. The edge is largely self-fulfilling: enough discretionary traders place orders at those levels that reactions cluster there. Confirm with a reversal candle or oversold oscillator — the level alone is not a trigger. Works best on liquid instruments and clear, single-leg swings.",
+        "- **Fibonacci retracement into a key level** — after a strong up-move, pullbacks into the 38.2%, 50%, or 61.8% retracement (the 'golden zone' 50–61.8% is the most watched) are frequent long entry points. The edge is largely self-fulfilling: enough discretionary traders place orders at those levels that reactions cluster there. Confirm with a reversal candle or oversold oscillator — the level alone is not a trigger. Works best on liquid instruments and clear, single-leg swings.\n" +
+        "- **Liquidity sweep low + reversal** — price pierces a prior N-bar swing low, triggering stop orders, then closes back inside the range. Reveals a failed supply push / stop run. High-probability long when the sweep lands at an auto-detected S/R cluster, unmitigated bullish Order Block, or Value Area Low. Entry on the reversal candle close, stop just below the sweep wick.\n" +
+        "- **Unmitigated bullish Order Block retest** — in an uptrend, price pulls back to the last bearish candle that preceded a strong impulse up, reacts and holds. That candle's range is the 'order block' — the footprint of institutional accumulation. Enter on the bullish reversal candle inside the block, stop below the block's low. Best combined with a sweep or FVG inside the zone.\n" +
+        "- **Bullish Fair Value Gap fill and hold** — price retraces into a prior bullish FVG (3-bar imbalance) and rejects the gap's lower edge. FVGs that coincide with S/R or a pivot are the highest-quality reaction zones. Confirm with a bullish candle closing above the gap's upper edge.\n" +
+        "- **Volume Profile — reclaim of VAL or POC** — in rotational regimes, price dips below the Value Area Low, reclaims it on a bullish close, and holds POC on first retest. Natural target: the Value Area High. Skip if ADX > 25 or the profile is bimodal — that's a trending / regime-shift environment, not rotation.\n" +
+        "- **Reaction at Pivot S1 (or PP) in a bullish period** — price opens above the period's PP (bullish bias), pulls back to S1 and reacts. PP itself is the intraday/weekly bias line — long bias above it, short below. Camarilla L3 / Fibonacci S1 are the tighter mean-reversion variants.\n" +
+        "- **Auto S/R cluster with high touches** — the auto-detection indicator flags a support cluster with many prior touches; price tags the level with a bullish rejection candle. More touches + recency = stronger level. Flip-zones (broken resistance becoming support) are particularly reliable on retest.",
     },
     {
       id: "exit",
@@ -54,7 +60,13 @@ const EN: BuySellGuide = {
         "- **Trailing stop triggered** — the most underrated exit. ATR-based stop (e.g. 2× ATR below recent swing high) lets winners run while capping give-back.\n" +
         "- **Volatility expansion on bad news** — a 3σ move on negative catalyst usually continues 1–3 days; don't try to catch the first bounce.\n" +
         "- **Loss of VWAP from above (intraday)** — price spent the session above VWAP, then breaks down through it on rising volume. Early warning that control has flipped from buyers to sellers; a failed attempt to reclaim VWAP from below confirms the change and often sets up a trend-day down.\n" +
-        "- **Failed Fibonacci bounce / break of 61.8%** — price retraces to a Fib level (38.2% or 50%), tries to hold, then closes back through it on volume. A close beyond 61.8% of the prior swing invalidates the retracement thesis — the move is no longer a pullback, it's a reversal. Tight invalidation makes Fib levels useful for stop placement even if you don't enter on them.",
+        "- **Failed Fibonacci bounce / break of 61.8%** — price retraces to a Fib level (38.2% or 50%), tries to hold, then closes back through it on volume. A close beyond 61.8% of the prior swing invalidates the retracement thesis — the move is no longer a pullback, it's a reversal. Tight invalidation makes Fib levels useful for stop placement even if you don't enter on them.\n" +
+        "- **Liquidity sweep high + reversal** — price pierces a prior N-bar swing high, triggering stops, then closes back inside the range. Classic short trigger and a high-probability long exit. Strongest at session highs, prior-day highs, round numbers, or at the upper edge of a Value Area. Stop just above the sweep wick — one of the tightest risk definitions available.\n" +
+        "- **Unmitigated bearish Order Block retest** — in a downtrend, price rallies into the last bullish candle before an impulsive drop and rejects. Enter on the bearish reversal candle inside the block, stop just above the block's high. Blocks already touched ('mitigated') have largely spent their edge — skip them.\n" +
+        "- **Rejection at a bearish FVG** — in a downtrend, rallies into an unfilled bearish Fair Value Gap tend to reject; a candle that pushes into the gap and closes back below the lower edge is a short trigger. If the gap fills with acceptance (close above the upper edge), the short thesis is invalidated.\n" +
+        "- **Volume Profile — rejection at VAH or loss of POC** — in rotation, price stretches to the Value Area High with no acceptance (wicks, no follow-through close) and returns toward POC. Target POC first, then VAL on extension. A close below POC that holds flips the session bias short and opens VAL as a target.\n" +
+        "- **Break of Pivot PP with a down-close** — a decisive close through PP shifts the period's bias from bullish to bearish. R1 then becomes the natural rally-back short level; S1/S2 are the next targets. Reliable on index futures and major FX where pivots get respected.\n" +
+        "- **Break of a major auto S/R cluster on volume** — the top-touched support cluster fails with a volume-expanding close below. The flip zone (old support becoming resistance) is the retest short; target the next cluster down. Multi-touch levels give more warning but also larger follow-through when they finally break.",
     },
     {
       id: "confirmation",
@@ -67,11 +79,35 @@ const EN: BuySellGuide = {
         "- **Multi-timeframe agreement** — a daily buy signal aligned with a weekly uptrend has much higher odds than a daily signal fighting the weekly trend.\n" +
         "- **VWAP as intraday bias filter** — trading on the same side of VWAP as your signal aligns you with the day's volume-weighted consensus (what institutions are paying). Fighting VWAP with a single-stock setup is low-probability; wait for the reclaim or the break before taking the trigger.\n" +
         "- **Fibonacci as a confluence amplifier, not a standalone** — Fib retracements (38.2 / 50 / 61.8%) work mostly through self-fulfilling behavior: many discretionary traders act on the same levels. Treat them as magnets, not triggers. A Fib level that coincides with a prior support, the 200-day MA, or a trendline is a far higher-quality zone than a Fib level in open space. Pure quant models rarely rely on Fibs alone — use them to *refine* entries and stops, not to replace trend or momentum signals.\n" +
-        "- **Avoid redundant confirmation** — RSI, Stoch, Williams %R, StochRSI all say essentially the same thing. Confluence means *different* signal families agreeing (trend + momentum + volume + structure).",
+        "- **Avoid redundant confirmation** — RSI, Stoch, Williams %R, StochRSI all say essentially the same thing. Confluence means *different* signal families agreeing (trend + momentum + volume + structure).\n" +
+        "- **Structure indicators are a dedicated family** — auto S/R, Pivot Points, Volume Profile, Order Blocks, Fair Value Gaps, and Liquidity Sweeps all describe *where* supply and demand sit, not *when* they act. Stacking a structure level (e.g. Pivot S1 + bullish Order Block + Value Area Low) with a momentum trigger (RSI oversold + bullish MACD cross) is the highest-quality confluence available. Rule of thumb: a structure level without a trigger is a watch, a trigger without a level is noise, both together is a setup.\n" +
+        "- **Mitigation / fill state matters** — unmitigated Order Blocks and unfilled Fair Value Gaps retain their edge; mitigated/filled ones have mostly paid out and should be deprioritised. Similarly, an S/R cluster that has been tested many times without breaking is a higher-quality level than a fresh pivot seen once.",
+    },
+    {
+      id: "palette",
+      title: "5. Extended indicator palette",
+      body:
+        "Beyond the core RSI / MACD / Bollinger / ADX set, Finatalk ships a dozen alternative indicators. Each slots into one of four families — use them as substitutes or confirmations, not as additions for their own sake.\n\n" +
+        "**Volatility bands (substitutes for Bollinger)**\n" +
+        "- **Keltner Channels** — ATR-based envelope around an EMA. A close above the upper band = momentum breakout, a pullback to the middle EMA in an uptrend = add point. Less prone to false squeezes than Bollinger in trending markets because ATR scales the bands to *directional* volatility, not standard deviation.\n" +
+        "- **Donchian Channels** — simply the highest-high / lowest-low of the last N bars. A close above the 20-day Donchian high = classic Turtle-trader entry; a close below the 10-day low = Turtle exit. The middle line is the mid-range mean.\n" +
+        "- **Chaikin Volatility** — rate of change of the EMA of (high − low). Rising ChaikinVol = widening ranges (often precedes breakouts); collapsing ChaikinVol = contraction warning that a range will resolve soon. Use as a timing filter, not a signal.\n\n" +
+        "**Volume / money flow (substitutes and companions for OBV)**\n" +
+        "- **A/D (Accumulation / Distribution) Line** — cumulative close-location volume. Divergence between A/D and price = quiet institutional accumulation (bullish) or distribution (bearish) before price confirms. Especially useful at range edges.\n" +
+        "- **Chaikin Money Flow (CMF)** — money-flow volume over a rolling 20–21 bar window. CMF > 0 = net accumulation, < 0 = net distribution. The cross of zero after a clear divergence is a timing trigger.\n" +
+        "- **Volume Oscillator** — difference (or %) between a fast and a slow volume MA. Rising during a breakout candle = genuine participation; flat or falling = almost certainly a fake breakout, step aside.\n\n" +
+        "**Trend-strength alternatives (companions to ADX)**\n" +
+        "- **Aroon (Up / Down)** — bars since the highest-high and lowest-low in a window. Aroon-Up > 70 with Aroon-Down < 30 = strong uptrend; crossovers of Up/Down = trend shifts; both < 50 = consolidation. More intuitive for spotting the *start* of a trend than ADX.\n" +
+        "- **Vortex (+VI / −VI)** — +VI crossing above −VI = trend change to up (and mirror); widening spread between the two = strengthening trend. More reactive than ADX on mid-timeframes, slightly more whipsaw-prone.\n" +
+        "- **Trend Intensity Index (TII)** — proportion of closes above/below a long-term SMA, rescaled 0–100. TII > 80 = clean uptrend; < 20 = clean downtrend; 40–60 = chop. Excellent binary regime filter before running any other setup.\n\n" +
+        "**Statistical / regime indicators**\n" +
+        "- **Bollinger %B** — normalised Bollinger reading (0 at lower band, 1 at upper). %B > 1 or < 0 = closing outside the bands (extreme stretch). Divergences with %B are often cleaner to spot than with raw price because the indicator is already scaled.\n" +
+        "- **Price Z-Score** — standardised distance of close from its rolling mean, expressed in σ. |Z| > 2 = stretched; |Z| > 3 = statistically extreme. Direct mean-reversion trigger that needs no further normalisation.\n" +
+        "- **Hurst Exponent** — long-memory exponent from R/S analysis. H > 0.55 = trending / momentum regime (prefer trend-following setups); H < 0.45 = mean-reverting (prefer fades); ≈ 0.5 = random walk (no TA edge). Use as a *meta-filter* before choosing which entry family to deploy — arguably the single most valuable regime tool in this list.",
     },
     {
       id: "fundamentals",
-      title: "5. Company fundamentals",
+      title: "6. Company fundamentals",
       body:
         "TA tells you **when**; fundamentals tell you **what**. Ignore either at your peril.\n\n" +
         "- **Strong fundamentals + TA weakness = accumulation opportunity.** A high-quality company pulling back to major support with oversold signals is the textbook long.\n" +
@@ -82,7 +118,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "news",
-      title: "6. News, catalysts and macro",
+      title: "7. News, catalysts and macro",
       body:
         "Price leads news, but news accelerates price.\n\n" +
         "- **Gaps on news** — gap up/down on a real catalyst (earnings, FDA, guidance) usually continues in the gap direction for 1–3 sessions. Don't fade day one.\n" +
@@ -94,7 +130,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "risk",
-      title: "7. Risk management (the only non-negotiable)",
+      title: "8. Risk management (the only non-negotiable)",
       body:
         "You don't control price, you control size and stops. Every professional book stresses this more than any indicator.\n\n" +
         "- **Risk ≤ 1–2% of account per trade.** Position size = (account × risk%) ÷ stop distance. This lets you be wrong repeatedly and still be in the game.\n" +
@@ -106,7 +142,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "psychology",
-      title: "8. Psychological pitfalls",
+      title: "9. Psychological pitfalls",
       body:
         "Most losing trades are correctly-spotted setups executed badly.\n\n" +
         "- **Confirmation bias** — you find the one indicator that supports your existing view. Defense: decide the criteria before you look at the chart.\n" +
@@ -159,7 +195,13 @@ const FR: BuySellGuide = {
         "- **MACD franchit zéro à la hausse** — un croisement MACD haussier est plus fort quand la ligne MACD est sous zéro qu'au-dessus.\n" +
         "- **PSAR qui bascule sous le prix** + ADX qui monte — déclencheur d'entrée en suivi de tendance.\n" +
         "- **Reconquête du VWAP (intraday)** — le prix repasse au-dessus d'un VWAP haussier sur volume après un creux en séance. C'est le déclencheur d'achat institutionnel par excellence : pupitres et algos visent le VWAP à l'exécution, donc une reconquête signifie que les acheteurs surpaient la moyenne pondérée du jour. Un repli qui tient le VWAP en séance haussière est un excellent point de renforcement.\n" +
-        "- **Retracement de Fibonacci sur niveau clé** — après une impulsion haussière, les replis vers 38,2 %, 50 % ou 61,8 % (la « zone d'or » 50–61,8 % est la plus surveillée) sont des points d'entrée longs fréquents. L'edge est en grande partie auto-réalisateur : suffisamment de traders discrétionnaires placent des ordres sur ces niveaux pour que les réactions s'y concentrent. Confirmez avec une bougie de retournement ou un oscillateur en survente — le niveau seul n'est pas un déclencheur. Fonctionne mieux sur des instruments liquides et des impulsions nettes en une seule patte.",
+        "- **Retracement de Fibonacci sur niveau clé** — après une impulsion haussière, les replis vers 38,2 %, 50 % ou 61,8 % (la « zone d'or » 50–61,8 % est la plus surveillée) sont des points d'entrée longs fréquents. L'edge est en grande partie auto-réalisateur : suffisamment de traders discrétionnaires placent des ordres sur ces niveaux pour que les réactions s'y concentrent. Confirmez avec une bougie de retournement ou un oscillateur en survente — le niveau seul n'est pas un déclencheur. Fonctionne mieux sur des instruments liquides et des impulsions nettes en une seule patte.\n" +
+        "- **Sweep de liquidité bas + retournement** — le prix perce un plus bas de swing sur N barres, déclenche les stops, puis reclôt dans la fourchette. Signale une offre qui échoue / chasse aux stops. Long à haute probabilité quand le sweep tombe sur un cluster S/R auto, un Order Block haussier non mitigé, ou la Value Area Low. Entrée à la clôture de la bougie de retournement, stop juste sous la mèche du sweep.\n" +
+        "- **Retest d'un Order Block haussier non mitigé** — en tendance haussière, le prix se replie sur la dernière bougie baissière précédant une impulsion, réagit et tient. Cette bougie est l'« order block » — empreinte d'accumulation institutionnelle. Entrée sur la bougie haussière de retournement à l'intérieur du bloc, stop sous le bas du bloc. Optimal combiné à un sweep ou un FVG à l'intérieur de la zone.\n" +
+        "- **Remplissage + tenue d'un Fair Value Gap haussier** — le prix retrace dans un FVG haussier (déséquilibre 3 barres) et rejette le bord inférieur. Les FVG qui coïncident avec un S/R ou un pivot sont les zones de réaction les plus qualitatives. Confirmez avec une bougie haussière qui clôt au-dessus du bord supérieur du gap.\n" +
+        "- **Volume Profile — reconquête du VAL ou du POC** — en régime rotationnel, le prix plonge sous le Value Area Low, le reconquiert sur clôture haussière, puis tient le POC au premier retest. Cible naturelle : le Value Area High. À éviter si ADX > 25 ou si le profil est bimodal — c'est un environnement de tendance / changement de régime, pas de rotation.\n" +
+        "- **Réaction au pivot S1 (ou PP) en période haussière** — le prix ouvre au-dessus du PP (biais haussier), repli sur S1 et réaction. PP = ligne de biais intraday / hebdomadaire — biais long au-dessus, short en dessous. Camarilla L3 / Fibonacci S1 sont les variantes plus serrées pour le mean reversion.\n" +
+        "- **Cluster S/R auto à nombreuses touches** — l'indicateur S/R auto signale un cluster de support avec beaucoup de touches antérieures ; le prix tag le niveau avec une bougie de rejet haussière. Plus de touches + récence = niveau plus fort. Les flip-zones (résistance cassée devenue support) sont particulièrement fiables au retest.",
     },
     {
       id: "exit",
@@ -174,7 +216,13 @@ const FR: BuySellGuide = {
         "- **Stop suiveur déclenché** — la sortie la plus sous-estimée. Un stop basé sur l'ATR (p. ex. 2× ATR sous le plus haut récent) laisse courir les gagnants tout en limitant le give-back.\n" +
         "- **Expansion de volatilité sur mauvaise nouvelle** — un mouvement de 3σ sur catalyseur négatif continue souvent 1–3 jours ; ne pas essayer d'attraper le premier rebond.\n" +
         "- **Perte du VWAP par le dessus (intraday)** — le prix a passé la séance au-dessus du VWAP puis casse en dessous sur volume qui grimpe. Signal précoce que le contrôle est passé des acheteurs aux vendeurs ; une tentative ratée de reconquérir le VWAP par le dessous confirme le changement et déclenche souvent une journée de tendance baissière.\n" +
-        "- **Rebond Fibonacci raté / cassure du 61,8 %** — le prix retrace sur un niveau Fib (38,2 % ou 50 %), tente de tenir, puis reclôt en dessous sur volume. Une clôture au-delà du 61,8 % de l'impulsion précédente invalide la thèse de retracement — le mouvement n'est plus un repli, c'est un retournement. L'invalidation nette rend les niveaux Fib utiles pour placer les stops, même sans entrer dessus.",
+        "- **Rebond Fibonacci raté / cassure du 61,8 %** — le prix retrace sur un niveau Fib (38,2 % ou 50 %), tente de tenir, puis reclôt en dessous sur volume. Une clôture au-delà du 61,8 % de l'impulsion précédente invalide la thèse de retracement — le mouvement n'est plus un repli, c'est un retournement. L'invalidation nette rend les niveaux Fib utiles pour placer les stops, même sans entrer dessus.\n" +
+        "- **Sweep de liquidité haut + retournement** — le prix perce un plus haut de swing sur N barres, déclenche les stops, puis reclôt dans la fourchette. Déclencheur short classique et sortie long à haute probabilité. Plus fort aux sommets de séance, plus hauts de la veille, chiffres ronds, ou au bord supérieur d'une Value Area. Stop juste au-dessus de la mèche — l'une des définitions de risque les plus serrées disponibles.\n" +
+        "- **Retest d'un Order Block baissier non mitigé** — en tendance baissière, le prix rallye dans la dernière bougie haussière précédant une chute impulsive et rejette. Entrée sur la bougie baissière de retournement à l'intérieur du bloc, stop juste au-dessus du haut. Les blocs déjà touchés (« mitigés ») ont largement épuisé leur edge — à éviter.\n" +
+        "- **Rejet sur un FVG baissier** — en tendance baissière, les rallyes dans un Fair Value Gap baissier non rempli rejettent souvent ; une bougie qui pousse dans le gap et reclôt sous le bord inférieur est un déclencheur short. Si le gap se remplit avec acceptation (clôture au-dessus du bord supérieur), la thèse short est invalidée.\n" +
+        "- **Volume Profile — rejet au VAH ou perte du POC** — en rotation, le prix s'étire au Value Area High sans acceptation (mèches, pas de clôture de suivi) et retourne vers le POC. Cible POC d'abord, puis VAL en extension. Une clôture sous le POC qui tient fait basculer le biais de séance à la vente et ouvre le VAL comme cible.\n" +
+        "- **Cassure du pivot PP avec clôture baissière** — une clôture nette sous le PP fait basculer le biais de la période de haussier à baissier. R1 devient alors le niveau naturel de short sur remontée ; S1/S2 sont les prochaines cibles. Fiable sur les futures d'indices et le Forex majeur où les pivots sont respectés.\n" +
+        "- **Cassure d'un cluster S/R auto majeur sur volume** — le cluster de support le plus touché cède sur clôture baissière avec expansion de volume. La flip zone (ancien support devenu résistance) est le short au retest ; cible = prochain cluster plus bas. Les niveaux multi-touches préviennent plus tôt mais le suivi est aussi plus ample quand ils finissent par céder.",
     },
     {
       id: "confirmation",
@@ -187,11 +235,35 @@ const FR: BuySellGuide = {
         "- **Accord multi-horizons** — un signal d'achat journalier aligné avec une tendance haussière hebdomadaire a de bien meilleures chances qu'un signal journalier contre la tendance hebdo.\n" +
         "- **VWAP comme filtre de biais intraday** — trader du même côté du VWAP que votre signal vous aligne avec le consensus pondéré par le volume de la séance (ce que paient les institutions). Aller contre le VWAP avec un setup single-stock est à faible probabilité ; attendez la reconquête ou la cassure avant d'exécuter le déclencheur.\n" +
         "- **Fibonacci comme amplificateur de confluence, pas comme signal autonome** — les retracements Fib (38,2 / 50 / 61,8 %) fonctionnent surtout par auto-réalisation : beaucoup de traders discrétionnaires agissent sur les mêmes niveaux. Traitez-les comme des aimants, pas des déclencheurs. Un niveau Fib qui coïncide avec un support antérieur, la MM200 ou une ligne de tendance est une zone bien plus qualitative qu'un Fib dans le vide. Les modèles quantitatifs purs s'appuient rarement sur les Fibs seuls — utilisez-les pour *affiner* entrées et stops, pas pour remplacer les signaux de tendance ou de momentum.\n" +
-        "- **Évitez la confirmation redondante** — RSI, Stoch, Williams %R, StochRSI disent essentiellement la même chose. La confluence, c'est *différentes* familles de signaux (tendance + momentum + volume + structure) qui s'accordent.",
+        "- **Évitez la confirmation redondante** — RSI, Stoch, Williams %R, StochRSI disent essentiellement la même chose. La confluence, c'est *différentes* familles de signaux (tendance + momentum + volume + structure) qui s'accordent.\n" +
+        "- **Les indicateurs de structure forment une famille dédiée** — S/R auto, Pivot Points, Volume Profile, Order Blocks, Fair Value Gaps et Liquidity Sweeps décrivent *où* se trouvent l'offre et la demande, pas *quand* elles agissent. Empiler un niveau de structure (p. ex. Pivot S1 + Order Block haussier + Value Area Low) avec un déclencheur de momentum (RSI survendu + croisement MACD haussier) est la confluence la plus qualitative disponible. Règle : un niveau sans déclencheur = une veille, un déclencheur sans niveau = du bruit, les deux ensemble = un setup.\n" +
+        "- **L'état de mitigation / remplissage compte** — les Order Blocks non mitigés et les Fair Value Gaps non remplis conservent leur edge ; ceux qui sont mitigés / remplis ont largement payé et doivent être dépriorisés. De même, un cluster S/R testé de nombreuses fois sans cassure est un niveau plus qualitatif qu'un pivot neuf vu une seule fois.",
+    },
+    {
+      id: "palette",
+      title: "5. Palette étendue d'indicateurs",
+      body:
+        "Au-delà du cœur RSI / MACD / Bollinger / ADX, Finatalk embarque une douzaine d'indicateurs alternatifs. Chacun entre dans l'une de quatre familles — utilisez-les comme substituts ou confirmations, pas comme ajouts pour eux-mêmes.\n\n" +
+        "**Bandes de volatilité (substituts aux bandes de Bollinger)**\n" +
+        "- **Keltner Channels** — enveloppe basée sur l'ATR autour d'une EMA. Clôture au-dessus de la bande supérieure = cassure de momentum ; repli sur l'EMA centrale en tendance haussière = renforcement. Moins sujet aux faux squeezes que Bollinger en marché tendance, car l'ATR cale les bandes sur la volatilité *directionnelle*, pas l'écart-type.\n" +
+        "- **Donchian Channels** — simplement le plus haut / plus bas des N dernières barres. Clôture au-dessus du Donchian 20 jours = entrée Turtle classique ; clôture sous le plus bas 10 jours = sortie Turtle. La ligne médiane est la moyenne de la plage.\n" +
+        "- **Chaikin Volatility** — taux de variation de l'EMA de (haut − bas). ChaikinVol en hausse = plages qui s'élargissent (précède souvent les cassures) ; ChaikinVol en baisse = contraction, résolution de range imminente. Filtre de timing, pas un signal.\n\n" +
+        "**Volume / flux de monnaie (substituts et compléments à l'OBV)**\n" +
+        "- **Ligne A/D (Accumulation / Distribution)** — volume cumulatif positionné par la clôture. Divergence entre A/D et prix = accumulation (haussier) ou distribution (baissier) institutionnelle silencieuse avant confirmation par le prix. Particulièrement utile aux bords d'un range.\n" +
+        "- **Chaikin Money Flow (CMF)** — volume de flux monétaire sur une fenêtre glissante de 20–21 barres. CMF > 0 = accumulation nette, < 0 = distribution nette. La cassure de zéro après une divergence nette = déclencheur de timing.\n" +
+        "- **Volume Oscillator** — différence (ou %) entre une MA rapide et une MA lente du volume. En hausse sur la bougie de cassure = vraie participation ; plat ou en baisse = fausse cassure quasi certaine, on s'écarte.\n\n" +
+        "**Alternatives de force de tendance (compléments à l'ADX)**\n" +
+        "- **Aroon (Up / Down)** — barres depuis le plus haut / plus bas de la fenêtre. Aroon-Up > 70 avec Aroon-Down < 30 = tendance haussière forte ; les croisements Up/Down = changements de tendance ; les deux < 50 = consolidation. Plus intuitif que l'ADX pour repérer le *début* d'une tendance.\n" +
+        "- **Vortex (+VI / −VI)** — +VI passant au-dessus de −VI = changement de tendance haussier (miroir inverse) ; écart qui s'élargit = tendance qui se renforce. Plus réactif que l'ADX sur les timeframes moyennes, légèrement plus sujet aux whipsaws.\n" +
+        "- **Trend Intensity Index (TII)** — proportion de clôtures au-dessus / en dessous d'une SMA long terme, rescalée 0–100. TII > 80 = tendance haussière propre ; < 20 = baissière propre ; 40–60 = chop. Excellent filtre de régime binaire avant tout autre setup.\n\n" +
+        "**Indicateurs statistiques / de régime**\n" +
+        "- **Bollinger %B** — lecture de Bollinger normalisée (0 à la bande basse, 1 à la haute). %B > 1 ou < 0 = clôture hors des bandes (extension extrême). Les divergences sur %B sont souvent plus propres à repérer que sur le prix brut, car l'indicateur est déjà rescalé.\n" +
+        "- **Price Z-Score** — distance standardisée de la clôture à sa moyenne glissante, exprimée en σ. |Z| > 2 = étiré ; |Z| > 3 = extrême statistique. Déclencheur de mean reversion direct, sans normalisation supplémentaire.\n" +
+        "- **Exposant de Hurst** — exposant de mémoire longue issu de l'analyse R/S. H > 0,55 = régime de tendance / momentum (privilégier le trend-following) ; H < 0,45 = régime mean-reverting (privilégier les fades) ; ≈ 0,5 = marche aléatoire (pas d'edge AT). À utiliser comme *méta-filtre* avant de choisir la famille d'entrée — sans doute l'outil de régime le plus précieux de cette liste.",
     },
     {
       id: "fundamentals",
-      title: "5. Fondamentaux de l'entreprise",
+      title: "6. Fondamentaux de l'entreprise",
       body:
         "L'AT dit **quand** ; les fondamentaux disent **quoi**. Ignorer l'un ou l'autre coûte cher.\n\n" +
         "- **Bons fondamentaux + AT faible = opportunité d'accumulation.** Une entreprise de qualité qui se replie sur un support majeur avec signaux de survente est le long classique.\n" +
@@ -202,7 +274,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "news",
-      title: "6. Nouvelles, catalyseurs et macro",
+      title: "7. Nouvelles, catalyseurs et macro",
       body:
         "Le prix précède la nouvelle, mais la nouvelle accélère le prix.\n\n" +
         "- **Gaps sur nouvelle** — un gap haussier/baissier sur un vrai catalyseur (résultats, FDA, guidance) continue généralement dans le sens du gap 1–3 séances. Ne pas fader le jour 1.\n" +
@@ -214,7 +286,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "risk",
-      title: "7. Gestion du risque (non négociable)",
+      title: "8. Gestion du risque (non négociable)",
       body:
         "Vous ne contrôlez pas le prix, vous contrôlez la taille et les stops. C'est ce que tout livre professionnel souligne plus que n'importe quel indicateur.\n\n" +
         "- **Risque ≤ 1–2% du compte par trade.** Taille = (compte × risque%) ÷ distance du stop. Cela vous permet de vous tromper à répétition et de rester dans la partie.\n" +
@@ -226,7 +298,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "psychology",
-      title: "8. Pièges psychologiques",
+      title: "9. Pièges psychologiques",
       body:
         "La plupart des trades perdants sont des setups correctement identifiés mais mal exécutés.\n\n" +
         "- **Biais de confirmation** — vous trouvez l'indicateur qui appuie votre opinion. Parade : décidez des critères avant de regarder le graphique.\n" +
