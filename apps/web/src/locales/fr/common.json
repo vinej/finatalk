@@ -119,7 +119,12 @@
     "tabSteps": "Étape par étape",
     "coreIdea": "Idée centrale",
     "indicatorsUsed": "Indicateurs utilisés",
-    "whyItWorks": "Pourquoi ça fonctionne"
+    "whyItWorks": "Pourquoi ça fonctionne",
+    "group": {
+      "longTerm": "Investissement long terme",
+      "swing": "Swing / position",
+      "intraday": "Intraday / day trading"
+    }
   },
   "myLearning": {
     "title": "Mon apprentissage",
@@ -340,6 +345,7 @@
     "symbolsRefreshed": "Symboles actualisés ({{count}}).",
     "symbolsRefreshFailed": "Échec de l'actualisation des symboles.",
     "symbolsCount": "{{count}} symboles disponibles",
+    "intradayStrategiesHint": "Voir les stratégies intraday \u2192",
     "symbolsFetchedAt": "Récupéré le {{date}}",
     "showInCad": "Afficher en CAD",
     "currency": "Devise : {{code}}",

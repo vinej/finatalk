@@ -223,10 +223,10 @@ export const StoredIndicator = z.object({
 });
 export type StoredIndicator = z.infer<typeof StoredIndicator>;
 
-export const RangeSchema = z.enum(["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"]);
+export const RangeSchema = z.enum(["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "max"]);
 export type Range = z.infer<typeof RangeSchema>;
 
-export const IntervalSchema = z.enum(["1d", "1wk", "1mo"]);
+export const IntervalSchema = z.enum(["1m", "5m", "15m", "30m", "60m", "90m", "1d", "1wk", "1mo"]);
 export type Interval = z.infer<typeof IntervalSchema>;
 
 export const ConvertToSchema = z.enum(["CAD"]).nullable();

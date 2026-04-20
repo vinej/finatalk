@@ -50,6 +50,44 @@ export const STRATEGY_KINDS = [
 
 export type StrategyKind = (typeof STRATEGY_KINDS)[number];
 
+export type StrategyGroup = "longTerm" | "swing" | "intraday";
+
+export const STRATEGY_GROUPS: Record<StrategyGroup, readonly StrategyKind[]> = {
+  longTerm: [
+    "buyAndHold",
+    "dollarCostAveraging",
+    "valueInvesting",
+    "growthInvesting",
+    "dividendInvesting",
+    "indexInvesting",
+    "bondLaddering",
+    "barbellStrategy",
+    "assetAllocation",
+    "coreSatellite",
+  ],
+  swing: [
+    "momentumInvesting",
+    "contrarianInvesting",
+    "trendPullback",
+    "breakoutMomentum",
+    "meanReversion",
+    "maCrossover",
+    "supportResistancePullback",
+    "donchianTurtleBreakout",
+    "trendStructureVolatility",
+  ],
+  intraday: [
+    "openingRangeBreakout",
+    "vwapStrategy",
+    "volumeProfileRotation",
+    "orderBlockRetest",
+    "pivotPointReaction",
+    "liqSweepReversal",
+  ],
+};
+
+export const STRATEGY_GROUP_ORDER: readonly StrategyGroup[] = ["longTerm", "swing", "intraday"];
+
 export const STRATEGY_GENERAL_LINKS: Record<Lang, StrategyLink[]> = {
   en: [
     { title: "Investopedia — Investment strategies", url: "https://www.investopedia.com/terms/i/investmentstrategy.asp" },

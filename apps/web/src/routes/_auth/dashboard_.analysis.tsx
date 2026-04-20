@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,7 +28,7 @@ import {
   type IndicatorColor,
   type IndicatorSpec,
 } from "@/lib/indicator-defaults";
-import { STRATEGY_GUIDE, STRATEGY_KINDS, type StrategyKind } from "@/lib/strategy-guide";
+import { STRATEGY_GROUPS, STRATEGY_GUIDE, STRATEGY_KINDS, type StrategyKind } from "@/lib/strategy-guide";
 import { STRATEGY_CHART_INDICATORS } from "@/lib/strategy-indicators";
 import { evaluateStrategy, type StrategyAction } from "@/lib/strategy-signals";
 import { pickLang, type Lang } from "@/lib/lang";
@@ -52,8 +52,35 @@ export const Route = createFileRoute("/_auth/dashboard_/analysis")({
 
 type AnalyzeResult = RouterOutputs["market"]["analyze"]["results"][number];
 
-const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
-const INTERVALS = ["1d", "1wk", "1mo"] as const;
+const RANGES = ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
+const INTERVALS = ["1m", "5m", "15m", "30m", "60m", "90m", "1d", "1wk", "1mo"] as const;
+
+type RangeValue = (typeof RANGES)[number];
+type IntervalValue = (typeof INTERVALS)[number];
+
+const INTRADAY_INTERVALS: readonly IntervalValue[] = ["1m", "5m", "15m", "30m", "60m", "90m"];
+
+function isIntradayInterval(i: IntervalValue): boolean {
+  return (INTRADAY_INTERVALS as readonly string[]).includes(i);
+}
+
+function compatibleRangesForInterval(i: IntervalValue): readonly RangeValue[] {
+  if (i === "1m") return ["1d", "5d"];
+  if (i === "5m" || i === "15m" || i === "30m" || i === "90m") return ["1d", "5d", "1mo"];
+  if (i === "60m") return ["1d", "5d", "1mo", "3mo", "6mo", "1y"];
+  return ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"];
+}
+
+function defaultRangeForInterval(i: IntervalValue): RangeValue {
+  if (i === "1m") return "5d";
+  if (isIntradayInterval(i)) return i === "60m" ? "1mo" : "5d";
+  return "6mo";
+}
+
+function clampRangeForInterval(r: RangeValue, i: IntervalValue): RangeValue {
+  const allowed = compatibleRangesForInterval(i);
+  return allowed.includes(r) ? r : defaultRangeForInterval(i);
+}
 const SYMBOL_RE = /^[A-Z0-9.\-=^]+$/;
 function sanitizeSymbol(s: string | null | undefined): string {
   if (!s) return "";
@@ -570,10 +597,10 @@ function AnalysisPage() {
               <select
                 id="range"
                 value={range}
-                onChange={(e) => setRange(e.target.value as (typeof RANGES)[number])}
+                onChange={(e) => setRange(e.target.value as RangeValue)}
                 className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
               >
-                {RANGES.map((r) => (
+                {compatibleRangesForInterval(interval).map((r) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
@@ -583,7 +610,11 @@ function AnalysisPage() {
               <select
                 id="interval"
                 value={interval}
-                onChange={(e) => setInterval(e.target.value as (typeof INTERVALS)[number])}
+                onChange={(e) => {
+                  const next = e.target.value as IntervalValue;
+                  setInterval(next);
+                  setRange((r) => clampRangeForInterval(r, next));
+                }}
                 className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
               >
                 {INTERVALS.map((i) => (
@@ -625,6 +656,15 @@ function AnalysisPage() {
             <p className="mt-2 text-xs text-[var(--color-muted-fg)]">
               {t("analysis.symbolsCount", { count: symbolsQuery.data.symbols.length })}
             </p>
+          )}
+          {isIntradayInterval(interval) && (
+            <Link
+              to="/dashboard/strategies"
+              search={{ group: "intraday" }}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-primary)] hover:underline"
+            >
+              {t("analysis.intradayStrategiesHint")}
+            </Link>
           )}
         </CardContent>
         )}
@@ -696,7 +736,11 @@ function AnalysisPage() {
               className="h-9 max-w-[240px] rounded-md border border-[var(--color-border)] bg-transparent px-2 text-xs"
             >
               <option value="">{t("analysis.applyStrategy")}</option>
-              {STRATEGY_KINDS.filter((k) => STRATEGY_CHART_INDICATORS[k]).map((k) => (
+              {STRATEGY_KINDS.filter((k) => {
+                if (!STRATEGY_CHART_INDICATORS[k]) return false;
+                const isIntradayStrat = (STRATEGY_GROUPS.intraday as readonly StrategyKind[]).includes(k);
+                return isIntradayInterval(interval) ? isIntradayStrat : !isIntradayStrat;
+              }).map((k) => (
                 <option key={k} value={k}>
                   {STRATEGY_GUIDE[pickLang(i18n.language)][k].label}
                 </option>

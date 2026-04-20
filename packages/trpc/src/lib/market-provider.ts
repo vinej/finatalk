@@ -22,19 +22,18 @@ const yf = new YahooFinance();
 export function rangeToPeriod1(range: Range): Date {
   const now = new Date();
   if (range === "max") return new Date(1970, 0, 1);
-  const months: Record<Exclude<Range, "max">, number> = {
+  const d = new Date(now);
+  if (range === "1d") { d.setDate(d.getDate() - 1); return d; }
+  if (range === "5d") { d.setDate(d.getDate() - 5); return d; }
+  const months: Record<Exclude<Range, "max" | "1d" | "5d">, number> = {
     "1mo": 1, "3mo": 3, "6mo": 6, "1y": 12, "2y": 24, "5y": 60,
   };
-  const d = new Date(now);
   d.setMonth(d.getMonth() - months[range]);
   return d;
 }
 
 function mapInterval(interval: Interval): string {
-  const map: Record<Interval, string> = {
-    "1d": "1d", "1wk": "1wk", "1mo": "1mo",
-  };
-  return map[interval];
+  return interval;
 }
 
 function openbbBarToCandle(bar: OHLCVBar): Candle {

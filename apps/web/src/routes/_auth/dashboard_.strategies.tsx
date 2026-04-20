@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   STRATEGY_GENERAL_LINKS,
+  STRATEGY_GROUP_ORDER,
+  STRATEGY_GROUPS,
   STRATEGY_GUIDE,
   STRATEGY_KINDS,
   type StrategyEntry,
@@ -13,8 +16,14 @@ import {
 } from "@/lib/strategy-guide";
 import { pickLang, type Lang } from "@/lib/lang";
 
+const strategiesSearchSchema = z.object({
+  group: z.enum(["longTerm", "swing", "intraday"]).optional(),
+  kind: z.enum(STRATEGY_KINDS).optional(),
+});
+
 export const Route = createFileRoute("/_auth/dashboard_/strategies")({
   component: StrategiesPage,
+  validateSearch: strategiesSearchSchema,
 });
 
 type TabKey = "overview" | "steps";
@@ -22,9 +31,20 @@ type TabKey = "overview" | "steps";
 function StrategiesPage() {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
-  const [activeKind, setActiveKind] = useState<StrategyKind>(STRATEGY_KINDS[0]);
+  const search = Route.useSearch();
+  const initialKind: StrategyKind =
+    search.kind ?? (search.group ? STRATEGY_GROUPS[search.group][0] : STRATEGY_KINDS[0]);
+  const [activeKind, setActiveKind] = useState<StrategyKind>(initialKind);
   const [tab, setTab] = useState<TabKey>("overview");
   const [introOpen, setIntroOpen] = useState(true);
+
+  useEffect(() => {
+    if (search.kind) {
+      setActiveKind(search.kind);
+    } else if (search.group) {
+      setActiveKind(STRATEGY_GROUPS[search.group][0]);
+    }
+  }, [search.kind, search.group]);
 
   const entry = STRATEGY_GUIDE[lang][activeKind];
 
@@ -88,26 +108,35 @@ function StrategyMenu({
         <CardTitle className="text-base">{t("learnStrategies.tableOfContents")}</CardTitle>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-auto">
-        <ul className="flex flex-col gap-1">
-          {STRATEGY_KINDS.map((kind) => {
-            const active = kind === activeKind;
-            return (
-              <li key={kind}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(kind)}
-                  className={`w-full rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors ${
-                    active
-                      ? "border-[var(--color-border)] bg-[var(--color-accent)] font-medium"
-                      : "border-transparent hover:bg-[var(--color-accent)]/60"
-                  }`}
-                >
-                  {STRATEGY_GUIDE[lang][kind].label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="flex flex-col gap-3">
+          {STRATEGY_GROUP_ORDER.map((group) => (
+            <div key={group}>
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted-fg)]">
+                {t(`learnStrategies.group.${group}` as const)}
+              </div>
+              <ul className="flex flex-col gap-1">
+                {STRATEGY_GROUPS[group].map((kind) => {
+                  const active = kind === activeKind;
+                  return (
+                    <li key={kind}>
+                      <button
+                        type="button"
+                        onClick={() => onSelect(kind)}
+                        className={`w-full rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors ${
+                          active
+                            ? "border-[var(--color-border)] bg-[var(--color-accent)] font-medium"
+                            : "border-transparent hover:bg-[var(--color-accent)]/60"
+                        }`}
+                      >
+                        {STRATEGY_GUIDE[lang][kind].label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
