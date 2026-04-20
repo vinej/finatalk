@@ -71,6 +71,13 @@
       "when": 1776467296065,
       "tag": "0009_nifty_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776709484005,
+      "tag": "0010_happy_whirlwind",
+      "breakpoints": true
     }
   ]
 }

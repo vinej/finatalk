@@ -45,6 +45,7 @@ export const STRATEGY_KINDS = [
   "pivotPointReaction",
   "liqSweepReversal",
   "donchianTurtleBreakout",
+  "trendStructureVolatility",
 ] as const;
 
 export type StrategyKind = (typeof STRATEGY_KINDS)[number];
@@ -1321,6 +1322,67 @@ const STRATEGY_GUIDE_EN: Record<StrategyKind, StrategyEntry> = {
       { title: "Original Turtle rules (PDF, archived)", url: "https://web.archive.org/web/20210304144604/https://bigpicture.typepad.com/comments/files/turtlerules.pdf" },
     ],
   },
+
+  trendStructureVolatility: {
+    label: "Trend + Structure + Volatility Expansion",
+    summary: "Six-filter swing/intraday system — only trades when trend (EMA 50), strength (ADX 14), pullback (RSI 14), structure (VWAP or Volume Profile), and volatility expansion (close back through the Keltner mid-line) all agree. 1.5× ATR stops, 2R targets or Keltner/RSI trail.",
+    description:
+      "Trend + Structure + Volatility Expansion is a rules-based system that stacks six independent filters before allowing any trade: trend direction (EMA 50), regime strength (ADX 14 > 25 and rising), pullback timing (RSI 14 returning to the 40–50 zone in an uptrend or 50–60 in a downtrend), market structure (price above/below VWAP, or reacting at a high-volume node on the Volume Profile), and a volatility-expansion trigger — a candle that closes back through the Keltner(20, 2× ATR) mid-line in the direction of trend after the pullback. Position sizing is driven by ATR so every trade risks the same dollar amount across instruments and regimes. The edge comes from the filters' combined ability to refuse trades: the gate turns away most setups, which is exactly the design goal — the trades you don't take are the ones that would have hurt you.",
+    whenToUse:
+      "Use on liquid instruments (major FX, index futures, large-cap equities, high-liquidity crypto) on the 15-minute to daily timeframe. Best suited to swing and active intraday traders who can patiently wait for full filter alignment. Stand aside entirely when ADX is below 20, when price is criss-crossing EMA 50, when ADX is high but falling (trend exhausting), or when ATR has collapsed to multi-month lows — the system is engineered to skip those regimes, not to squeeze trades out of them.",
+    prosAndCons:
+      "Pros: six independent filters kill most bad setups before they tempt you; ATR-scaled stops and position sizing normalise dollar risk across instruments and volatility regimes; two exit styles (fixed 2R or Keltner/RSI trail) let you match the system to your temperament; logic is fully symmetric long/short. Cons: very few trades in calm or choppy regimes — long stretches of sitting on your hands are normal; requires the patience to wait for the RSI pullback instead of chasing the initial move; performance depends heavily on respecting the 'skip' rules — every override is what turns a profitable system into a losing one.",
+    indicatorsUsed: [
+      "EMA (50) — trend direction",
+      "ADX (14) — regime-strength gate (> 25 and rising)",
+      "RSI (14) — pullback-timing filter",
+      "ATR (14) — stop sizing and position sizing",
+      "Keltner Channels (20, 2× ATR) — volatility-expansion trigger on the mid-line",
+      "VWAP or Volume Profile — structural reference (POC / VAH / VAL)",
+    ],
+    coreIdea:
+      "Don't enter until trend, momentum pullback, structure, and volatility all agree. Six filters is a high bar — and that bar is the edge. Most traders miss the alignment because they trade any one of the signals on its own.",
+    steps: [
+      {
+        title: "Step 1: Regime filter — trade only when ADX > 25 and price is clearly on one side of EMA 50",
+        body:
+          "First gate: is this a tradable regime at all? Require ADX(14) above 25 AND price visibly above (for longs) or below (for shorts) the 50 EMA. Skip if ADX is under 20 (chop), if price keeps crossing the EMA, or if ADX is high but falling (trend exhausting). This single rule removes a large share of losing trades before they happen.",
+      },
+      {
+        title: "Step 2: Wait for a momentum pullback on RSI",
+        body:
+          "After the regime gate, do not chase. Wait for RSI(14) to pull back to the 40–50 zone in an uptrend, or rally to the 50–60 zone in a downtrend. This is the timing filter that keeps you from buying tops and selling bottoms. What matters is that momentum has cooled — entering fresh into an overbought or oversold print is exactly what this step is designed to prevent.",
+      },
+      {
+        title: "Step 3: Confirm the structural level",
+        body:
+          "Check structure before pulling the trigger. For longs: price above VWAP, or bouncing from a high-volume node on the Volume Profile. For shorts: below VWAP, or rejecting a high-volume zone overhead. If structure does not agree with the trend-and-momentum picture, stand aside — one missing filter is enough to invalidate the setup.",
+      },
+      {
+        title: "Step 4: Trigger — close back through the Keltner mid-line",
+        body:
+          "The entry candle is the one that closes back through the Keltner(20, 2× ATR) mid-line (the 20-EMA) in the direction of the trend after the RSI pullback. Enter at the close of that confirmation candle. This sequence — pullback first, volatility-expansion close second — catches the resumption of the move rather than the pullback itself. For shorts, mirror the logic: close below the mid-line after RSI rallies into 50–60.",
+      },
+      {
+        title: "Step 5: Stop at 1.5× ATR, take profit at 2R or trail with Keltner/RSI",
+        body:
+          "Stop-loss: 1.5 × ATR(14) from entry (below for longs, above for shorts). Two exit options — pick one and keep it consistent: (A) fixed 2× risk take-profit (2R), mechanical and simple; (B) trail and hold — exit when price closes back through the Keltner mid-line against you, or when RSI prints > 70 (long) / < 30 (short) and turns. Trend-following traders prefer (B); probabilistic / RR-minded traders prefer (A).",
+      },
+      {
+        title: "Step 6: Size by ATR and respect the hard-skip rules",
+        body:
+          "Risk 0.5–1% of account per trade. Position size = (account × risk%) / (1.5 × ATR × point value). This normalises dollar risk across instruments and volatility regimes. Hard skip rules: ADX falling even if > 25, price extended too far from EMA 50 (overstretched), imminent major news, ATR compressed to multi-month lows (dead market). Optional enhancements: only take longs above the daily pivot and shorts below; add a no-trade band around VWAP ± a small tolerance; use the higher-timeframe EMA 50 as a bias filter. Common mistakes to avoid: entering without the RSI pullback (chasing), ignoring a falling ADX, using stops tighter than 1.5× ATR, and manually overriding any rule on 'conviction'.",
+      },
+    ],
+    whyItWorks:
+      "Each filter blocks a specific failure mode. ADX kills chop — where most strategies bleed. EMA 50 picks the side of the market. The RSI pullback forces a better entry than chasing the initial move. VWAP / Volume Profile anchors the trade to a level where real flow transacts. The Keltner mid-line close waits for volatility to actually expand in your direction before committing. ATR-based sizing and stops equalise risk across regimes so a quiet week and a volatile week both contribute the same dollar exposure. Individually each filter is ordinary; stacked, they turn away the trades that would have destroyed the edge — which is why the system survives across instruments and market cycles.",
+    links: [
+      { title: "Investopedia — ADX (Average Directional Index)", url: "https://www.investopedia.com/terms/a/adx.asp" },
+      { title: "Investopedia — Keltner Channel", url: "https://www.investopedia.com/terms/k/keltnerchannel.asp" },
+      { title: "Investopedia — ATR and position sizing", url: "https://www.investopedia.com/articles/trading/08/atr.asp" },
+      { title: "Investopedia — Volume Profile", url: "https://www.investopedia.com/terms/v/volume-profile.asp" },
+    ],
+  },
 };
 
 const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
@@ -2578,6 +2640,67 @@ const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
       { title: "Investopedia — Donchian Channels (anglais)", url: "https://www.investopedia.com/terms/d/donchianchannels.asp" },
       { title: "Livre — Curtis Faith, Way of the Turtle (anglais)", url: "https://www.amazon.com/Way-Turtle-Secret-Methods-Legendary/dp/007148664X" },
       { title: "Règles Turtle originales (PDF, anglais, archivé)", url: "https://web.archive.org/web/20210304144604/https://bigpicture.typepad.com/comments/files/turtlerules.pdf" },
+    ],
+  },
+
+  trendStructureVolatility: {
+    label: "Tendance + Structure + Expansion de volatilité",
+    summary: "Système swing/intraday à six filtres — n'entre que lorsque tendance (EMA 50), force (ADX 14), pullback (RSI 14), structure (VWAP ou Volume Profile) et expansion de volatilité (clôture à travers la médiane Keltner) sont tous alignés. Stops à 1,5× ATR, objectifs 2R ou trailing Keltner/RSI.",
+    description:
+      "Tendance + Structure + Expansion de volatilité est un système rule-based qui empile six filtres indépendants avant d'autoriser un trade : direction de tendance (EMA 50), force du régime (ADX 14 > 25 et en hausse), timing du pullback (RSI 14 revenant en zone 40–50 en uptrend ou 50–60 en downtrend), structure de marché (prix au-dessus/au-dessous du VWAP, ou réaction sur un nœud à fort volume du Volume Profile) et un déclencheur d'expansion de volatilité — une bougie qui reclôture à travers la médiane Keltner(20, 2× ATR) dans le sens de la tendance après le pullback. Le dimensionnement est piloté par l'ATR pour que chaque trade risque le même montant en dollars quel que soit l'instrument ou le régime. L'edge vient de la capacité combinée des filtres à refuser des trades : la porte écarte la plupart des setups, et c'est précisément le but — les trades que vous ne prenez pas sont ceux qui vous auraient fait mal.",
+    whenToUse:
+      "À utiliser sur des instruments liquides (Forex majeur, futures d'indices, grandes capitalisations, cryptos très liquides) sur unités de temps 15 min à daily. Idéal pour les traders swing et intraday actifs capables d'attendre patiemment l'alignement complet des filtres. Rester totalement à l'écart quand l'ADX est sous 20, quand le prix scie l'EMA 50, quand l'ADX est élevé mais en baisse (tendance qui s'épuise), ou quand l'ATR est tombé à des plus bas pluri-mensuels — le système est conçu pour sauter ces régimes, pas pour y forcer un trade.",
+    prosAndCons:
+      "Avantages : six filtres indépendants tuent la majorité des mauvais setups avant qu'ils vous tentent ; stops et dimensionnement à base d'ATR qui normalisent le risque en dollars entre instruments et régimes de volatilité ; deux options de sortie (2R fixe ou trailing Keltner/RSI) pour s'adapter au tempérament ; logique totalement symétrique long/short. Inconvénients : très peu de trades en régime calme ou choppy — il faut tenir les bras croisés longtemps ; demande de la patience pour attendre le pullback RSI plutôt que de chasser le mouvement initial ; la performance dépend fortement du respect des règles « skip » — chaque override est ce qui transforme un système profitable en système perdant.",
+    indicatorsUsed: [
+      "EMA (50) — direction de tendance",
+      "ADX (14) — filtre de force du régime (> 25 et en hausse)",
+      "RSI (14) — filtre de timing du pullback",
+      "ATR (14) — dimensionnement du stop et de la position",
+      "Canaux de Keltner (20, 2× ATR) — déclencheur d'expansion de volatilité sur la médiane",
+      "VWAP ou Volume Profile — référence structurelle (POC / VAH / VAL)",
+    ],
+    coreIdea:
+      "N'entrez pas avant que tendance, pullback de momentum, structure et volatilité soient tous d'accord. Six filtres, c'est une barre haute — et cette barre, c'est l'edge. La plupart des traders manquent cet alignement parce qu'ils tradent chacun des signaux pris isolément.",
+    steps: [
+      {
+        title: "Étape 1 : filtrer le régime — trader uniquement si ADX > 25 et prix clairement d'un côté de l'EMA 50",
+        body:
+          "Premier garde-fou : est-ce un régime tradable ? Exiger ADX(14) > 25 ET prix visiblement au-dessus (longs) ou en dessous (shorts) de l'EMA 50. Sauter si l'ADX est sous 20 (chop), si le prix scie l'EMA, ou si l'ADX est élevé mais en baisse (tendance qui s'épuise). Cette seule règle élimine une large part des trades perdants avant même qu'ils se présentent.",
+      },
+      {
+        title: "Étape 2 : attendre un pullback de momentum sur le RSI",
+        body:
+          "Après le filtre de régime, ne pas courir après le prix. Attendre que le RSI(14) revienne dans la zone 40–50 en uptrend, ou monte vers 50–60 en downtrend. C'est le filtre de timing qui évite d'acheter les sommets et de vendre les creux. Ce qui compte, c'est que le momentum ait refroidi — entrer frais dans un print surtaché ou sursold est exactement ce que cette étape doit empêcher.",
+      },
+      {
+        title: "Étape 3 : confirmer le niveau structurel",
+        body:
+          "Vérifier la structure avant d'appuyer. Pour un long : prix au-dessus du VWAP, ou rebond sur un nœud à fort volume du Volume Profile. Pour un short : sous le VWAP, ou rejet d'une zone à fort volume au-dessus. Si la structure ne confirme pas le tableau tendance + momentum, rester à l'écart — un filtre manquant suffit à invalider le setup.",
+      },
+      {
+        title: "Étape 4 : déclencheur — clôture à travers la médiane Keltner",
+        body:
+          "La bougie d'entrée est celle qui reclôture à travers la médiane Keltner(20, 2× ATR) (la 20-EMA) dans le sens de la tendance après le pullback RSI. Entrée à la clôture de cette bougie de confirmation. Cette séquence — pullback d'abord, clôture d'expansion de volatilité ensuite — capture la reprise du mouvement plutôt que le pullback lui-même. Pour un short, miroir : clôture sous la médiane après un RSI revenu en 50–60.",
+      },
+      {
+        title: "Étape 5 : stop à 1,5× ATR, take profit à 2R ou trailing Keltner/RSI",
+        body:
+          "Stop-loss : 1,5 × ATR(14) depuis l'entrée (en dessous pour les longs, au-dessus pour les shorts). Deux options de sortie — en choisir une et s'y tenir : (A) TP fixe à 2× le risque (2R), mécanique et simple ; (B) trailing — sortir quand le prix reclôture contre vous à travers la médiane Keltner, ou quand le RSI dépasse 70 (long) / passe sous 30 (short) puis se retourne. Les traders de suivi de tendance préfèrent (B) ; les traders à RR probabiliste préfèrent (A).",
+      },
+      {
+        title: "Étape 6 : dimensionnement par ATR et respect des règles de skip",
+        body:
+          "Risquer 0,5–1 % du compte par trade. Taille = (compte × risque %) / (1,5 × ATR × valeur du point). Cela normalise le risque en dollars entre instruments et régimes. Règles de skip strictes : ADX en baisse même si > 25, prix trop éloigné de l'EMA 50 (sur-étendu), news majeure imminente, ATR comprimé à des plus bas pluri-mensuels (marché mort). Améliorations optionnelles : n'autoriser les longs qu'au-dessus du pivot quotidien et les shorts en dessous ; ajouter une zone de non-trade autour du VWAP ± une petite tolérance ; utiliser l'EMA 50 de l'unité de temps supérieure comme biais. Erreurs fréquentes à éviter : entrer sans pullback RSI (chasing), ignorer un ADX qui baisse, utiliser des stops plus serrés que 1,5× ATR, outrepasser manuellement les règles par « conviction ».",
+      },
+    ],
+    whyItWorks:
+      "Chaque filtre bloque un mode d'échec précis. L'ADX élimine le chop — là où la plupart des stratégies saignent. L'EMA 50 choisit le côté du marché. Le pullback RSI force une meilleure entrée que courir après le mouvement initial. VWAP / Volume Profile ancre le trade à un niveau où des flux réels transigent. La clôture sur la médiane Keltner attend que la volatilité s'étende réellement dans votre sens avant de s'engager. Le dimensionnement et les stops à base d'ATR égalisent le risque entre régimes, pour qu'une semaine calme et une semaine volatile contribuent à la même exposition en dollars. Pris isolément, chaque filtre est banal ; empilés, ils écartent les trades qui auraient détruit l'edge — c'est pour cela que le système survit entre instruments et cycles de marché.",
+    links: [
+      { title: "Investopedia — ADX (anglais)", url: "https://www.investopedia.com/terms/a/adx.asp" },
+      { title: "Investopedia — Canaux de Keltner (anglais)", url: "https://www.investopedia.com/terms/k/keltnerchannel.asp" },
+      { title: "Investopedia — ATR et dimensionnement (anglais)", url: "https://www.investopedia.com/articles/trading/08/atr.asp" },
+      { title: "Investopedia — Volume Profile (anglais)", url: "https://www.investopedia.com/terms/v/volume-profile.asp" },
     ],
   },
 };

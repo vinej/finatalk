@@ -171,6 +171,7 @@ export const portfolioRouter = createTRPCRouter({
       currency: CurrencySchema.parse(p.currency),
       accountType: p.accountType ?? null,
       manageTransactions: p.manageTransactions ?? false,
+      strategyKind: p.strategyKind ?? null,
       holdingCount: counts[i]!.length,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
@@ -193,6 +194,7 @@ export const portfolioRouter = createTRPCRouter({
         currency: CurrencySchema.parse(p.currency),
         accountType: p.accountType ?? null,
         manageTransactions: p.manageTransactions ?? false,
+        strategyKind: p.strategyKind ?? null,
         holdings: rows.map((r) => ({
           ...serializeHolding(r.h),
           analysisTitle: r.analysisTitle ?? null,
@@ -245,12 +247,14 @@ export const portfolioRouter = createTRPCRouter({
       currency: CurrencySchema.optional(),
       accountType: AccountTypeSchema.nullable().optional(),
       manageTransactions: z.boolean().optional(),
+      strategyKind: z.string().max(64).nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await findOwnedPortfolio(ctx, input.id);
       const values: Record<string, unknown> = { updatedAt: new Date() };
       if (input.accountType !== undefined) values.accountType = input.accountType;
       if (input.manageTransactions !== undefined) values.manageTransactions = input.manageTransactions;
+      if (input.strategyKind !== undefined) values.strategyKind = input.strategyKind;
       if (input.title !== undefined) {
         const duplicate = await ctx.db.query.portfolio.findFirst({
           where: and(

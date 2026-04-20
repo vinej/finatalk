@@ -352,7 +352,8 @@ export function MarketChart({
         const lastTime = candles.at(-1)?.time;
         for (const g of r.series.gaps) {
           const color = g.type === "bullish" ? fc.bullish : fc.bearish;
-          const endTime = (g.endTime ?? lastTime ?? g.time) as Time;
+          const rawEnd = g.endTime ?? lastTime ?? g.time;
+          const endTime = Math.max(rawEnd, g.time + 1) as Time;
           const lineStyle = g.filled ? 2 : 0;
           const topLine = chart.addSeries(LineSeries, {
             color,
@@ -393,6 +394,7 @@ export function MarketChart({
           typeof c === "object" && c.kind === "srLevels"
             ? c
             : { support: "#16a34a", resistance: "#dc2626" };
+        const srEnd = Math.max(r.series.endTime, r.series.startTime + 1);
         for (const lvl of r.series.levels) {
           const color = lvl.type === "support" ? sc.support : sc.resistance;
           const line = chart.addSeries(LineSeries, {
@@ -404,7 +406,7 @@ export function MarketChart({
           });
           line.setData([
             { time: r.series.startTime as Time, value: lvl.price },
-            { time: r.series.endTime as Time, value: lvl.price },
+            { time: srEnd as Time, value: lvl.price },
           ]);
           seriesRef.current.push(line);
         }
@@ -414,6 +416,7 @@ export function MarketChart({
             ? c
             : { pp: "#6366f1", resistance: "#dc2626", support: "#16a34a" };
         for (const period of r.series.periods) {
+          const pEnd = Math.max(period.endTime, period.startTime + 1);
           for (const lvl of period.levels) {
             const color = lvl.role === "pp" ? pc.pp : lvl.role === "resistance" ? pc.resistance : pc.support;
             const line = chart.addSeries(LineSeries, {
@@ -425,7 +428,7 @@ export function MarketChart({
             });
             line.setData([
               { time: period.startTime as Time, value: lvl.price },
-              { time: period.endTime as Time, value: lvl.price },
+              { time: pEnd as Time, value: lvl.price },
             ]);
             seriesRef.current.push(line);
           }
@@ -436,6 +439,7 @@ export function MarketChart({
             ? c
             : { poc: "#f59e0b", valueArea: "#60a5fa", histogram: "#94a3b8" };
         const s = r.series;
+        const vpEnd = Math.max(s.endTime, s.startTime + 1);
         if (s.bins.length > 0) {
           const pocLine = chart.addSeries(LineSeries, {
             color: vc.poc,
@@ -445,7 +449,7 @@ export function MarketChart({
           });
           pocLine.setData([
             { time: s.startTime as Time, value: s.poc },
-            { time: s.endTime as Time, value: s.poc },
+            { time: vpEnd as Time, value: s.poc },
           ]);
           seriesRef.current.push(pocLine);
           const vahLine = chart.addSeries(LineSeries, {
@@ -457,7 +461,7 @@ export function MarketChart({
           });
           vahLine.setData([
             { time: s.startTime as Time, value: s.vah },
-            { time: s.endTime as Time, value: s.vah },
+            { time: vpEnd as Time, value: s.vah },
           ]);
           const valLine = chart.addSeries(LineSeries, {
             color: vc.valueArea,
@@ -468,7 +472,7 @@ export function MarketChart({
           });
           valLine.setData([
             { time: s.startTime as Time, value: s.val },
-            { time: s.endTime as Time, value: s.val },
+            { time: vpEnd as Time, value: s.val },
           ]);
           seriesRef.current.push(vahLine, valLine);
           if (r.spec.showHistogram) {
@@ -485,7 +489,7 @@ export function MarketChart({
                 });
                 line.setData([
                   { time: s.startTime as Time, value: bin.price },
-                  { time: s.endTime as Time, value: bin.price },
+                  { time: vpEnd as Time, value: bin.price },
                 ]);
                 seriesRef.current.push(line);
               }
@@ -500,7 +504,8 @@ export function MarketChart({
         const lastTime = candles.at(-1)?.time;
         for (const b of r.series.blocks) {
           const color = b.type === "bullish" ? oc.bullish : oc.bearish;
-          const endTime = (b.endTime ?? lastTime ?? b.time) as Time;
+          const rawEnd = b.endTime ?? lastTime ?? b.time;
+          const endTime = Math.max(rawEnd, b.time + 1) as Time;
           const lineStyle = b.mitigated ? 2 : 0;
           const topLine = chart.addSeries(LineSeries, {
             color,

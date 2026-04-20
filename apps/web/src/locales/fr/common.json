@@ -338,6 +338,18 @@
     "currency": "Devise : {{code}}",
     "currencyConverted": "Converti de {{from}} vers {{to}} aux taux de change historiques",
     "indicators": "Indicateurs",
+    "applyStrategy": "Appliquer une stratégie…",
+    "strategyApplied": "{{added}} indicateur(s) chargés depuis {{strategy}}.",
+    "indicatorsAccordingToStrategy": "Indicateurs selon la stratégie {{strategy}}",
+    "proposedAction": "Action proposée",
+    "proposedActionFor": "Action proposée — {{strategy}}",
+    "action": {
+      "buy": "Acheter",
+      "sell": "Vendre",
+      "exitLong": "Sortir du long",
+      "exitShort": "Sortir du short",
+      "wait": "Patienter"
+    },
     "noIndicators": "Aucun indicateur sur le graphique. Ajoutez-en un ci-dessus.",
     "add": "Ajouter :",
     "edit": "Modifier",
@@ -672,6 +684,16 @@
     "exDate": "Date ex",
     "payDate": "Date de paiement",
     "annualEst": "Annuel est."
+  },
+  "strategySignal": {
+    "title": "Évaluateur de signaux de stratégie",
+    "none": "Aucune stratégie liée",
+    "linkHint": "Lier ce portefeuille à une stratégie",
+    "pickStrategy": "Choisissez une stratégie pour évaluer chaque position.",
+    "noHoldings": "Ajoutez une position pour évaluer les signaux.",
+    "evaluatingWith": "Évaluation de chaque position avec {{strategy}} sur 6 mois de données journalières.",
+    "loading": "Analyse…",
+    "noSignal": "Aucun signal disponible."
   },
   "settings": {
     "title": "Paramètres",

@@ -13,6 +13,7 @@ export const portfolio = createTable(
     currency: text("currency").notNull(),
     accountType: text("account_type"),
     manageTransactions: boolean("manage_transactions").notNull().default(false),
+    strategyKind: text("strategy_kind"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

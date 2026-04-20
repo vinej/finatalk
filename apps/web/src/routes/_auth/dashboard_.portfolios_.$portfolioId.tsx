@@ -22,6 +22,15 @@ import {
   clearLastPortfolioId,
   saveLastPortfolioId,
 } from "@/lib/portfolio-persistence";
+import { STRATEGY_GUIDE, type StrategyKind } from "@/lib/strategy-guide";
+import { STRATEGY_CHART_INDICATORS } from "@/lib/strategy-indicators";
+import {
+  evaluateStrategy,
+  type StrategyAction,
+  type StrategySignal,
+} from "@/lib/strategy-signals";
+import { createActive, type IndicatorKind } from "@/lib/indicator-defaults";
+import { pickLang } from "@/lib/lang";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
@@ -687,6 +696,15 @@ function PortfolioDetailPage() {
       )}
 
       <DividendSection symbols={[...new Set(holdings.map((h) => h.symbol.toUpperCase()))]} holdings={holdings} currency={currency} />
+
+      <StrategySignalSection
+        strategyKind={(p.strategyKind as StrategyKind | null) ?? null}
+        holdings={holdings}
+        onChangeStrategy={(kind) =>
+          updatePortfolio.mutate({ id: portfolioId, strategyKind: kind })
+        }
+        saving={updatePortfolio.isPending}
+      />
 
       {p.manageTransactions && <TaxSummarySection portfolioId={portfolioId} currency={currency} />}
 
@@ -1444,6 +1462,22 @@ function saveDividendCollapsed(collapsed: boolean): void {
   } catch { /* ignore */ }
 }
 
+const STRATEGY_SIGNAL_COLLAPSED_KEY = "finatalk:strategy-signal-collapsed";
+
+function loadStrategySignalCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(STRATEGY_SIGNAL_COLLAPSED_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
+function saveStrategySignalCollapsed(collapsed: boolean): void {
+  try {
+    window.localStorage.setItem(STRATEGY_SIGNAL_COLLAPSED_KEY, String(collapsed));
+  } catch { /* ignore */ }
+}
+
 function TransactionPanel({
   holdingId,
   symbol,
@@ -1880,5 +1914,193 @@ function DividendSection({
         </CardContent>
       )}
     </Card>
+  );
+}
+
+const EVALUABLE_STRATEGIES: StrategyKind[] = (Object.keys(STRATEGY_CHART_INDICATORS) as StrategyKind[]).sort();
+
+function StrategySignalSection({
+  strategyKind,
+  holdings,
+  onChangeStrategy,
+  saving,
+}: {
+  strategyKind: StrategyKind | null;
+  holdings: Array<{ symbol: string }>;
+  onChangeStrategy: (kind: StrategyKind | null) => void;
+  saving: boolean;
+}) {
+  const { t, i18n } = useTranslation();
+  const lang = pickLang(i18n.language);
+  const [collapsed, setCollapsed] = useState(loadStrategySignalCollapsed);
+
+  function toggle() {
+    setCollapsed((v) => {
+      saveStrategySignalCollapsed(!v);
+      return !v;
+    });
+  }
+
+  const symbols = useMemo(
+    () => [...new Set(holdings.map((h) => h.symbol.toUpperCase()))].sort(),
+    [holdings],
+  );
+
+  const strategyLabel = strategyKind ? STRATEGY_GUIDE[lang][strategyKind].label : null;
+  const indicatorKinds: IndicatorKind[] = strategyKind
+    ? STRATEGY_CHART_INDICATORS[strategyKind] ?? []
+    : [];
+  const indicators = useMemo(
+    () => indicatorKinds.slice(0, 10).map((k) => createActive(k).spec),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [strategyKind],
+  );
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+        <button
+          type="button"
+          onClick={toggle}
+          className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-[var(--color-accent)]"
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+          )}
+          <CardTitle className="text-sm font-semibold">
+            {t("strategySignal.title")}
+          </CardTitle>
+        </button>
+        <div className="flex items-center gap-2">
+          <select
+            className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs"
+            value={strategyKind ?? ""}
+            onChange={(e) => onChangeStrategy((e.target.value || null) as StrategyKind | null)}
+            disabled={saving}
+            title={t("strategySignal.linkHint")}
+          >
+            <option value="">{t("strategySignal.none")}</option>
+            {EVALUABLE_STRATEGIES.map((k) => (
+              <option key={k} value={k}>
+                {STRATEGY_GUIDE[lang][k].label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </CardHeader>
+      {!collapsed && (
+        <CardContent>
+          {!strategyKind ? (
+            <p className="text-sm text-[var(--color-muted-fg)]">
+              {t("strategySignal.pickStrategy")}
+            </p>
+          ) : symbols.length === 0 ? (
+            <p className="text-sm text-[var(--color-muted-fg)]">
+              {t("strategySignal.noHoldings")}
+            </p>
+          ) : (
+            <>
+              <p className="mb-3 text-xs text-[var(--color-muted-fg)]">
+                {t("strategySignal.evaluatingWith", { strategy: strategyLabel })}
+              </p>
+              <div className="space-y-2">
+                {symbols.map((sym) => (
+                  <HoldingSignalRow
+                    key={sym}
+                    symbol={sym}
+                    strategyKind={strategyKind}
+                    indicators={indicators}
+                    lang={lang}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+const ACTION_STYLE: Record<StrategyAction, { border: string; badge: string }> = {
+  buy: { border: "border-[#10b981]", badge: "bg-[#10b981] text-white" },
+  sell: { border: "border-[#ef4444]", badge: "bg-[#ef4444] text-white" },
+  exitLong: { border: "border-[#f59e0b]", badge: "bg-[#f59e0b] text-black" },
+  exitShort: { border: "border-[#f59e0b]", badge: "bg-[#f59e0b] text-black" },
+  wait: { border: "border-[var(--color-border)]", badge: "bg-[var(--color-muted)] text-[var(--color-muted-fg)]" },
+};
+
+function HoldingSignalRow({
+  symbol,
+  strategyKind,
+  indicators,
+  lang,
+}: {
+  symbol: string;
+  strategyKind: StrategyKind;
+  indicators: Array<ReturnType<typeof createActive>["spec"]>;
+  lang: "en" | "fr";
+}) {
+  const { t } = useTranslation();
+  const query = trpc.market.analyze.useQuery(
+    { symbol, range: "6mo", interval: "1d", indicators },
+    { staleTime: 300_000, retry: false },
+  );
+
+  const signal: StrategySignal | null = useMemo(() => {
+    if (!query.data) return null;
+    return evaluateStrategy(strategyKind, query.data.results, query.data.candles, lang);
+  }, [query.data, strategyKind, lang]);
+
+  if (query.isLoading) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-[var(--color-border)] p-3 text-sm">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-muted-fg)]" aria-hidden />
+        <span className="font-mono">{symbol}</span>
+        <span className="text-xs text-[var(--color-muted-fg)]">{t("strategySignal.loading")}</span>
+      </div>
+    );
+  }
+
+  if (query.error) {
+    return (
+      <div className="rounded-md border border-[var(--color-border)] p-3 text-sm">
+        <span className="font-mono">{symbol}</span>
+        <span className="ml-2 text-xs text-[#ef4444]">{query.error.message}</span>
+      </div>
+    );
+  }
+
+  if (!signal) {
+    return (
+      <div className="rounded-md border border-[var(--color-border)] p-3 text-sm">
+        <span className="font-mono">{symbol}</span>
+        <span className="ml-2 text-xs text-[var(--color-muted-fg)]">
+          {t("strategySignal.noSignal")}
+        </span>
+      </div>
+    );
+  }
+
+  const style = ACTION_STYLE[signal.action];
+  return (
+    <div className={`rounded-md border-2 ${style.border} p-3`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-sm">{symbol}</span>
+        <span className={`rounded-full px-3 py-0.5 text-xs font-semibold uppercase ${style.badge}`}>
+          {t(`analysis.action.${signal.action}`)}
+        </span>
+      </div>
+      {signal.reasons.length > 0 && (
+        <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-[var(--color-muted-fg)]">
+          {signal.reasons.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

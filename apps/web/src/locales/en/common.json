@@ -338,6 +338,18 @@
     "currency": "Currency: {{code}}",
     "currencyConverted": "Converted from {{from}} to {{to}} at historical FX rates",
     "indicators": "Indicators",
+    "applyStrategy": "Apply strategy…",
+    "strategyApplied": "Loaded {{added}} indicator(s) from {{strategy}}.",
+    "indicatorsAccordingToStrategy": "Indicators according to strategy {{strategy}}",
+    "proposedAction": "Proposed action",
+    "proposedActionFor": "Proposed action — {{strategy}}",
+    "action": {
+      "buy": "Buy",
+      "sell": "Sell",
+      "exitLong": "Exit long",
+      "exitShort": "Exit short",
+      "wait": "Wait"
+    },
     "noIndicators": "No indicators on the chart. Add one above to get started.",
     "add": "Add:",
     "edit": "Edit",
@@ -672,6 +684,16 @@
     "exDate": "Ex-date",
     "payDate": "Pay date",
     "annualEst": "Annual est."
+  },
+  "strategySignal": {
+    "title": "Strategy signal evaluator",
+    "none": "No strategy linked",
+    "linkHint": "Link this portfolio to a strategy",
+    "pickStrategy": "Pick a strategy to evaluate each holding.",
+    "noHoldings": "Add a holding to evaluate signals.",
+    "evaluatingWith": "Evaluating each holding against {{strategy}} on 6 months of daily data.",
+    "loading": "Analyzing…",
+    "noSignal": "No signal available."
   },
   "settings": {
     "title": "Settings",

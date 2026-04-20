@@ -21,12 +21,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  createActive,
   DEFAULT_SEED,
   sortIndicators,
   type ActiveIndicator,
   type IndicatorColor,
   type IndicatorSpec,
 } from "@/lib/indicator-defaults";
+import { STRATEGY_GUIDE, STRATEGY_KINDS, type StrategyKind } from "@/lib/strategy-guide";
+import { STRATEGY_CHART_INDICATORS } from "@/lib/strategy-indicators";
+import { evaluateStrategy, type StrategyAction } from "@/lib/strategy-signals";
+import { pickLang, type Lang } from "@/lib/lang";
 import { loadAnalysisState, saveAnalysisState } from "@/lib/analysis-persistence";
 import { COMMODITIES, COMMODITY_EXCHANGE_BY_CATEGORY } from "@/lib/commodities";
 import { trpc } from "@/lib/trpc";
@@ -80,6 +85,7 @@ function AnalysisPage() {
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf" | "commodity" | "mutualfund">(persisted?.assetTypeFilter ?? "all");
   const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
+  const [appliedStrategy, setAppliedStrategy] = useState<StrategyKind | null>(null);
 
   const confidenceMutation = trpc.research.getConfidence.useMutation({
     onSuccess: (data) => setConfidence(data.confidence),
@@ -365,6 +371,16 @@ function AnalysisPage() {
     );
   }
 
+  function applyStrategy(kind: StrategyKind) {
+    const wanted = STRATEGY_CHART_INDICATORS[kind] ?? [];
+    const lang = pickLang(i18n.language);
+    const label = STRATEGY_GUIDE[lang][kind].label;
+    setActiveIndicators(wanted.map((k) => createActive(k)));
+    setHiddenIds(new Set());
+    setAppliedStrategy(kind);
+    toast.success(t("analysis.strategyApplied", { added: wanted.length, strategy: label }));
+  }
+
   function loadAnalysis(data: AnalysisLoadData) {
     const sym = sanitizeSymbol(data.symbol);
     setSymbolInput(data.symbol);
@@ -378,6 +394,7 @@ function AnalysisPage() {
     setInterval(data.interval as (typeof INTERVALS)[number]);
     setConvertToCad(data.convertTo === "CAD");
     setConfidence(null);
+    setAppliedStrategy(null);
   }
 
   function newAnalysis() {
@@ -393,6 +410,7 @@ function AnalysisPage() {
     setConvertToCad(false);
     setAssetTypeFilter("all");
     setConfidence(null);
+    setAppliedStrategy(null);
   }
 
   function onSymbolChange(next: string) {
@@ -657,8 +675,31 @@ function AnalysisPage() {
               ) : (
                 <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
               )}
-              <CardTitle className="text-base">{t("analysis.indicators")}</CardTitle>
+              <CardTitle className="text-base">
+                {appliedStrategy
+                  ? t("analysis.indicatorsAccordingToStrategy", {
+                      strategy: STRATEGY_GUIDE[pickLang(i18n.language)][appliedStrategy].label,
+                    })
+                  : t("analysis.indicators")}
+              </CardTitle>
             </button>
+            <select
+              aria-label={t("analysis.applyStrategy")}
+              value=""
+              onChange={(e) => {
+                const v = e.target.value as StrategyKind | "";
+                if (v) applyStrategy(v);
+                e.target.value = "";
+              }}
+              className="h-9 max-w-[240px] rounded-md border border-[var(--color-border)] bg-transparent px-2 text-xs"
+            >
+              <option value="">{t("analysis.applyStrategy")}</option>
+              {STRATEGY_KINDS.filter((k) => STRATEGY_CHART_INDICATORS[k]).map((k) => (
+                <option key={k} value={k}>
+                  {STRATEGY_GUIDE[pickLang(i18n.language)][k].label}
+                </option>
+              ))}
+            </select>
           </CardHeader>
           {!indicatorsCollapsed && (
             <CardContent className="flex flex-col gap-3">
@@ -714,7 +755,15 @@ function AnalysisPage() {
             </button>
           </CardHeader>
           {!latestCollapsed && (
-            <CardContent>
+            <CardContent className="space-y-3">
+              {appliedStrategy && (
+                <ProposedActionBanner
+                  kind={appliedStrategy}
+                  results={query.data.results}
+                  candles={query.data.candles}
+                  lang={pickLang(i18n.language)}
+                />
+              )}
               <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 md:grid-cols-4">
                 {query.data.results.map((r, i) => (
                   <LatestCell key={i} result={r} lastClose={query.data.candles.at(-1)?.close ?? null} />
@@ -788,6 +837,75 @@ function AnalysisPage() {
           hiddenIds,
         }}
       />
+    </div>
+  );
+}
+
+const ACTION_STYLE: Record<StrategyAction, { border: string; badge: string; text: string }> = {
+  buy: {
+    border: "border-[#10b981]",
+    badge: "bg-[#10b981] text-white",
+    text: "text-[#10b981]",
+  },
+  sell: {
+    border: "border-[#ef4444]",
+    badge: "bg-[#ef4444] text-white",
+    text: "text-[#ef4444]",
+  },
+  exitLong: {
+    border: "border-[#f59e0b]",
+    badge: "bg-[#f59e0b] text-black",
+    text: "text-[#f59e0b]",
+  },
+  exitShort: {
+    border: "border-[#f59e0b]",
+    badge: "bg-[#f59e0b] text-black",
+    text: "text-[#f59e0b]",
+  },
+  wait: {
+    border: "border-[var(--color-border)]",
+    badge: "bg-[var(--color-muted)] text-[var(--color-muted-fg)]",
+    text: "text-[var(--color-muted-fg)]",
+  },
+};
+
+function ProposedActionBanner({
+  kind,
+  results,
+  candles,
+  lang,
+}: {
+  kind: StrategyKind;
+  results: RouterOutputs["market"]["analyze"]["results"];
+  candles: RouterOutputs["market"]["analyze"]["candles"];
+  lang: Lang;
+}) {
+  const { t } = useTranslation();
+  const signal = useMemo(
+    () => evaluateStrategy(kind, results, candles, lang),
+    [kind, results, candles, lang],
+  );
+  if (!signal) return null;
+  const style = ACTION_STYLE[signal.action];
+  const strategyLabel = STRATEGY_GUIDE[lang][kind].label;
+
+  return (
+    <div className={`rounded-md border-2 ${style.border} p-3`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-[var(--color-muted-fg)]">
+          {t("analysis.proposedActionFor", { strategy: strategyLabel })}
+        </div>
+        <span className={`rounded-full px-3 py-0.5 text-xs font-semibold uppercase ${style.badge}`}>
+          {t(`analysis.action.${signal.action}`)}
+        </span>
+      </div>
+      {signal.reasons.length > 0 && (
+        <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-[var(--color-muted-fg)]">
+          {signal.reasons.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
