@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpDown, BookOpen, Briefcase, ChevronDown, ChevronRight, Coins, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, NotebookPen, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
+import { ArrowUpDown, BookOpen, Briefcase, ChevronDown, ChevronRight, Coins, Eye, FlaskConical, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, NotebookPen, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -56,6 +56,7 @@ export function Sidebar() {
   const topItems = [
     { key: "home", to: "/dashboard", label: t("nav.home"), icon: Home },
     { key: "analysis", to: "/dashboard/analysis", label: t("nav.analysis"), icon: LineChart },
+    { key: "backtest", to: "/dashboard/backtest", label: t("nav.backtest"), icon: FlaskConical },
     { key: "portfolios", label: t("nav.portfolios"), icon: Briefcase, link: portfolioLink, matchPrefix: "/dashboard/portfolios" },
     { key: "advisor", to: "/dashboard/advisor", label: t("nav.advisor"), icon: Sparkles },
     ...(showTax

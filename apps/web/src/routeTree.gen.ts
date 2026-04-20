@@ -37,6 +37,7 @@ import { Route as AuthDashboardIndicesRouteImport } from './routes/_auth/dashboa
 import { Route as AuthDashboardComparisonRouteImport } from './routes/_auth/dashboard_.comparison'
 import { Route as AuthDashboardCommoditiesRouteImport } from './routes/_auth/dashboard_.commodities'
 import { Route as AuthDashboardCalendarRouteImport } from './routes/_auth/dashboard_.calendar'
+import { Route as AuthDashboardBacktestRouteImport } from './routes/_auth/dashboard_.backtest'
 import { Route as AuthDashboardAnalysisRouteImport } from './routes/_auth/dashboard_.analysis'
 import { Route as AuthDashboardAdvisorRouteImport } from './routes/_auth/dashboard_.advisor'
 import { Route as AuthDashboardPortfoliosPortfolioIdRouteImport } from './routes/_auth/dashboard_.portfolios_.$portfolioId'
@@ -183,6 +184,11 @@ const AuthDashboardCalendarRoute = AuthDashboardCalendarRouteImport.update({
   path: '/dashboard/calendar',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardBacktestRoute = AuthDashboardBacktestRouteImport.update({
+  id: '/dashboard_/backtest',
+  path: '/dashboard/backtest',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardAnalysisRoute = AuthDashboardAnalysisRouteImport.update({
   id: '/dashboard_/analysis',
   path: '/dashboard/analysis',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/advisor': typeof AuthDashboardAdvisorRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
+  '/dashboard/backtest': typeof AuthDashboardBacktestRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/advisor': typeof AuthDashboardAdvisorRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
+  '/dashboard/backtest': typeof AuthDashboardBacktestRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dashboard_/advisor': typeof AuthDashboardAdvisorRoute
   '/_auth/dashboard_/analysis': typeof AuthDashboardAnalysisRoute
+  '/_auth/dashboard_/backtest': typeof AuthDashboardBacktestRoute
   '/_auth/dashboard_/calendar': typeof AuthDashboardCalendarRoute
   '/_auth/dashboard_/commodities': typeof AuthDashboardCommoditiesRoute
   '/_auth/dashboard_/comparison': typeof AuthDashboardComparisonRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/advisor'
     | '/dashboard/analysis'
+    | '/dashboard/backtest'
     | '/dashboard/calendar'
     | '/dashboard/commodities'
     | '/dashboard/comparison'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/advisor'
     | '/dashboard/analysis'
+    | '/dashboard/backtest'
     | '/dashboard/calendar'
     | '/dashboard/commodities'
     | '/dashboard/comparison'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard'
     | '/_auth/dashboard_/advisor'
     | '/_auth/dashboard_/analysis'
+    | '/_auth/dashboard_/backtest'
     | '/_auth/dashboard_/calendar'
     | '/_auth/dashboard_/commodities'
     | '/_auth/dashboard_/comparison'
@@ -606,6 +618,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardCalendarRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/backtest': {
+      id: '/_auth/dashboard_/backtest'
+      path: '/dashboard/backtest'
+      fullPath: '/dashboard/backtest'
+      preLoaderRoute: typeof AuthDashboardBacktestRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/analysis': {
       id: '/_auth/dashboard_/analysis'
       path: '/dashboard/analysis'
@@ -634,6 +653,7 @@ interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDashboardAdvisorRoute: typeof AuthDashboardAdvisorRoute
   AuthDashboardAnalysisRoute: typeof AuthDashboardAnalysisRoute
+  AuthDashboardBacktestRoute: typeof AuthDashboardBacktestRoute
   AuthDashboardCalendarRoute: typeof AuthDashboardCalendarRoute
   AuthDashboardCommoditiesRoute: typeof AuthDashboardCommoditiesRoute
   AuthDashboardComparisonRoute: typeof AuthDashboardComparisonRoute
@@ -661,6 +681,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDashboardAdvisorRoute: AuthDashboardAdvisorRoute,
   AuthDashboardAnalysisRoute: AuthDashboardAnalysisRoute,
+  AuthDashboardBacktestRoute: AuthDashboardBacktestRoute,
   AuthDashboardCalendarRoute: AuthDashboardCalendarRoute,
   AuthDashboardCommoditiesRoute: AuthDashboardCommoditiesRoute,
   AuthDashboardComparisonRoute: AuthDashboardComparisonRoute,
