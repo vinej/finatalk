@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ function MyLearningPage() {
 
   const listQuery = trpc.learning.list.useQuery();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [introOpen, setIntroOpen] = useState(true);
 
   const notes = listQuery.data ?? [];
 
@@ -42,19 +43,28 @@ function MyLearningPage() {
   });
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("myLearning.title")}</CardTitle>
+    <div className="flex h-full flex-col gap-4">
+      <Card className="shrink-0">
+        <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
+          <div className="flex items-center gap-2">
+            {introOpen ? (
+              <ChevronDown className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
+            ) : (
+              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
+            )}
+            <CardTitle>{t("myLearning.title")}</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-[var(--color-muted-fg)]">{t("myLearning.intro")}</p>
-        </CardContent>
+        {introOpen && (
+          <CardContent>
+            <p className="text-sm text-[var(--color-muted-fg)]">{t("myLearning.intro")}</p>
+          </CardContent>
+        )}
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-[280px_1fr]">
-        <Card className="self-start">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[280px_1fr]">
+        <Card className="flex max-h-full flex-col overflow-hidden">
+          <CardHeader className="flex shrink-0 flex-row items-center justify-between gap-2 space-y-0">
             <CardTitle className="text-base">{t("myLearning.title")}</CardTitle>
             <Button
               size="sm"
@@ -71,7 +81,7 @@ function MyLearningPage() {
               {t("myLearning.newNote")}
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-0 flex-1 overflow-auto">
             {listQuery.isLoading ? (
               <div className="flex items-center gap-2 text-xs text-[var(--color-muted-fg)]">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -111,7 +121,7 @@ function MyLearningPage() {
         {selectedId ? (
           <NoteEditor key={selectedId} noteId={selectedId} />
         ) : (
-          <Card>
+          <Card className="flex max-h-full flex-col overflow-hidden">
             <CardContent className="py-8">
               <p className="text-sm text-[var(--color-muted-fg)]">
                 {t("myLearning.selectNote")}
@@ -186,7 +196,7 @@ function NoteEditor({ noteId }: { noteId: string }) {
 
   if (noteQuery.isLoading || !loaded) {
     return (
-      <Card>
+      <Card className="flex max-h-full flex-col overflow-hidden">
         <CardContent className="flex items-center gap-2 py-8 text-sm text-[var(--color-muted-fg)]">
           <Loader2 className="h-4 w-4 animate-spin" />
         </CardContent>
@@ -195,8 +205,8 @@ function NoteEditor({ noteId }: { noteId: string }) {
   }
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-3 py-4">
+    <Card className="flex max-h-full flex-col overflow-hidden">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto py-4">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -236,10 +246,10 @@ function NoteEditor({ noteId }: { noteId: string }) {
             placeholder={t("myLearning.contentPlaceholder")}
             rows={22}
             maxLength={100_000}
-            className="min-h-[480px] w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3 font-mono text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+            className="min-h-[360px] w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3 font-mono text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
           />
         ) : (
-          <div className="min-h-[480px] rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+          <div className="min-h-[360px] rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
             {content.trim() ? (
               <Markdown>{content}</Markdown>
             ) : (

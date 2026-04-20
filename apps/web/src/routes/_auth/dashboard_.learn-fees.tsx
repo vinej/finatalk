@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -18,63 +19,101 @@ export const Route = createFileRoute("/_auth/dashboard_/learn-fees")({
 function LearnFeesPage() {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
+  const [activeTopic, setActiveTopic] = useState<FeeTopicKey>(FEE_TOPICS[0]);
+  const [introOpen, setIntroOpen] = useState(true);
+
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("learnFees.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-[var(--color-muted-fg)]">{t("learnFees.intro")}</p>
-          <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/40 p-3 text-xs text-[var(--color-muted-fg)]">
-            {t("learnFees.disclaimer")}
-          </p>
-          <div>
-            <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-              {t("learnFees.generalResources")}
-            </div>
-            <LinkChips links={FEES_GENERAL_LINKS[lang]} />
+    <div className="flex h-full flex-col gap-4">
+      <Card className="shrink-0">
+        <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
+          <div className="flex items-center gap-2">
+            {introOpen ? (
+              <ChevronDown className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
+            ) : (
+              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
+            )}
+            <CardTitle>{t("learnFees.title")}</CardTitle>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("learnFees.tableOfContents")}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ul className="flex flex-wrap gap-2">
-            {FEE_TOPICS.map((topic) => (
-              <li key={topic}>
-                <a
-                  href={`#${topic}`}
-                  className="rounded-md border border-[var(--color-border)] px-2.5 py-1 text-sm hover:bg-[var(--color-accent)]"
-                >
-                  {FEES_GUIDE[lang][topic].label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
+        {introOpen && (
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-[var(--color-muted-fg)]">{t("learnFees.intro")}</p>
+            <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/40 p-3 text-xs text-[var(--color-muted-fg)]">
+              {t("learnFees.disclaimer")}
+            </p>
+            <div>
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
+                {t("learnFees.generalResources")}
+              </div>
+              <LinkChips links={FEES_GENERAL_LINKS[lang]} />
+            </div>
+          </CardContent>
+        )}
       </Card>
 
-      {FEE_TOPICS.map((topic) => (
-        <FeeSection key={topic} topic={topic} lang={lang} />
-      ))}
+      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_1fr]">
+        <FeesMenu
+          activeTopic={activeTopic}
+          onSelect={setActiveTopic}
+          lang={lang}
+        />
+        <FeePanel topic={activeTopic} lang={lang} />
+      </div>
     </div>
   );
 }
 
-function FeeSection({ topic, lang }: { topic: FeeTopicKey; lang: Lang }) {
+function FeesMenu({
+  activeTopic,
+  onSelect,
+  lang,
+}: {
+  activeTopic: FeeTopicKey;
+  onSelect: (t: FeeTopicKey) => void;
+  lang: Lang;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Card className="flex max-h-full flex-col overflow-hidden">
+      <CardHeader className="shrink-0">
+        <CardTitle className="text-base">{t("learnFees.tableOfContents")}</CardTitle>
+      </CardHeader>
+      <CardContent className="min-h-0 flex-1 overflow-auto">
+        <ul className="flex flex-col gap-1">
+          {FEE_TOPICS.map((topic) => {
+            const active = topic === activeTopic;
+            return (
+              <li key={topic}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(topic)}
+                  className={`w-full rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors ${
+                    active
+                      ? "border-[var(--color-border)] bg-[var(--color-accent)] font-medium"
+                      : "border-transparent hover:bg-[var(--color-accent)]/60"
+                  }`}
+                >
+                  {FEES_GUIDE[lang][topic].label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FeePanel({ topic, lang }: { topic: FeeTopicKey; lang: Lang }) {
   const { t } = useTranslation();
   const entry = FEES_GUIDE[lang][topic];
   return (
-    <Card id={topic} className="scroll-mt-4">
-      <CardHeader>
+    <Card className="flex max-h-full flex-col overflow-hidden">
+      <CardHeader className="shrink-0">
         <CardTitle>{entry.label}</CardTitle>
         <p className="text-sm text-[var(--color-muted-fg)]">{entry.summary}</p>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
         <Block label={t("learnFees.howItWorks")} text={entry.howItWorks} />
         <Block label={t("learnFees.typicalCost")} text={entry.typicalCost} />
         <Block label={t("learnFees.howToMinimize")} text={entry.howToMinimize} />

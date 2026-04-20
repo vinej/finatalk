@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Briefcase, Plus, Sparkles } from "lucide-react";
+import { Briefcase, CalendarDays, Copy, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -61,6 +61,18 @@ function PortfoliosPage() {
           <h1 className="text-lg font-semibold">{t("nav.portfolios")}</h1>
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/dashboard/calendar">
+              <CalendarDays className="mr-1 h-4 w-4" />
+              {t("nav.calendar")}
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/dashboard/templates">
+              <Copy className="mr-1 h-4 w-4" />
+              {t("nav.templates")}
+            </Link>
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setGenerateOpen(true)}>
             <Sparkles className="mr-1 h-4 w-4" />
             {t("portfolio.generatePortfolio")}

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,30 +24,40 @@ function StrategiesPage() {
   const lang = pickLang(i18n.language);
   const [activeKind, setActiveKind] = useState<StrategyKind>(STRATEGY_KINDS[0]);
   const [tab, setTab] = useState<TabKey>("overview");
+  const [introOpen, setIntroOpen] = useState(true);
 
   const entry = STRATEGY_GUIDE[lang][activeKind];
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("learnStrategies.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-[var(--color-muted-fg)]">{t("learnStrategies.intro")}</p>
-          <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/40 p-3 text-xs text-[var(--color-muted-fg)]">
-            {t("learnStrategies.disclaimer")}
-          </p>
-          <div>
-            <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-              {t("learnStrategies.generalResources")}
-            </div>
-            <LinkChips links={STRATEGY_GENERAL_LINKS[lang]} />
+    <div className="flex h-full flex-col gap-4">
+      <Card className="shrink-0">
+        <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
+          <div className="flex items-center gap-2">
+            {introOpen ? (
+              <ChevronDown className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
+            ) : (
+              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
+            )}
+            <CardTitle>{t("learnStrategies.title")}</CardTitle>
           </div>
-        </CardContent>
+        </CardHeader>
+        {introOpen && (
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-[var(--color-muted-fg)]">{t("learnStrategies.intro")}</p>
+            <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/40 p-3 text-xs text-[var(--color-muted-fg)]">
+              {t("learnStrategies.disclaimer")}
+            </p>
+            <div>
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
+                {t("learnStrategies.generalResources")}
+              </div>
+              <LinkChips links={STRATEGY_GENERAL_LINKS[lang]} />
+            </div>
+          </CardContent>
+        )}
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-[240px_1fr]">
+      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_1fr]">
         <StrategyMenu
           activeKind={activeKind}
           onSelect={(k) => {
@@ -73,11 +83,11 @@ function StrategyMenu({
 }) {
   const { t } = useTranslation();
   return (
-    <Card className="self-start">
-      <CardHeader>
+    <Card className="flex max-h-full flex-col overflow-hidden">
+      <CardHeader className="shrink-0">
         <CardTitle className="text-base">{t("learnStrategies.tableOfContents")}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-h-0 flex-1 overflow-auto">
         <ul className="flex flex-col gap-1">
           {STRATEGY_KINDS.map((kind) => {
             const active = kind === activeKind;
@@ -117,12 +127,12 @@ function StrategyPanel({
     !!entry.coreIdea || (entry.steps && entry.steps.length > 0) || !!entry.whyItWorks;
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="flex max-h-full flex-col overflow-hidden">
+      <CardHeader className="shrink-0">
         <CardTitle>{entry.label}</CardTitle>
         <p className="text-sm text-[var(--color-muted-fg)]">{entry.summary}</p>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
         <div
           role="tablist"
           className="flex gap-1 border-b border-[var(--color-border)]"

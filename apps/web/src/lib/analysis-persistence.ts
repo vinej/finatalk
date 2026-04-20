@@ -1,4 +1,5 @@
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
+import type { StrategyKind } from "@/lib/strategy-guide";
 
 const STORAGE_KEY = "finatalk:analysis-workspace";
 const VERSION = 1;
@@ -24,6 +25,7 @@ export type PersistedAnalysisState = {
   shortInterestCollapsed?: boolean;
   assetTypeFilter?: "all" | "stock" | "etf" | "commodity" | "mutualfund";
   exchangeFilter?: string;
+  appliedStrategy?: StrategyKind | null;
 };
 
 export function loadAnalysisState(): PersistedAnalysisState | null {

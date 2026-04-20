@@ -42,6 +42,7 @@
     "calendar": "Calendrier",
     "news": "Nouvelles",
     "learning": "Apprentissage",
+    "market": "Marché",
     "symbols": "Symboles",
     "research": "Recherche",
     "advisor": "Conseiller IA",
@@ -61,7 +62,13 @@
     "generalResources": "Ressources générales",
     "buySellTitle": "Quand acheter / vendre",
     "buySellSubtitle": "Transformer les signaux d'indicateurs en décisions — avec le régime de marché, les fondamentaux, les nouvelles et la gestion du risque comme contexte autour du graphique.",
-    "buySellResources": "Lectures et livres"
+    "buySellResources": "Lectures et livres",
+    "paletteTitle": "Palette étendue d'indicateurs",
+    "paletteSummary": "Les indicateurs cœur de Finatalk et les familles étendues de substituts et confirmations.",
+    "coreLabel": "Cœur",
+    "coreLegend": "Indicateurs cœur de Finatalk",
+    "coreIndicators": "Indicateurs cœur de Finatalk",
+    "coreIndicatorsIntro": "Voici les cinq indicateurs mis en avant par défaut dans Finatalk. Les familles ci-dessous présentent des substituts et des confirmations à ajouter ensuite."
   },
   "learnInvestment": {
     "title": "Apprendre l'investissement",

@@ -85,7 +85,7 @@ function AnalysisPage() {
   const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf" | "commodity" | "mutualfund">(persisted?.assetTypeFilter ?? "all");
   const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
-  const [appliedStrategy, setAppliedStrategy] = useState<StrategyKind | null>(null);
+  const [appliedStrategy, setAppliedStrategy] = useState<StrategyKind | null>(persisted?.appliedStrategy ?? null);
 
   const confidenceMutation = trpc.research.getConfidence.useMutation({
     onSuccess: (data) => setConfidence(data.confidence),
@@ -118,6 +118,7 @@ function AnalysisPage() {
       shortInterestCollapsed,
       assetTypeFilter,
       exchangeFilter,
+      appliedStrategy,
     });
   }, [
     symbolInput,
@@ -139,6 +140,7 @@ function AnalysisPage() {
     shortInterestCollapsed,
     assetTypeFilter,
     exchangeFilter,
+    appliedStrategy,
   ]);
 
   const sortedActiveIndicators = useMemo(() => sortIndicators(activeIndicators), [activeIndicators]);

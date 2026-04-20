@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpDown, BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronRight, Coins, Copy, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, NotebookPen, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
+import { ArrowUpDown, BookOpen, Briefcase, ChevronDown, ChevronRight, Coins, Eye, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, NotebookPen, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 
 const LEARNING_COLLAPSED_KEY = "finatalk:sidebar-learning-collapsed";
 const SYMBOLS_COLLAPSED_KEY = "finatalk:sidebar-symbols-collapsed";
+const MARKET_COLLAPSED_KEY = "finatalk:sidebar-market-collapsed";
 
 export function Sidebar() {
   const { t } = useTranslation();
@@ -25,6 +26,11 @@ export function Sidebar() {
     return window.localStorage.getItem(SYMBOLS_COLLAPSED_KEY) === "1";
   });
 
+  const [marketCollapsed, setMarketCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(MARKET_COLLAPSED_KEY) === "1";
+  });
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(LEARNING_COLLAPSED_KEY, learningCollapsed ? "1" : "0");
@@ -34,6 +40,11 @@ export function Sidebar() {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(SYMBOLS_COLLAPSED_KEY, symbolsCollapsed ? "1" : "0");
   }, [symbolsCollapsed]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(MARKET_COLLAPSED_KEY, marketCollapsed ? "1" : "0");
+  }, [marketCollapsed]);
 
   const portfolioLink = lastPortfolioId
     ? ({
@@ -46,23 +57,24 @@ export function Sidebar() {
     { key: "home", to: "/dashboard", label: t("nav.home"), icon: Home },
     { key: "analysis", to: "/dashboard/analysis", label: t("nav.analysis"), icon: LineChart },
     { key: "portfolios", label: t("nav.portfolios"), icon: Briefcase, link: portfolioLink, matchPrefix: "/dashboard/portfolios" },
-    { key: "indices", to: "/dashboard/indices", label: t("nav.indices"), icon: Landmark },
-    { key: "commodities", to: "/dashboard/commodities", label: t("nav.commodities"), icon: Wheat },
-    { key: "rates", to: "/dashboard/rates", label: t("nav.rates"), icon: Percent },
-    { key: "calendar", to: "/dashboard/calendar", label: t("nav.calendar"), icon: CalendarDays },
-    { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
-    { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
     { key: "advisor", to: "/dashboard/advisor", label: t("nav.advisor"), icon: Sparkles },
     ...(showTax
       ? [{ key: "tax", to: "/dashboard/tax", label: t("nav.tax"), icon: Receipt } as const]
       : []),
-    { key: "templates", to: "/dashboard/templates", label: t("nav.templates"), icon: Copy },
+  ] as const;
+
+  const marketItems = [
+    { key: "indices", to: "/dashboard/indices", label: t("nav.indices"), icon: Landmark },
+    { key: "commodities", to: "/dashboard/commodities", label: t("nav.commodities"), icon: Wheat },
+    { key: "rates", to: "/dashboard/rates", label: t("nav.rates"), icon: Percent },
+    { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
   ] as const;
 
   const symbolsItems = [
     { key: "watchlist", to: "/dashboard/watchlist", label: t("nav.watchlist"), icon: Eye },
     { key: "comparison", to: "/dashboard/comparison", label: t("nav.comparison"), icon: GitCompareArrows },
     { key: "screener", to: "/dashboard/screener", label: t("nav.screener"), icon: ScanSearch },
+    { key: "research", to: "/dashboard/research", label: t("nav.research"), icon: Microscope },
   ] as const;
 
   const learningItems = [
@@ -78,9 +90,26 @@ export function Sidebar() {
   const settingsItem = { key: "settings", to: "/dashboard/settings", label: t("nav.settings"), icon: Settings } as const;
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] p-3 md:block">
+    <aside className="hidden h-full w-56 shrink-0 overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-bg)] p-3 md:block">
       <nav className="flex flex-col gap-1">
         {topItems.map((item) => (
+          <SidebarLink key={item.key} item={item} />
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setMarketCollapsed((c) => !c)}
+          className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
+          aria-expanded={!marketCollapsed}
+        >
+          {marketCollapsed ? (
+            <ChevronRight className="h-3 w-3" aria-hidden />
+          ) : (
+            <ChevronDown className="h-3 w-3" aria-hidden />
+          )}
+          <span>{t("nav.market")}</span>
+        </button>
+        {!marketCollapsed && marketItems.map((item) => (
           <SidebarLink key={item.key} item={item} />
         ))}
 

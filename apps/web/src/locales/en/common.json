@@ -42,6 +42,7 @@
     "calendar": "Calendar",
     "news": "News",
     "learning": "Learning",
+    "market": "Market",
     "symbols": "Symbols",
     "research": "Research",
     "advisor": "AI Advisor",
@@ -61,7 +62,13 @@
     "generalResources": "General resources",
     "buySellTitle": "When to buy / sell",
     "buySellSubtitle": "Turning indicator signals into decisions — with market regime, fundamentals, news, and risk management as the context around the chart.",
-    "buySellResources": "Further reading & books"
+    "buySellResources": "Further reading & books",
+    "paletteTitle": "Extended indicator palette",
+    "paletteSummary": "The core Finatalk indicators and the extended families of substitutes and confirmations.",
+    "coreLabel": "Core",
+    "coreLegend": "Core Finatalk indicators",
+    "coreIndicators": "Core Finatalk indicators",
+    "coreIndicatorsIntro": "These are the five indicators highlighted by default in Finatalk. The families below show substitutes and confirmations you can add next."
   },
   "learnInvestment": {
     "title": "Learn investment",

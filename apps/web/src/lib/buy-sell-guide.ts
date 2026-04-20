@@ -27,8 +27,36 @@ const EN: BuySellGuide = {
         "- **Transition / squeeze** — Bollinger Band width at multi-month lows signals an imminent breakout but not direction. Wait for the first strong candle + volume to confirm the side.",
     },
     {
+      id: "long-short",
+      title: "2. Long vs short — the two sides of a trade",
+      body:
+        "Every technical signal is meaningful only *relative to which side you're on*. Before reading any buy/sell rule, know what long and short actually mean.\n\n" +
+        "**Long — betting the price rises**\n" +
+        "- You **own** the asset (or a contract to buy it). You profit when price goes **up**.\n" +
+        "- Buy 100 shares at $150, sell later at $180 → +$30/share.\n" +
+        "- **Max loss**: price can only go to $0, so loss is capped at what you paid.\n" +
+        "- **Max gain**: theoretically unlimited — price can rise forever.\n" +
+        "- \"Going long\" = buying. \"Closing a long\" = selling what you own.\n\n" +
+        "**Short — betting the price falls**\n" +
+        "- You **sell an asset you don't own**, betting the price will fall. Mechanically: your broker lends you the shares, you sell them at today's price, then later **buy them back** (\"cover\") and return them.\n" +
+        "- Short 100 shares at $180, price drops to $150, buy back → +$30/share.\n" +
+        "- **Max gain**: capped — price can only fall to $0.\n" +
+        "- **Max loss**: *theoretically unlimited* — price can rise forever and you'd have to buy back at any cost.\n" +
+        "- Extra costs and risks: borrow fees, margin requirements, and the possibility of a **forced buy-in** if the lender recalls the shares.\n\n" +
+        "**How the platform's signal evaluator maps to this**\n" +
+        "- `buy` → open or add to a **long** (price expected to rise).\n" +
+        "- `sell` → open or add to a **short** (price expected to fall).\n" +
+        "- `exitLong` → close an existing long (take profit or cut loss on a bullish position).\n" +
+        "- `exitShort` → close an existing short (buy back the borrowed shares).\n" +
+        "- `wait` → no edge; stand aside.\n\n" +
+        "**Why the distinction matters for reading indicators**\n" +
+        "The same reading can mean opposite things depending on which side you're on. RSI at 75 is a *warning for long holders* (overbought — consider trimming) but a potential *entry for shorts* in a mean-reversion setup. The evaluator picks a side first (trend direction, ADX, structure) before deciding whether overbought means \"trim longs\" or \"look to short.\"\n\n" +
+        "**Practical note for retail investors**\n" +
+        "Most retail brokerage cash accounts only allow going **long**. Shorting requires a **margin account**, carries unlimited theoretical risk, and is usually not permitted in retirement accounts (RRSP, TFSA, 401(k), IRA). If you cannot short, treat `sell` and `exitShort` signals as *do-not-buy-here* warnings rather than actionable entries — and focus on `buy` / `exitLong` / `wait` for your own book.",
+    },
+    {
       id: "entry",
-      title: "2. Buy signals (long entries)",
+      title: "3. Buy signals (long entries)",
       body:
         "Higher-probability long setups share **confluence** — multiple independent signals agreeing at the same price.\n\n" +
         "- **Oversold + reversal candle at support** — RSI < 30 (or Williams %R < −80, Stoch < 20) AND a bullish hammer/engulfing AND a prior support or the 200-day MA. Classic swing-trade long.\n" +
@@ -49,7 +77,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "exit",
-      title: "3. Sell signals (exits and shorts)",
+      title: "4. Sell signals (exits and shorts)",
       body:
         "The exit is harder than the entry. Plan it *before* you enter.\n\n" +
         "- **Overbought is a warning, not a trigger.** Exit on the *turn*: RSI back under 70, MACD rolling over, bearish divergence — not the first overbought print.\n" +
@@ -70,7 +98,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "confirmation",
-      title: "4. Confirmation and confluence",
+      title: "5. Confirmation and confluence",
       body:
         "A single indicator firing is noise. Two agreeing is a signal. Three aligning at the same price is a setup.\n\n" +
         "- **Pair a trend filter with a trigger** — e.g. price above 200-day MA (filter) + MACD bullish cross (trigger). Ignore triggers that fight the filter.\n" +
@@ -85,14 +113,25 @@ const EN: BuySellGuide = {
     },
     {
       id: "palette",
-      title: "5. Extended indicator palette",
+      title: "6. Extended indicator palette",
       body:
-        "Beyond the core RSI / MACD / Bollinger / ADX set, Finatalk ships a dozen alternative indicators. Each slots into one of four families — use them as substitutes or confirmations, not as additions for their own sake.\n\n" +
-        "**Volatility bands (substitutes for Bollinger)**\n" +
+        "Beyond the eight core indicators (EMA / RSI / MACD / Bollinger / ATR / ADX / OBV / VWAP), Finatalk ships roughly thirty alternatives. Each slots into one of a handful of families — use them as substitutes, confirmations, or structural context, not as additions for their own sake.\n\n" +
+        "**Moving-average variants (companions / substitutes for EMA)**\n" +
+        "- **SMA (Simple MA)** — equal-weighted average of the last N closes. The workhorse long-term filter — the 200-day SMA is the institutional regime line, the 50-day the swing-trend line. Slower than EMA, which is the point: less whipsaw.\n" +
+        "- **RMA (Wilder's MA)** — the exponential smoothing Wilder actually used inside RSI and ATR (alpha = 1/N). Smoother than EMA of the same period; useful whenever you want EMA-style reactivity without noise spikes.\n" +
+        "- **WMA (Weighted MA)** — linear weights so the most recent close counts most. Sits between SMA and EMA — faster than SMA, steadier than EMA. Short-term swing traders favour it on fast timeframes.\n" +
+        "- **DEMA (Double EMA)** — two-pass EMA designed to cancel lag. Hugs price tightly; catches trend changes earlier than EMA at the cost of more chop in ranges. A good choice for active trend-following when you accept more false flips.\n\n" +
+        "**Momentum alternatives (substitutes / companions for RSI)**\n" +
+        "- **Momentum (MOM)** — raw `close − close[N]`. Positive and rising = accelerating; zero-line crossings flag directional shifts. Unbounded, so useful for divergence but not for overbought/oversold gating.\n" +
+        "- **Rate of Change (ROC)** — percent version of Momentum: comparable across price levels and across tickers. Extremes are asset-specific — calibrate against the instrument's own history, not a fixed threshold.\n" +
+        "- **Stochastic Oscillator** — close vs the high-low range over N bars. %K/%D crossovers at extremes (<20 / >80) are the textbook signal. Faster than RSI, but noisier in trends.\n" +
+        "- **Stochastic RSI** — Stoch formula applied to RSI rather than price. Catches shorter cycles than plain RSI; excellent in ranges, whippy in trends. Pair with a regime filter.\n" +
+        "- **Williams %R** — mechanically the Stochastic %K on an inverted −100…0 scale (>−20 overbought, <−80 oversold). Redundant with Stoch — pick one, not both.\n\n" +
+        "**Volatility bands and measures (substitutes / companions for Bollinger and ATR)**\n" +
         "- **Keltner Channels** — ATR-based envelope around an EMA. A close above the upper band = momentum breakout, a pullback to the middle EMA in an uptrend = add point. Less prone to false squeezes than Bollinger in trending markets because ATR scales the bands to *directional* volatility, not standard deviation.\n" +
         "- **Donchian Channels** — simply the highest-high / lowest-low of the last N bars. A close above the 20-day Donchian high = classic Turtle-trader entry; a close below the 10-day low = Turtle exit. The middle line is the mid-range mean.\n" +
         "- **Chaikin Volatility** — rate of change of the EMA of (high − low). Rising ChaikinVol = widening ranges (often precedes breakouts); collapsing ChaikinVol = contraction warning that a range will resolve soon. Use as a timing filter, not a signal.\n\n" +
-        "**Volume / money flow (substitutes and companions for OBV)**\n" +
+        "**Volume / money flow (substitutes and companions for OBV and VWAP)**\n" +
         "- **A/D (Accumulation / Distribution) Line** — cumulative close-location volume. Divergence between A/D and price = quiet institutional accumulation (bullish) or distribution (bearish) before price confirms. Especially useful at range edges.\n" +
         "- **Chaikin Money Flow (CMF)** — money-flow volume over a rolling 20–21 bar window. CMF > 0 = net accumulation, < 0 = net distribution. The cross of zero after a clear divergence is a timing trigger.\n" +
         "- **Volume Oscillator** — difference (or %) between a fast and a slow volume MA. Rising during a breakout candle = genuine participation; flat or falling = almost certainly a fake breakout, step aside.\n\n" +
@@ -100,14 +139,26 @@ const EN: BuySellGuide = {
         "- **Aroon (Up / Down)** — bars since the highest-high and lowest-low in a window. Aroon-Up > 70 with Aroon-Down < 30 = strong uptrend; crossovers of Up/Down = trend shifts; both < 50 = consolidation. More intuitive for spotting the *start* of a trend than ADX.\n" +
         "- **Vortex (+VI / −VI)** — +VI crossing above −VI = trend change to up (and mirror); widening spread between the two = strengthening trend. More reactive than ADX on mid-timeframes, slightly more whipsaw-prone.\n" +
         "- **Trend Intensity Index (TII)** — proportion of closes above/below a long-term SMA, rescaled 0–100. TII > 80 = clean uptrend; < 20 = clean downtrend; 40–60 = chop. Excellent binary regime filter before running any other setup.\n\n" +
+        "**Trend-following stops and crossovers**\n" +
+        "- **Parabolic SAR (PSAR)** — trend-following stop-and-reverse dots that flip from below price (uptrend) to above (downtrend). Use as a trailing stop in confirmed trends; whips badly in chop — gate with ADX > 20.\n" +
+        "- **MA Cross** — plots a fast and a slow moving average and marks every crossover. The 50/200 SMA pair produces the Golden Cross (bullish regime) and Death Cross (bearish). Lagging but reliable for position-sizing decisions and regime flips.\n" +
+        "- **MACD Cross** — marks every MACD signal-line crossover on the chart. Faster than MA Cross; best used under a trend filter (e.g. price above 200-day SMA) to avoid chop.\n\n" +
         "**Statistical / regime indicators**\n" +
         "- **Bollinger %B** — normalised Bollinger reading (0 at lower band, 1 at upper). %B > 1 or < 0 = closing outside the bands (extreme stretch). Divergences with %B are often cleaner to spot than with raw price because the indicator is already scaled.\n" +
         "- **Price Z-Score** — standardised distance of close from its rolling mean, expressed in σ. |Z| > 2 = stretched; |Z| > 3 = statistically extreme. Direct mean-reversion trigger that needs no further normalisation.\n" +
-        "- **Hurst Exponent** — long-memory exponent from R/S analysis. H > 0.55 = trending / momentum regime (prefer trend-following setups); H < 0.45 = mean-reverting (prefer fades); ≈ 0.5 = random walk (no TA edge). Use as a *meta-filter* before choosing which entry family to deploy — arguably the single most valuable regime tool in this list.",
+        "- **Hurst Exponent** — long-memory exponent from R/S analysis. H > 0.55 = trending / momentum regime (prefer trend-following setups); H < 0.45 = mean-reverting (prefer fades); ≈ 0.5 = random walk (no TA edge). Use as a *meta-filter* before choosing which entry family to deploy — arguably the single most valuable regime tool in this list.\n\n" +
+        "**Retracement and price structure (where supply and demand sit)**\n" +
+        "- **Fibonacci Retracement** — horizontal levels (23.6 / 38.2 / 50 / 61.8 / 78.6 %) between swing high and low. The 50 % and 61.8 % levels (the 'golden zone') are the most watched. Works through self-fulfilling reaction, not a formula — treat as a magnet, pair with a trigger.\n" +
+        "- **Support/Resistance Levels (auto S/R)** — horizontal levels clustered from fractal swing pivots, ranked by touch count and recency. The most-touched levels act as genuine supply/demand zones; flip-zones (prior resistance become support) are particularly fertile at retest.\n" +
+        "- **Pivot Points** — floor-trader PP / R1–R3 / S1–S3 derived from the prior period's high/low/close. Classic, Fibonacci, and Camarilla variants. A clean close above PP = bullish day bias; below = bearish. Intraday and futures desks anchor stops here.\n" +
+        "- **Volume Profile** — horizontal distribution of traded volume across price. POC, VAH, VAL act as magnets and decision levels; low-volume nodes produce fast transit moves. Orthogonal to time-series volume — answers *where* activity happened, not *when*.\n" +
+        "- **Order Block** — the last opposite-colour candle before an impulsive move. Unmitigated OBs retain their edge on retest; mitigated ones have paid out. Stack with a sweep or an FVG inside the zone for highest-quality re-entries.\n" +
+        "- **Fair Value Gap (FVG)** — three-bar imbalance where bars i-2 and i do not overlap. Unfilled gaps act as magnets and often pause / support the next leg. Pair with S/R or an OB for confluence.\n" +
+        "- **Liquidity Sweep** — detects stop-hunt bars that briefly pierce a prior N-bar high/low and close back inside. Among the tightest risk definitions available — stop just beyond the sweep wick — especially strong at session highs/lows or prior-day extremes.",
     },
     {
       id: "fundamentals",
-      title: "6. Company fundamentals",
+      title: "7. Company fundamentals",
       body:
         "TA tells you **when**; fundamentals tell you **what**. Ignore either at your peril.\n\n" +
         "- **Strong fundamentals + TA weakness = accumulation opportunity.** A high-quality company pulling back to major support with oversold signals is the textbook long.\n" +
@@ -118,7 +169,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "news",
-      title: "7. News, catalysts and macro",
+      title: "8. News, catalysts and macro",
       body:
         "Price leads news, but news accelerates price.\n\n" +
         "- **Gaps on news** — gap up/down on a real catalyst (earnings, FDA, guidance) usually continues in the gap direction for 1–3 sessions. Don't fade day one.\n" +
@@ -130,7 +181,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "risk",
-      title: "8. Risk management (the only non-negotiable)",
+      title: "9. Risk management (the only non-negotiable)",
       body:
         "You don't control price, you control size and stops. Every professional book stresses this more than any indicator.\n\n" +
         "- **Risk ≤ 1–2% of account per trade.** Position size = (account × risk%) ÷ stop distance. This lets you be wrong repeatedly and still be in the game.\n" +
@@ -142,7 +193,7 @@ const EN: BuySellGuide = {
     },
     {
       id: "psychology",
-      title: "9. Psychological pitfalls",
+      title: "10. Psychological pitfalls",
       body:
         "Most losing trades are correctly-spotted setups executed badly.\n\n" +
         "- **Confirmation bias** — you find the one indicator that supports your existing view. Defense: decide the criteria before you look at the chart.\n" +
@@ -183,8 +234,36 @@ const FR: BuySellGuide = {
         "- **Transition / squeeze** — largeur des bandes de Bollinger au plus bas de plusieurs mois : cassure imminente, mais direction inconnue. Attendez la première bougie forte + volume pour confirmer le côté.",
     },
     {
+      id: "long-short",
+      title: "2. Long vs short — les deux côtés d'un trade",
+      body:
+        "Tout signal technique n'a de sens que *par rapport au côté sur lequel vous êtes*. Avant de lire n'importe quelle règle d'achat/vente, comprenez ce que signifient vraiment long et short.\n\n" +
+        "**Long — parier sur la hausse**\n" +
+        "- Vous **possédez** l'actif (ou un contrat d'achat). Vous gagnez quand le prix **monte**.\n" +
+        "- Acheter 100 actions à 150 $, revendre à 180 $ → +30 $/action.\n" +
+        "- **Perte max** : le prix ne peut descendre qu'à 0, donc la perte est plafonnée à ce que vous avez payé.\n" +
+        "- **Gain max** : théoriquement illimité — le prix peut monter sans fin.\n" +
+        "- « Être long » = acheter. « Clore un long » = vendre ce que vous possédez.\n\n" +
+        "**Short — parier sur la baisse**\n" +
+        "- Vous **vendez un actif que vous ne possédez pas**, en pariant sur une baisse. Mécaniquement : votre courtier vous prête les actions, vous les vendez au prix du jour, puis plus tard vous les **rachetez** (« couverture » / « cover ») et les rendez.\n" +
+        "- Short 100 actions à 180 $, le prix tombe à 150 $, rachat → +30 $/action.\n" +
+        "- **Gain max** : plafonné — le prix ne peut descendre qu'à 0.\n" +
+        "- **Perte max** : *théoriquement illimitée* — le prix peut monter sans fin et il faudra racheter à n'importe quel cours.\n" +
+        "- Coûts et risques additionnels : frais d'emprunt, exigences de marge, et possibilité d'un **rachat forcé (buy-in)** si le prêteur rappelle les titres.\n\n" +
+        "**Comment l'évaluateur de signaux de la plateforme se connecte à tout ça**\n" +
+        "- `buy` → ouvrir ou renforcer un **long** (prix attendu à la hausse).\n" +
+        "- `sell` → ouvrir ou renforcer un **short** (prix attendu à la baisse).\n" +
+        "- `exitLong` → clore un long existant (prise de profit ou coupe de perte sur une position haussière).\n" +
+        "- `exitShort` → clore un short existant (racheter les actions empruntées).\n" +
+        "- `wait` → pas d'edge ; rester à l'écart.\n\n" +
+        "**Pourquoi cette distinction change la lecture des indicateurs**\n" +
+        "La même lecture peut vouloir dire l'inverse selon le côté sur lequel vous êtes. RSI à 75 est un *avertissement pour les détenteurs longs* (suracheté — envisager d'alléger) mais une *entrée potentielle pour les shorts* dans un setup de mean reversion. L'évaluateur choisit d'abord un côté (direction de tendance, ADX, structure) avant de décider si « suracheté » veut dire « alléger les longs » ou « chercher un short ».\n\n" +
+        "**Note pratique pour l'investisseur particulier**\n" +
+        "La plupart des comptes au comptant du courtage retail n'autorisent que le **long**. Le short nécessite un **compte sur marge**, comporte un risque théoriquement illimité, et n'est généralement pas permis dans les comptes de retraite (REER, CELI, 401(k), IRA). Si vous ne pouvez pas shorter, traitez les signaux `sell` et `exitShort` comme des avertissements *ne-pas-acheter-ici* plutôt que comme des entrées exécutables — et concentrez-vous sur `buy` / `exitLong` / `wait` pour votre propre portefeuille.",
+    },
+    {
       id: "entry",
-      title: "2. Signaux d'achat (entrées longues)",
+      title: "3. Signaux d'achat (entrées longues)",
       body:
         "Les meilleures entrées longues partagent un principe de **confluence** — plusieurs signaux indépendants qui s'accordent au même prix.\n\n" +
         "- **Survente + bougie de retournement sur support** — RSI < 30 (ou Williams %R < −80, Stoch < 20) ET bougie haussière (marteau, englobante) ET support horizontal ou MM200. Setup classique de swing trading.\n" +
@@ -205,7 +284,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "exit",
-      title: "3. Signaux de vente (sorties et shorts)",
+      title: "4. Signaux de vente (sorties et shorts)",
       body:
         "La sortie est plus difficile que l'entrée. Planifiez-la *avant* d'entrer.\n\n" +
         "- **Suracheté est un avertissement, pas un déclencheur.** Sortez au *retournement* : RSI qui repasse sous 70, MACD qui roule à la baisse, divergence baissière — pas sur le premier suracheté.\n" +
@@ -226,7 +305,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "confirmation",
-      title: "4. Confirmation et confluence",
+      title: "5. Confirmation et confluence",
       body:
         "Un seul indicateur qui parle = du bruit. Deux qui s'accordent = un signal. Trois qui s'alignent au même prix = un setup.\n\n" +
         "- **Associez un filtre de tendance et un déclencheur** — p. ex. prix au-dessus de la MM200 (filtre) + croisement haussier MACD (déclencheur). Ignorez les déclencheurs qui vont contre le filtre.\n" +
@@ -241,14 +320,25 @@ const FR: BuySellGuide = {
     },
     {
       id: "palette",
-      title: "5. Palette étendue d'indicateurs",
+      title: "6. Palette étendue d'indicateurs",
       body:
-        "Au-delà du cœur RSI / MACD / Bollinger / ADX, Finatalk embarque une douzaine d'indicateurs alternatifs. Chacun entre dans l'une de quatre familles — utilisez-les comme substituts ou confirmations, pas comme ajouts pour eux-mêmes.\n\n" +
-        "**Bandes de volatilité (substituts aux bandes de Bollinger)**\n" +
+        "Au-delà des huit indicateurs cœur (EMA / RSI / MACD / Bollinger / ATR / ADX / OBV / VWAP), Finatalk embarque une trentaine d'alternatives. Chacune entre dans l'une de quelques familles — utilisez-les comme substituts, confirmations ou contexte structurel, pas comme ajouts pour eux-mêmes.\n\n" +
+        "**Variantes de moyennes mobiles (compléments / substituts à l'EMA)**\n" +
+        "- **SMA (moyenne simple)** — moyenne équipondérée des N dernières clôtures. Le filtre long terme de référence — la SMA 200 jours est la ligne de régime institutionnelle, la 50 jours la ligne de tendance swing. Plus lente que l'EMA, ce qui est justement l'avantage : moins de faux signaux.\n" +
+        "- **RMA (moyenne de Wilder)** — le lissage exponentiel que Wilder utilisait à l'intérieur du RSI et de l'ATR (alpha = 1/N). Plus lisse que l'EMA de même période ; utile lorsqu'on veut une réactivité proche de l'EMA sans les pics de bruit.\n" +
+        "- **WMA (moyenne pondérée)** — pondérations linéaires donnant le plus de poids à la clôture la plus récente. Se situe entre SMA et EMA — plus rapide que la SMA, plus stable que l'EMA. Les swing traders court terme la privilégient sur les timeframes rapides.\n" +
+        "- **DEMA (double EMA)** — EMA à deux passes conçue pour annuler le retard. Épouse le prix de près ; capte plus tôt les changements de tendance au prix de plus de chop en range. Bon choix en suivi de tendance actif lorsqu'on accepte plus de faux signaux.\n\n" +
+        "**Alternatives de momentum (substituts / compléments au RSI)**\n" +
+        "- **Momentum (MOM)** — brut : `clôture − clôture[N]`. Positif et croissant = accélération ; les franchissements de zéro signalent les changements directionnels. Non borné, donc utile pour les divergences mais pas pour gérer le surachat/survente.\n" +
+        "- **Taux de variation (ROC)** — version en pourcentage du Momentum : comparable entre niveaux de prix et entre titres. Les extrêmes sont propres à l'actif — étalonnez sur l'historique de l'instrument, pas un seuil fixe.\n" +
+        "- **Oscillateur stochastique** — clôture comparée à la plage haut-bas des N dernières barres. Les croisements %K/%D aux extrêmes (<20 / >80) sont le signal de manuel. Plus rapide que le RSI, mais plus bruyant en tendance.\n" +
+        "- **Stochastique RSI** — formule Stoch appliquée au RSI plutôt qu'au prix. Capte des cycles plus courts que le RSI simple ; excellent en range, erratique en tendance. À combiner avec un filtre de régime.\n" +
+        "- **Williams %R** — mécaniquement le Stochastic %K sur une échelle inversée −100…0 (>−20 suracheté, <−80 survendu). Redondant avec le Stoch — choisissez l'un, pas les deux.\n\n" +
+        "**Bandes et mesures de volatilité (substituts / compléments à Bollinger et à l'ATR)**\n" +
         "- **Keltner Channels** — enveloppe basée sur l'ATR autour d'une EMA. Clôture au-dessus de la bande supérieure = cassure de momentum ; repli sur l'EMA centrale en tendance haussière = renforcement. Moins sujet aux faux squeezes que Bollinger en marché tendance, car l'ATR cale les bandes sur la volatilité *directionnelle*, pas l'écart-type.\n" +
         "- **Donchian Channels** — simplement le plus haut / plus bas des N dernières barres. Clôture au-dessus du Donchian 20 jours = entrée Turtle classique ; clôture sous le plus bas 10 jours = sortie Turtle. La ligne médiane est la moyenne de la plage.\n" +
         "- **Chaikin Volatility** — taux de variation de l'EMA de (haut − bas). ChaikinVol en hausse = plages qui s'élargissent (précède souvent les cassures) ; ChaikinVol en baisse = contraction, résolution de range imminente. Filtre de timing, pas un signal.\n\n" +
-        "**Volume / flux de monnaie (substituts et compléments à l'OBV)**\n" +
+        "**Volume / flux de monnaie (substituts et compléments à l'OBV et au VWAP)**\n" +
         "- **Ligne A/D (Accumulation / Distribution)** — volume cumulatif positionné par la clôture. Divergence entre A/D et prix = accumulation (haussier) ou distribution (baissier) institutionnelle silencieuse avant confirmation par le prix. Particulièrement utile aux bords d'un range.\n" +
         "- **Chaikin Money Flow (CMF)** — volume de flux monétaire sur une fenêtre glissante de 20–21 barres. CMF > 0 = accumulation nette, < 0 = distribution nette. La cassure de zéro après une divergence nette = déclencheur de timing.\n" +
         "- **Volume Oscillator** — différence (ou %) entre une MA rapide et une MA lente du volume. En hausse sur la bougie de cassure = vraie participation ; plat ou en baisse = fausse cassure quasi certaine, on s'écarte.\n\n" +
@@ -256,14 +346,26 @@ const FR: BuySellGuide = {
         "- **Aroon (Up / Down)** — barres depuis le plus haut / plus bas de la fenêtre. Aroon-Up > 70 avec Aroon-Down < 30 = tendance haussière forte ; les croisements Up/Down = changements de tendance ; les deux < 50 = consolidation. Plus intuitif que l'ADX pour repérer le *début* d'une tendance.\n" +
         "- **Vortex (+VI / −VI)** — +VI passant au-dessus de −VI = changement de tendance haussier (miroir inverse) ; écart qui s'élargit = tendance qui se renforce. Plus réactif que l'ADX sur les timeframes moyennes, légèrement plus sujet aux whipsaws.\n" +
         "- **Trend Intensity Index (TII)** — proportion de clôtures au-dessus / en dessous d'une SMA long terme, rescalée 0–100. TII > 80 = tendance haussière propre ; < 20 = baissière propre ; 40–60 = chop. Excellent filtre de régime binaire avant tout autre setup.\n\n" +
+        "**Stops de suivi de tendance et croisements**\n" +
+        "- **Parabolic SAR (PSAR)** — points de « stop-and-reverse » en suivi de tendance qui basculent sous le prix (tendance haussière) puis au-dessus (baissière). À utiliser comme stop suiveur en tendance confirmée ; erratique en chop — à filtrer par ADX > 20.\n" +
+        "- **MA Cross** — trace une MA rapide et une MA lente et marque chaque croisement. Le couple 50/200 SMA produit le Golden Cross (régime haussier) et le Death Cross (baissier). Tardif mais fiable pour les décisions de dimensionnement et de bascule de régime.\n" +
+        "- **MACD Cross** — marque chaque franchissement de la ligne de signal MACD sur le graphique. Plus rapide que le MA Cross ; à utiliser sous un filtre de tendance (p. ex. prix au-dessus de la SMA 200) pour éviter le chop.\n\n" +
         "**Indicateurs statistiques / de régime**\n" +
         "- **Bollinger %B** — lecture de Bollinger normalisée (0 à la bande basse, 1 à la haute). %B > 1 ou < 0 = clôture hors des bandes (extension extrême). Les divergences sur %B sont souvent plus propres à repérer que sur le prix brut, car l'indicateur est déjà rescalé.\n" +
         "- **Price Z-Score** — distance standardisée de la clôture à sa moyenne glissante, exprimée en σ. |Z| > 2 = étiré ; |Z| > 3 = extrême statistique. Déclencheur de mean reversion direct, sans normalisation supplémentaire.\n" +
-        "- **Exposant de Hurst** — exposant de mémoire longue issu de l'analyse R/S. H > 0,55 = régime de tendance / momentum (privilégier le trend-following) ; H < 0,45 = régime mean-reverting (privilégier les fades) ; ≈ 0,5 = marche aléatoire (pas d'edge AT). À utiliser comme *méta-filtre* avant de choisir la famille d'entrée — sans doute l'outil de régime le plus précieux de cette liste.",
+        "- **Exposant de Hurst** — exposant de mémoire longue issu de l'analyse R/S. H > 0,55 = régime de tendance / momentum (privilégier le trend-following) ; H < 0,45 = régime mean-reverting (privilégier les fades) ; ≈ 0,5 = marche aléatoire (pas d'edge AT). À utiliser comme *méta-filtre* avant de choisir la famille d'entrée — sans doute l'outil de régime le plus précieux de cette liste.\n\n" +
+        "**Retracements et structure de prix (où sont l'offre et la demande)**\n" +
+        "- **Retracement de Fibonacci** — niveaux horizontaux (23,6 / 38,2 / 50 / 61,8 / 78,6 %) entre swing haut et bas. Les niveaux 50 % et 61,8 % (la « zone d'or ») sont les plus surveillés. Fonctionne par réaction auto-réalisatrice, pas par formule — traiter comme un aimant, associer à un déclencheur.\n" +
+        "- **Niveaux de support/résistance (S/R auto)** — niveaux horizontaux issus du clustering de pivots fractaux, classés par nombre de touches et fraîcheur. Les niveaux les plus touchés agissent comme de véritables zones d'offre/demande ; les flip-zones (ancienne résistance devenue support) sont particulièrement fertiles au retest.\n" +
+        "- **Points pivots** — PP / R1–R3 / S1–S3 de floor trader dérivés du haut/bas/clôture de la période précédente. Variantes classique, Fibonacci et Camarilla. Une clôture nette au-dessus du PP = biais haussier du jour ; en dessous = baissier. Les pupitres intraday et futures y ancrent leurs stops.\n" +
+        "- **Profil de volume** — distribution horizontale du volume échangé par niveau de prix. POC, VAH, VAL agissent comme aimants et niveaux de décision ; les LVN favorisent les mouvements rapides. Orthogonal au volume temporel — répond au *où* de l'activité, pas au *quand*.\n" +
+        "- **Order Block** — dernière bougie de couleur opposée avant un mouvement impulsif. Les OB non mitigés conservent leur edge au retest ; les mitigés ont déjà payé. À empiler avec un sweep ou un FVG dans la zone pour des ré-entrées de la meilleure qualité.\n" +
+        "- **Fair Value Gap (FVG)** — déséquilibre sur trois barres où les barres i-2 et i ne se chevauchent pas. Les gaps non remplis agissent comme aimants et marquent souvent une pause / un support pour le prochain segment. Combinez avec un S/R ou un OB pour la confluence.\n" +
+        "- **Sweep de liquidité** — détecte les barres de chasse aux stops qui percent brièvement un plus haut/bas sur N barres puis reclôturent à l'intérieur. Parmi les définitions de risque les plus serrées — stop juste au-delà de la mèche du sweep — particulièrement fort aux extrêmes de séance ou aux extrêmes de la veille.",
     },
     {
       id: "fundamentals",
-      title: "6. Fondamentaux de l'entreprise",
+      title: "7. Fondamentaux de l'entreprise",
       body:
         "L'AT dit **quand** ; les fondamentaux disent **quoi**. Ignorer l'un ou l'autre coûte cher.\n\n" +
         "- **Bons fondamentaux + AT faible = opportunité d'accumulation.** Une entreprise de qualité qui se replie sur un support majeur avec signaux de survente est le long classique.\n" +
@@ -274,7 +376,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "news",
-      title: "7. Nouvelles, catalyseurs et macro",
+      title: "8. Nouvelles, catalyseurs et macro",
       body:
         "Le prix précède la nouvelle, mais la nouvelle accélère le prix.\n\n" +
         "- **Gaps sur nouvelle** — un gap haussier/baissier sur un vrai catalyseur (résultats, FDA, guidance) continue généralement dans le sens du gap 1–3 séances. Ne pas fader le jour 1.\n" +
@@ -286,7 +388,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "risk",
-      title: "8. Gestion du risque (non négociable)",
+      title: "9. Gestion du risque (non négociable)",
       body:
         "Vous ne contrôlez pas le prix, vous contrôlez la taille et les stops. C'est ce que tout livre professionnel souligne plus que n'importe quel indicateur.\n\n" +
         "- **Risque ≤ 1–2% du compte par trade.** Taille = (compte × risque%) ÷ distance du stop. Cela vous permet de vous tromper à répétition et de rester dans la partie.\n" +
@@ -298,7 +400,7 @@ const FR: BuySellGuide = {
     },
     {
       id: "psychology",
-      title: "9. Pièges psychologiques",
+      title: "10. Pièges psychologiques",
       body:
         "La plupart des trades perdants sont des setups correctement identifiés mais mal exécutés.\n\n" +
         "- **Biais de confirmation** — vous trouvez l'indicateur qui appuie votre opinion. Parade : décidez des critères avant de regarder le graphique.\n" +
