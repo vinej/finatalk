@@ -1039,6 +1039,30 @@ function cellLabel(result: AnalyzeResult): string {
       return `${result.spec.maType.toUpperCase()} CROSS ${result.spec.fastPeriod}/${result.spec.slowPeriod}`;
     case "macdCross":
       return `MACD CROSS ${result.spec.fast}/${result.spec.slow}/${result.spec.signal}`;
+    case "keltner":
+      return `KELTNER ${result.spec.period}/${result.spec.atrPeriod}×${result.spec.multiplier}`;
+    case "donchian":
+      return `DONCHIAN ${result.spec.period}`;
+    case "chaikinVol":
+      return `CHAIKIN VOL ${result.spec.emaPeriod}/${result.spec.rocPeriod}`;
+    case "ad":
+      return "A/D";
+    case "cmf":
+      return `CMF ${result.spec.period}`;
+    case "volOsc":
+      return `VOL OSC ${result.spec.fast}/${result.spec.slow}`;
+    case "aroon":
+      return `AROON ${result.spec.period}`;
+    case "vortex":
+      return `VORTEX ${result.spec.period}`;
+    case "tii":
+      return `TII ${result.spec.majorPeriod}/${result.spec.minorPeriod}`;
+    case "zscore":
+      return `Z-SCORE ${result.spec.period}`;
+    case "bbPctB":
+      return `BB%B ${result.spec.period}/${result.spec.stdDev}`;
+    case "hurst":
+      return `HURST ${result.spec.period}`;
     default:
       return `${result.kind.toUpperCase()} ${result.spec.period}`;
   }
@@ -1060,6 +1084,15 @@ function formatLast(kind: string, last: Record<string, number | unknown>): strin
   }
   if (kind === "fib") {
     return `${fmt(last.level382)} / ${fmt(last.level500)} / ${fmt(last.level618)}`;
+  }
+  if (kind === "keltner" || kind === "donchian") {
+    return `${fmt(last.upper)} / ${fmt(last.middle)} / ${fmt(last.lower)}`;
+  }
+  if (kind === "aroon") {
+    return `Up ${fmt(last.up)} / Down ${fmt(last.down)}`;
+  }
+  if (kind === "vortex") {
+    return `+${fmt(last.plus)} / −${fmt(last.minus)}`;
   }
   return fmt(last.value);
 }

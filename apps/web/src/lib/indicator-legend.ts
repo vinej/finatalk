@@ -7,4 +7,8 @@ export type IndicatorColor =
   | { kind: "stoch"; k: string; d: string }
   | { kind: "adx"; adx: string; pdi: string; mdi: string }
   | { kind: "maCross"; fast: string; slow: string; bull: string; bear: string }
-  | { kind: "macdCross"; bull: string; bear: string };
+  | { kind: "macdCross"; bull: string; bear: string }
+  | { kind: "keltner"; upper: string; middle: string; lower: string }
+  | { kind: "donchian"; upper: string; middle: string; lower: string }
+  | { kind: "aroon"; up: string; down: string }
+  | { kind: "vortex"; plus: string; minus: string };

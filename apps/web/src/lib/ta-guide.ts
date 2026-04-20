@@ -233,6 +233,114 @@ const TA_GUIDE_EN: Record<IndicatorKind, TaGuideEntry> = {
       { title: "StockCharts — Fibonacci Retracements", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/fibonacci-retracements" },
     ],
   },
+  keltner: {
+    when: "Use Keltner Channels when you want a smoother volatility envelope than Bollinger Bands — ATR-based bands stay stable through noise and are favored for trend-following breakout systems and trailing stops.",
+    how: "Plots an EMA(period) in the middle and bands at multiplier × ATR(atrPeriod) above and below. Defaults: EMA 20, ATR 20, multiplier 2. Price riding the upper band = strong uptrend; riding the lower band = strong downtrend. Closes outside the channel often flag trend initiations rather than mean-reversion setups.",
+    analyse: "Unlike Bollinger Bands, which widen sharply on outliers, Keltner bands react proportionally to true range — useful when you want the channel to feel the 'average' volatility. Combine with ADX > 20 for breakout confirmation. A typical setup: enter long on a close above the upper band with ADX rising, trail the stop at the middle EMA or lower band. Avoid in sideways markets where price whipsaws between bands.",
+    links: [
+      { title: "Investopedia — Keltner Channel", url: "https://www.investopedia.com/terms/k/keltnerchannel.asp" },
+      { title: "StockCharts — Keltner Channels", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/keltner-channels" },
+    ],
+  },
+  donchian: {
+    when: "Use Donchian Channels when you want the textbook breakout signal — the channel the original Turtle Traders traded. Ideal for trend-following systems and for spotting the rolling N-bar highest high / lowest low at a glance.",
+    how: "Upper band = highest high of the last N bars, lower band = lowest low of the last N bars, middle = their average. Default period 20 (Turtle entry) or 55 (longer-term trend). A close above the upper band = long breakout signal; below the lower = short/exit.",
+    analyse: "Donchian is as mechanical as it gets — no smoothing, no params beyond period. That's the point: it reflects pure structure. The tradeoff is whipsaws in range-bound markets, so it's paired with a trend filter (ADX, 200-SMA direction) in practical systems. The lower band also doubles as a built-in trailing stop for long positions.",
+    links: [
+      { title: "Investopedia — Donchian Channels", url: "https://www.investopedia.com/terms/d/donchianchannels.asp" },
+      { title: "StockCharts — Donchian Channels", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/donchian-channels" },
+    ],
+  },
+  chaikinVol: {
+    when: "Use Chaikin Volatility when you want to track how quickly the trading range is expanding or contracting — useful for spotting volatility regime shifts, breakout setups, and climax exhaustion moves.",
+    how: "Takes an EMA(emaPeriod) of (high − low), then expresses the rate of change versus rocPeriod bars ago as a percentage. Defaults 10/10: Marc Chaikin's original values. Positive values = range is expanding (volatility rising); negative = contracting (calm returning).",
+    analyse: "Rising Chaikin Volatility often accompanies the initial phase of a trend or a panic selloff — expect higher ATR, wider candles, and larger intraday swings. Falling values mark consolidation periods where breakout strategies underperform and mean-reversion works better. Use as a regime filter: require Chaikin Vol above zero (or a threshold) before taking breakout signals. Unlike ATR, which is absolute, Chaikin Vol is relative so it's comparable across different assets and price levels.",
+    links: [
+      { title: "StockCharts — Chaikin Volatility", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/chaikin-volatility" },
+      { title: "Investopedia — Chaikin Indicator Overview", url: "https://www.investopedia.com/terms/c/chaikinoscillator.asp" },
+    ],
+  },
+  ad: {
+    when: "Use Accumulation/Distribution when you want a volume-weighted read on whether each bar's close location within its range argues for accumulation or distribution. Like OBV but with intra-bar nuance: a close near the high counts fully bullish, a close mid-range is neutral even on heavy volume.",
+    how: "For each bar, CLV = ((close − low) − (high − close)) / (high − low), then MFV = CLV × volume, and AD is the running cumulative sum. No parameters. Plotted as a line in its own pane; absolute level is arbitrary, only direction and slope matter.",
+    analyse: "AD rising with price = trend confirmed by real buying; AD flat or falling while price rises = bearish divergence (distribution — smart money selling into strength). AD is more refined than OBV because closes inside the range are weighted proportionally rather than binary up/down. The strongest signal is divergence over several weeks; short-term moves are noisy. Use as confirmation for breakouts, not as a standalone entry.",
+    links: [
+      { title: "Investopedia — Accumulation/Distribution Indicator (A/D)", url: "https://www.investopedia.com/terms/a/accumulationdistribution.asp" },
+      { title: "StockCharts — Accumulation/Distribution Line", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/accumulation-distribution-line" },
+    ],
+  },
+  cmf: {
+    when: "Use Chaikin Money Flow when you want an oscillator version of A/D that reads money-flow pressure over a rolling window — easier to interpret than a cumulative line because it oscillates around zero with clear buy/sell zones.",
+    how: "For each bar, money-flow volume (MFV) = CLV × volume (same as A/D). CMF = sum(MFV, N) / sum(volume, N). Default period 20 (Marc Chaikin's recommendation). Plotted in its own pane around a zero line; bounded approximately between −1 and +1.",
+    analyse: "CMF above zero for sustained periods = buying pressure dominates (bullish bias); below zero = selling pressure (bearish). Sharp spikes above +0.25 or below −0.25 are notable but usually mean-revert. Divergence with price is the classic signal: price higher, CMF lower = distribution warning. Combine with a trend filter — CMF in strong trends can stay on one side of zero for months.",
+    links: [
+      { title: "Investopedia — Chaikin Money Flow (CMF)", url: "https://www.investopedia.com/terms/c/chaikinmoneyflow.asp" },
+      { title: "StockCharts — Chaikin Money Flow (CMF)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/chaikin-money-flow-cmf" },
+    ],
+  },
+  volOsc: {
+    when: "Use the Volume Oscillator to spot volume regime shifts — is recent volume accelerating or decelerating versus the longer-term average? Useful for confirming breakouts and filtering low-conviction chop.",
+    how: "Computes ((SMA(volume, fast) − SMA(volume, slow)) / SMA(volume, slow)) × 100. Defaults 5/20. Plotted as a line oscillator around zero in its own pane, expressed as a percentage.",
+    analyse: "Positive and rising = recent volume is exceeding the baseline (interest growing — breakouts here are higher-quality). Negative = volume drying up (consolidation, breakouts fail more often). Cross above zero alongside a price breakout is a classic confirmation. Divergence matters: price making new highs while the Volume Oscillator is falling flags an unsupported advance likely to reverse.",
+    links: [
+      { title: "Investopedia — Volume Oscillator (Percentage Volume Oscillator)", url: "https://www.investopedia.com/terms/p/pvo.asp" },
+      { title: "Wikipedia — Volume Oscillator", url: "https://en.wikipedia.org/wiki/Volume_analysis" },
+    ],
+  },
+  aroon: {
+    when: "Use the Aroon Indicator when you want a clean read on whether a trend is young and healthy or fading. It's especially good at flagging the start of a new trend — the moment one line crosses 50 while the other dives below is often earlier than moving-average crossovers.",
+    how: "Two lines bounded 0–100. Aroon Up = ((N − bars since N-period high) / N) × 100; Aroon Down mirrors for N-period low. Default period 25 (Tushar Chande's original). Plotted in its own pane.",
+    analyse: "Aroon Up > 70 with Aroon Down < 30 = strong uptrend; the reverse = strong downtrend. When both are below 50 = no trend (consolidation). The crossover of Up over Down (or vice versa) is the primary trade signal; a sustained reading above 70 confirms trend strength. Unlike ADX, Aroon tells you direction as well as strength in a single indicator.",
+    links: [
+      { title: "Investopedia — Aroon Indicator", url: "https://www.investopedia.com/terms/a/aroon.asp" },
+      { title: "StockCharts — Aroon", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/aroon" },
+    ],
+  },
+  vortex: {
+    when: "Use the Vortex Indicator when you want a crossover-based trend system inspired by natural vortex patterns. It reacts faster than moving-average crosses and gives explicit bull/bear transitions via VI+ and VI− lines.",
+    how: "VM+ = |high − previous low|, VM− = |low − previous high|. Over N periods: VI+ = sum(VM+) / sum(TR), VI− = sum(VM−) / sum(TR). Default period 14 (a 21 or 25 period is used for slower signals). Both lines typically oscillate between roughly 0.7 and 1.3.",
+    analyse: "Bullish when VI+ crosses above VI−; bearish on the reverse cross. A widening spread between the two lines = strong trend; a narrowing or entangled pair = weak/ranging market. Combine with ADX to avoid signals in flat conditions, or with volume for breakout confirmation. Works well on daily and weekly charts.",
+    links: [
+      { title: "Investopedia — Vortex Indicator (VI)", url: "https://www.investopedia.com/terms/v/vortex-indicator-vi.asp" },
+      { title: "StockCharts — Vortex Indicator", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/vortex-indicator" },
+    ],
+  },
+  tii: {
+    when: "Use the Trend Intensity Index when you want a single bounded oscillator that answers 'is the asset trending or chopping?' — M.H. Pee designed it to quantify how lopsided recent price deviations from a long-term mean have been.",
+    how: "Compute SMA(close, majorPeriod), then for each bar measure deviation = close − SMA. Over the last minorPeriod bars (typically majorPeriod / 2) sum the positive deviations (sumPos) and the absolute negative deviations (sumNeg). TII = 100 × sumPos / (sumPos + sumNeg). Defaults 60/30. Plotted 0–100 in its own pane.",
+    analyse: "Above 80 = strong uptrend; below 20 = strong downtrend; near 50 = no clear trend (consolidation). Best paired with a directional trend system: only take long entries when TII > 80, shorts when TII < 20. Unlike ADX, TII has clear direction via its position around 50, making it easier to read at a glance.",
+    links: [
+      { title: "Investopedia — Trend Intensity Index", url: "https://www.investopedia.com/terms/t/trend_intensity_index.asp" },
+      { title: "Stocks & Commodities — M.H. Pee's original article", url: "https://store.traders.com/v20c6tii.html" },
+    ],
+  },
+  zscore: {
+    when: "Use the price Z-Score when you want a statistically grounded mean-reversion oscillator — it tells you how many standard deviations the current close is from its rolling average, so extremes are directly comparable across assets and timeframes.",
+    how: "For each bar, compute SMA(close, N) and the population standard deviation σ of the last N closes, then Z = (close − SMA) / σ. Default period 20. Plotted in its own pane around a zero line; typical bounds ±3.",
+    analyse: "|Z| > 2 = statistically stretched (about a 5% tail), |Z| > 3 = extreme. Classic mean-reversion: fade |Z| > 2 back toward zero, exit near the mean. Zero-line crossings can also act as trend confirmations. The method assumes the return distribution is roughly stationary — in a trending market, Z can stay stretched for long periods, so pair with a trend filter (ADX, SMA slope) before fading aggressively.",
+    links: [
+      { title: "Investopedia — Z-Score", url: "https://www.investopedia.com/terms/z/zscore.asp" },
+      { title: "QuantStrat — Mean reversion with Z-scores", url: "https://www.quantstart.com/articles/Basics-of-Statistical-Mean-Reversion-Testing/" },
+    ],
+  },
+  bbPctB: {
+    when: "Use Bollinger %B when you want a normalised version of Bollinger Bands — it answers 'where is price inside the bands?' on a clean 0–1 scale, making divergences and reversion setups easier to read than the bands themselves.",
+    how: "Compute Bollinger Bands (SMA(period) ± stdDev × σ). Then %B = (close − lower) / (upper − lower). Defaults period 20, stdDev 2. Plotted in its own pane with reference lines at 0 (lower band), 0.5 (middle SMA), and 1 (upper band).",
+    analyse: "%B > 1 = price above the upper band (overextension, potential fade or trend-continuation); %B < 0 = below the lower band. Divergence signals work well: price makes a new high but %B makes a lower high = upside exhaustion. In strong trends, %B can hug the 0.8–1+ zone for weeks (don't short into that blindly). Combine with volume or momentum for confirmation.",
+    links: [
+      { title: "Investopedia — Bollinger %B", url: "https://www.investopedia.com/terms/b/bollinger-bands.asp" },
+      { title: "StockCharts — %B Indicator", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/bollinger-band-percent-b-b" },
+    ],
+  },
+  hurst: {
+    when: "Use the Hurst Exponent (advanced) to answer a meta-question: what kind of market is this? Trending, mean-reverting, or random? It shapes which strategies are likely to work before you commit capital. Long windows only — Hurst is noisy on short data.",
+    how: "For each bar, take the last N log-returns and run a rescaled-range (R/S) analysis across multiple dyadic scales (8, 16, 32, ... up to N/2). For each scale, compute average R/S across non-overlapping chunks. Plot log(R/S) vs log(scale); the slope of the linear regression is the Hurst exponent H. Default lookback 100 (longer = more reliable).",
+    analyse: "H > 0.5 = persistent / trending series (momentum strategies have an edge). H < 0.5 = anti-persistent / mean-reverting (fade extremes, pairs trading, Z-score fades work better). H ≈ 0.5 = random walk (neither edge; avoid trading noise). Most equity indices sit around 0.55–0.65 in trending phases, closer to 0.45–0.5 in chop. Use as a regime filter, not a trade signal — values below ~20 bars of data are unreliable.",
+    links: [
+      { title: "Wikipedia — Hurst exponent", url: "https://en.wikipedia.org/wiki/Hurst_exponent" },
+      { title: "QuantStart — Hurst Exponent in Python", url: "https://www.quantstart.com/articles/Basics-of-Statistical-Mean-Reversion-Testing/" },
+    ],
+  },
 };
 
 const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
@@ -425,6 +533,114 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
     links: [
       { title: "Investopedia — Fibonacci Retracement Levels (anglais)", url: "https://www.investopedia.com/terms/f/fibonacciretracement.asp" },
       { title: "Wikipédia — Retracements de Fibonacci", url: "https://fr.wikipedia.org/wiki/Retracement_de_Fibonacci" },
+    ],
+  },
+  keltner: {
+    when: "Utilisez les canaux de Keltner quand vous voulez une enveloppe de volatilité plus lisse que les bandes de Bollinger — les bandes basées sur l'ATR restent stables malgré le bruit et sont privilégiées pour les systèmes de cassure en suivi de tendance et les stops suiveurs.",
+    how: "Trace une EMA(période) au centre et des bandes à multiplicateur × ATR(atrPériode) au-dessus et en dessous. Défauts : EMA 20, ATR 20, multiplicateur 2. Un prix longeant la bande supérieure = forte tendance haussière ; longeant la bande inférieure = forte tendance baissière. Les clôtures hors du canal signalent souvent un démarrage de tendance plutôt qu'un retour à la moyenne.",
+    analyse: "Contrairement aux bandes de Bollinger qui s'élargissent brusquement sur les valeurs aberrantes, les canaux de Keltner réagissent proportionnellement au true range — utile quand on veut ressentir la volatilité « moyenne ». À combiner avec ADX > 20 pour confirmer une cassure. Setup typique : entrée à l'achat sur clôture au-dessus de la bande supérieure avec ADX en hausse, stop suiveur à l'EMA centrale ou à la bande inférieure. À éviter en marché latéral où le prix fait du yoyo entre les bandes.",
+    links: [
+      { title: "Investopedia — Keltner Channel (anglais)", url: "https://www.investopedia.com/terms/k/keltnerchannel.asp" },
+      { title: "Wikipédia — Keltner Channel (anglais)", url: "https://en.wikipedia.org/wiki/Keltner_channel" },
+    ],
+  },
+  donchian: {
+    when: "Utilisez les canaux de Donchian quand vous voulez le signal de cassure par excellence — celui des Turtle Traders originels. Idéal pour les systèmes en suivi de tendance et pour repérer d'un coup d'œil le plus haut/plus bas glissant sur N barres.",
+    how: "Bande supérieure = plus haut des N dernières barres, bande inférieure = plus bas des N dernières, centre = leur moyenne. Défaut : période 20 (entrée Turtle) ou 55 (tendance plus longue). Une clôture au-dessus de la bande supérieure = signal d'achat en cassure ; sous la bande inférieure = vente/sortie.",
+    analyse: "Donchian est aussi mécanique que possible — aucun lissage, aucun paramètre au-delà de la période. C'est le but : il reflète la structure pure. Le revers : beaucoup de faux signaux en marché en range, d'où l'association avec un filtre de tendance (ADX, direction de la SMA 200) en conditions réelles. La bande inférieure sert aussi de stop suiveur intégré pour les positions longues.",
+    links: [
+      { title: "Investopedia — Donchian Channels (anglais)", url: "https://www.investopedia.com/terms/d/donchianchannels.asp" },
+      { title: "Wikipédia — Donchian channel (anglais)", url: "https://en.wikipedia.org/wiki/Donchian_channel" },
+    ],
+  },
+  chaikinVol: {
+    when: "Utilisez la volatilité de Chaikin quand vous voulez suivre à quelle vitesse la plage de trading s'étend ou se contracte — utile pour repérer les changements de régime de volatilité, les setups de cassure et les mouvements d'épuisement en climax.",
+    how: "Prend une EMA(emaPériode) de (haut − bas), puis exprime le taux de variation par rapport à rocPériode barres en arrière en pourcentage. Défauts 10/10 : les valeurs originales de Marc Chaikin. Valeurs positives = plage en expansion (volatilité en hausse) ; négatives = en contraction (retour au calme).",
+    analyse: "Une volatilité de Chaikin en hausse accompagne souvent la phase initiale d'une tendance ou une vente panique — attendez-vous à un ATR plus élevé, des bougies plus larges et des amplitudes intraday plus grandes. Des valeurs en baisse marquent des périodes de consolidation où les stratégies de cassure sous-performent et le retour à la moyenne fonctionne mieux. À utiliser comme filtre de régime : exigez Chaikin Vol au-dessus de zéro (ou d'un seuil) avant de prendre des signaux de cassure. Contrairement à l'ATR qui est absolu, Chaikin Vol est relatif et donc comparable entre actifs et niveaux de prix.",
+    links: [
+      { title: "StockCharts — Chaikin Volatility (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/chaikin-volatility" },
+      { title: "Investopedia — Chaikin Indicator Overview (anglais)", url: "https://www.investopedia.com/terms/c/chaikinoscillator.asp" },
+    ],
+  },
+  ad: {
+    when: "Utilisez la ligne d'Accumulation/Distribution quand vous voulez une lecture pondérée par le volume indiquant si la position de la clôture dans la plage plaide pour une accumulation ou une distribution. Comme l'OBV mais avec la nuance intra-barre : une clôture près du plus haut compte pleinement haussière, une clôture au milieu de la plage est neutre même sur gros volume.",
+    how: "Pour chaque barre, CLV = ((clôture − bas) − (haut − clôture)) / (haut − bas), puis MFV = CLV × volume, et AD est le cumul glissant. Sans paramètres. Tracée en ligne dans un panneau dédié ; le niveau absolu est arbitraire, seule la direction et la pente comptent.",
+    analyse: "AD en hausse avec le prix = tendance confirmée par un vrai achat ; AD plat ou en baisse alors que le prix monte = divergence baissière (distribution — argent malin vendant dans la force). AD est plus fine que l'OBV car les clôtures dans la plage sont pondérées proportionnellement plutôt qu'en binaire. Le signal le plus fort est la divergence sur plusieurs semaines ; les mouvements court terme sont bruités. Utilisez-la comme confirmation de cassure, pas comme entrée autonome.",
+    links: [
+      { title: "Investopedia — Accumulation/Distribution Indicator (A/D) (anglais)", url: "https://www.investopedia.com/terms/a/accumulationdistribution.asp" },
+      { title: "StockCharts — Accumulation/Distribution Line (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/accumulation-distribution-line" },
+    ],
+  },
+  cmf: {
+    when: "Utilisez le Chaikin Money Flow quand vous voulez une version oscillante de l'A/D qui lit la pression monétaire sur une fenêtre glissante — plus facile à interpréter que la ligne cumulée car il oscille autour de zéro avec des zones achat/vente claires.",
+    how: "Pour chaque barre, le money-flow volume (MFV) = CLV × volume (comme l'A/D). CMF = somme(MFV, N) / somme(volume, N). Période par défaut 20 (recommandation de Marc Chaikin). Tracé dans son panneau autour d'une ligne zéro ; borné approximativement entre −1 et +1.",
+    analyse: "CMF au-dessus de zéro sur des périodes prolongées = pression acheteuse dominante (biais haussier) ; en dessous = pression vendeuse (baissier). Les pics au-dessus de +0,25 ou sous −0,25 sont notables mais reviennent généralement à la moyenne. La divergence avec le prix est le signal classique : prix plus haut, CMF plus bas = avertissement de distribution. Combinez avec un filtre de tendance — en tendance forte, le CMF peut rester du même côté de zéro pendant des mois.",
+    links: [
+      { title: "Investopedia — Chaikin Money Flow (CMF) (anglais)", url: "https://www.investopedia.com/terms/c/chaikinmoneyflow.asp" },
+      { title: "StockCharts — Chaikin Money Flow (CMF) (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/chaikin-money-flow-cmf" },
+    ],
+  },
+  volOsc: {
+    when: "Utilisez l'oscillateur de volume pour repérer les changements de régime de volume — le volume récent accélère-t-il ou ralentit-il par rapport à la moyenne long terme ? Utile pour confirmer les cassures et filtrer les marchés hachés peu convaincants.",
+    how: "Calcule ((SMA(volume, rapide) − SMA(volume, lente)) / SMA(volume, lente)) × 100. Défauts 5/20. Tracé comme un oscillateur en ligne autour de zéro dans un panneau dédié, exprimé en pourcentage.",
+    analyse: "Positif et en hausse = le volume récent dépasse la moyenne (intérêt croissant — les cassures sont de meilleure qualité ici). Négatif = le volume s'assèche (consolidation, les cassures échouent plus souvent). Un passage au-dessus de zéro en même temps qu'une cassure de prix est une confirmation classique. La divergence compte : un prix qui fait de nouveaux sommets alors que l'oscillateur de volume baisse signale une avancée sans soutien susceptible de se retourner.",
+    links: [
+      { title: "Investopedia — Volume Oscillator (Percentage Volume Oscillator) (anglais)", url: "https://www.investopedia.com/terms/p/pvo.asp" },
+      { title: "Wikipedia — Volume Oscillator (anglais)", url: "https://en.wikipedia.org/wiki/Volume_analysis" },
+    ],
+  },
+  aroon: {
+    when: "Utilisez l'indicateur Aroon quand vous voulez une lecture nette pour savoir si une tendance est jeune et saine ou en train de s'essouffler. Il est particulièrement bon pour repérer le début d'une nouvelle tendance — le moment où une ligne croise 50 pendant que l'autre plonge sous ce niveau est souvent plus précoce qu'un croisement de moyennes mobiles.",
+    how: "Deux lignes bornées de 0 à 100. Aroon Up = ((N − nombre de barres depuis le plus haut sur N) / N) × 100 ; Aroon Down fait le miroir sur le plus bas sur N. Période par défaut 25 (la valeur originale de Tushar Chande). Tracé dans son panneau dédié.",
+    analyse: "Aroon Up > 70 avec Aroon Down < 30 = tendance haussière forte ; l'inverse = tendance baissière forte. Quand les deux sont sous 50 = pas de tendance (consolidation). Le croisement de Up au-dessus de Down (ou vice versa) est le signal de trading principal ; une lecture soutenue au-dessus de 70 confirme la force de la tendance. Contrairement à l'ADX, Aroon donne à la fois la direction et la force dans un seul indicateur.",
+    links: [
+      { title: "Investopedia — Aroon Indicator (anglais)", url: "https://www.investopedia.com/terms/a/aroon.asp" },
+      { title: "StockCharts — Aroon (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/aroon" },
+    ],
+  },
+  vortex: {
+    when: "Utilisez l'indicateur Vortex quand vous voulez un système de tendance basé sur des croisements inspiré des motifs de vortex naturels. Il réagit plus vite que les croisements de moyennes mobiles et donne des transitions haussières/baissières explicites via les lignes VI+ et VI−.",
+    how: "VM+ = |haut − bas précédent|, VM− = |bas − haut précédent|. Sur N périodes : VI+ = somme(VM+) / somme(TR), VI− = somme(VM−) / somme(TR). Période par défaut 14 (une période de 21 ou 25 est utilisée pour des signaux plus lents). Les deux lignes oscillent généralement entre environ 0,7 et 1,3.",
+    analyse: "Haussier quand VI+ croise au-dessus de VI− ; baissier au croisement inverse. Un écart qui s'élargit entre les deux lignes = tendance forte ; des lignes rapprochées ou entrelacées = marché faible ou en range. Combinez avec l'ADX pour éviter les signaux en conditions plates, ou avec le volume pour confirmer les cassures. Fonctionne bien sur les graphiques journaliers et hebdomadaires.",
+    links: [
+      { title: "Investopedia — Vortex Indicator (VI) (anglais)", url: "https://www.investopedia.com/terms/v/vortex-indicator-vi.asp" },
+      { title: "StockCharts — Vortex Indicator (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/vortex-indicator" },
+    ],
+  },
+  tii: {
+    when: "Utilisez le Trend Intensity Index quand vous voulez un oscillateur borné unique qui répond à la question « l'actif est-il en tendance ou en range ? » — M.H. Pee l'a conçu pour quantifier à quel point les écarts récents du prix par rapport à une moyenne de long terme sont déséquilibrés.",
+    how: "Calcule SMA(clôture, majorPeriod), puis pour chaque barre mesure écart = clôture − SMA. Sur les dernières minorPeriod barres (typiquement majorPeriod / 2), somme les écarts positifs (sumPos) et les écarts négatifs en valeur absolue (sumNeg). TII = 100 × sumPos / (sumPos + sumNeg). Défauts 60/30. Tracé de 0 à 100 dans son panneau dédié.",
+    analyse: "Au-dessus de 80 = tendance haussière forte ; sous 20 = tendance baissière forte ; près de 50 = pas de tendance claire (consolidation). Mieux utilisé avec un système de tendance directionnel : ne prendre des entrées longues que lorsque TII > 80, shorts quand TII < 20. Contrairement à l'ADX, le TII a une direction claire via sa position autour de 50, ce qui le rend plus facile à lire d'un coup d'œil.",
+    links: [
+      { title: "Investopedia — Trend Intensity Index (anglais)", url: "https://www.investopedia.com/terms/t/trend_intensity_index.asp" },
+      { title: "Stocks & Commodities — article original de M.H. Pee (anglais)", url: "https://store.traders.com/v20c6tii.html" },
+    ],
+  },
+  zscore: {
+    when: "Utilisez le score Z du prix quand vous voulez un oscillateur de retour à la moyenne statistiquement fondé — il indique de combien d'écarts-types la clôture s'écarte de sa moyenne glissante, rendant les extrêmes directement comparables entre actifs et horizons.",
+    how: "Pour chaque barre, calculez SMA(clôture, N) et l'écart-type population σ des N dernières clôtures, puis Z = (clôture − SMA) / σ. Période par défaut 20. Tracé dans son panneau autour d'une ligne zéro ; bornes typiques ±3.",
+    analyse: "|Z| > 2 = étirement statistique (queue d'environ 5 %), |Z| > 3 = extrême. Retour à la moyenne classique : fader |Z| > 2 vers zéro, sortir près de la moyenne. Les franchissements de zéro peuvent aussi servir de confirmation de tendance. La méthode suppose que la distribution des rendements est à peu près stationnaire — en tendance, Z peut rester étiré longtemps, combinez donc avec un filtre de tendance (ADX, pente de SMA) avant de fader agressivement.",
+    links: [
+      { title: "Investopedia — Z-Score (anglais)", url: "https://www.investopedia.com/terms/z/zscore.asp" },
+      { title: "QuantStart — Mean reversion with Z-scores (anglais)", url: "https://www.quantstart.com/articles/Basics-of-Statistical-Mean-Reversion-Testing/" },
+    ],
+  },
+  bbPctB: {
+    when: "Utilisez Bollinger %B quand vous voulez une version normalisée des Bandes de Bollinger — il répond à « où se situe le prix à l'intérieur des bandes ? » sur une échelle propre 0–1, ce qui rend les divergences et les setups de retour à la moyenne plus lisibles que les bandes elles-mêmes.",
+    how: "Calcule les Bandes de Bollinger (SMA(période) ± écart-type × σ). Puis %B = (clôture − inférieure) / (supérieure − inférieure). Défauts : période 20, écart-type 2. Tracé dans son panneau avec lignes de référence à 0 (bande inférieure), 0,5 (SMA centrale) et 1 (bande supérieure).",
+    analyse: "%B > 1 = prix au-dessus de la bande supérieure (excès, fade potentiel ou continuation de tendance) ; %B < 0 = sous la bande inférieure. Les divergences fonctionnent bien : prix qui fait un nouveau sommet mais %B fait un sommet plus bas = essoufflement haussier. En tendance forte, %B peut rester dans la zone 0,8–1+ pendant des semaines (ne pas shorter aveuglément). Combinez avec volume ou momentum pour confirmer.",
+    links: [
+      { title: "Investopedia — Bollinger %B (anglais)", url: "https://www.investopedia.com/terms/b/bollinger-bands.asp" },
+      { title: "StockCharts — %B Indicator (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/bollinger-band-percent-b-b" },
+    ],
+  },
+  hurst: {
+    when: "Utilisez l'exposant de Hurst (avancé) pour répondre à une méta-question : quel type de marché est-ce ? En tendance, en retour à la moyenne ou aléatoire ? Il guide quelles stratégies ont des chances de fonctionner avant d'engager du capital. Fenêtres longues uniquement — Hurst est bruité sur données courtes.",
+    how: "Pour chaque barre, prenez les N derniers log-rendements et exécutez une analyse d'étendue réajustée (R/S) à plusieurs échelles dyadiques (8, 16, 32, ... jusqu'à N/2). Pour chaque échelle, calculez la moyenne R/S sur des blocs non chevauchants. Tracez log(R/S) vs log(échelle) ; la pente de la régression linéaire est l'exposant de Hurst H. Lookback par défaut 100 (plus long = plus fiable).",
+    analyse: "H > 0,5 = série persistante / en tendance (les stratégies de momentum ont un avantage). H < 0,5 = anti-persistante / en retour à la moyenne (fader les extrêmes, pairs trading, fades de Z-score fonctionnent mieux). H ≈ 0,5 = marche aléatoire (aucun avantage ; éviter de trader le bruit). La plupart des indices actions se situent autour de 0,55–0,65 en phases de tendance, plus près de 0,45–0,5 en range. À utiliser comme filtre de régime, pas comme signal d'entrée — les valeurs sous ~20 barres de données sont peu fiables.",
+    links: [
+      { title: "Wikipedia — Exposant de Hurst", url: "https://fr.wikipedia.org/wiki/Exposant_de_Hurst" },
+      { title: "QuantStart — Hurst Exponent in Python (anglais)", url: "https://www.quantstart.com/articles/Basics-of-Statistical-Mean-Reversion-Testing/" },
     ],
   },
 };

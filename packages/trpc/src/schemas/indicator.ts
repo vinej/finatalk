@@ -53,6 +53,42 @@ export const IndicatorSpec = z.discriminatedUnion("kind", [
     slow: z.number().int().min(2).max(500),
     signal: z.number().int().min(1).max(200),
   }),
+  z.object({
+    kind: z.literal("keltner"),
+    period: z.number().int().min(2).max(500),
+    atrPeriod: z.number().int().min(2).max(500),
+    multiplier: z.number().min(0.1).max(10),
+  }),
+  z.object({
+    kind: z.literal("donchian"),
+    period: z.number().int().min(2).max(500),
+  }),
+  z.object({
+    kind: z.literal("chaikinVol"),
+    emaPeriod: z.number().int().min(2).max(500),
+    rocPeriod: z.number().int().min(1).max(500),
+  }),
+  z.object({ kind: z.literal("ad") }),
+  z.object({ kind: z.literal("cmf"), period: z.number().int().min(2).max(500) }),
+  z.object({
+    kind: z.literal("volOsc"),
+    fast: z.number().int().min(2).max(500),
+    slow: z.number().int().min(2).max(500),
+  }),
+  z.object({ kind: z.literal("aroon"), period: z.number().int().min(2).max(500) }),
+  z.object({ kind: z.literal("vortex"), period: z.number().int().min(2).max(500) }),
+  z.object({
+    kind: z.literal("tii"),
+    majorPeriod: z.number().int().min(2).max(500),
+    minorPeriod: z.number().int().min(1).max(500),
+  }),
+  z.object({ kind: z.literal("zscore"), period: z.number().int().min(2).max(500) }),
+  z.object({
+    kind: z.literal("bbPctB"),
+    period: z.number().int().min(2).max(500),
+    stdDev: z.number().min(0.1).max(10),
+  }),
+  z.object({ kind: z.literal("hurst"), period: z.number().int().min(20).max(2000) }),
 ]);
 export type IndicatorSpec = z.infer<typeof IndicatorSpec>;
 
@@ -88,6 +124,28 @@ export const IndicatorColor = z.union([
     kind: z.literal("macdCross"),
     bull: HexColor,
     bear: HexColor,
+  }),
+  z.object({
+    kind: z.literal("keltner"),
+    upper: HexColor,
+    middle: HexColor,
+    lower: HexColor,
+  }),
+  z.object({
+    kind: z.literal("donchian"),
+    upper: HexColor,
+    middle: HexColor,
+    lower: HexColor,
+  }),
+  z.object({
+    kind: z.literal("aroon"),
+    up: HexColor,
+    down: HexColor,
+  }),
+  z.object({
+    kind: z.literal("vortex"),
+    plus: HexColor,
+    minus: HexColor,
   }),
 ]);
 export type IndicatorColor = z.infer<typeof IndicatorColor>;

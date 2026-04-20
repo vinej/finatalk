@@ -12,7 +12,77 @@ export const KINDS: IndicatorKind[] = [
   "rsi", "mom", "roc", "macd", "bbands",
   "atr", "adx", "stoch", "stochRsi", "williamsR", "obv", "psar",
   "maCross", "macdCross", "fib",
+  "keltner", "donchian", "chaikinVol",
+  "ad", "cmf", "volOsc",
+  "aroon", "vortex", "tii",
+  "zscore", "bbPctB", "hurst",
 ];
+
+export type IndicatorCategory = "trend" | "momentum" | "volatility" | "volume" | "hybrid";
+
+export const CATEGORIES: IndicatorCategory[] = [
+  "trend", "momentum", "volatility", "volume", "hybrid",
+];
+
+const KIND_CATEGORY: Record<IndicatorKind, IndicatorCategory> = {
+  sma: "trend",
+  ema: "trend",
+  rma: "trend",
+  wma: "trend",
+  dema: "trend",
+  psar: "trend",
+  maCross: "trend",
+  rsi: "momentum",
+  mom: "momentum",
+  roc: "momentum",
+  stoch: "momentum",
+  stochRsi: "momentum",
+  williamsR: "momentum",
+  atr: "volatility",
+  bbands: "volatility",
+  keltner: "volatility",
+  donchian: "volatility",
+  chaikinVol: "volatility",
+  obv: "volume",
+  vwap: "volume",
+  ad: "volume",
+  cmf: "volume",
+  volOsc: "volume",
+  macd: "hybrid",
+  macdCross: "hybrid",
+  adx: "hybrid",
+  fib: "hybrid",
+  aroon: "trend",
+  vortex: "trend",
+  tii: "trend",
+  zscore: "momentum",
+  bbPctB: "volatility",
+  hurst: "hybrid",
+};
+
+export function kindCategory(kind: IndicatorKind): IndicatorCategory {
+  return KIND_CATEGORY[kind];
+}
+
+const CATEGORY_LABEL_EN: Record<IndicatorCategory, string> = {
+  trend: "Trend",
+  momentum: "Momentum",
+  volatility: "Volatility",
+  volume: "Volume",
+  hybrid: "Hybrid",
+};
+
+const CATEGORY_LABEL_FR: Record<IndicatorCategory, string> = {
+  trend: "Tendance",
+  momentum: "Momentum",
+  volatility: "Volatilité",
+  volume: "Volume",
+  hybrid: "Hybride",
+};
+
+export function categoryLabel(cat: IndicatorCategory, lang: Lang = "en"): string {
+  return (lang === "fr" ? CATEGORY_LABEL_FR : CATEGORY_LABEL_EN)[cat];
+}
 
 export function kindLabel(kind: IndicatorKind): string {
   switch (kind) {
@@ -37,6 +107,18 @@ export function kindLabel(kind: IndicatorKind): string {
     case "maCross": return "MA Cross";
     case "macdCross": return "MACD Cross";
     case "fib": return "Fib";
+    case "keltner": return "Keltner";
+    case "donchian": return "Donchian";
+    case "chaikinVol": return "Chaikin Vol";
+    case "ad": return "A/D";
+    case "cmf": return "CMF";
+    case "volOsc": return "Vol Osc";
+    case "aroon": return "Aroon";
+    case "vortex": return "Vortex";
+    case "tii": return "TII";
+    case "zscore": return "Z-Score";
+    case "bbPctB": return "BB %B";
+    case "hurst": return "Hurst";
   }
 }
 
@@ -62,6 +144,18 @@ const FULL_NAME_EN: Record<IndicatorKind, string> = {
   maCross: "Moving Average Crossover",
   macdCross: "MACD Signal Crossover",
   fib: "Fibonacci Retracement",
+  keltner: "Keltner Channels",
+  donchian: "Donchian Channels",
+  chaikinVol: "Chaikin Volatility",
+  ad: "Accumulation/Distribution Line",
+  cmf: "Chaikin Money Flow",
+  volOsc: "Volume Oscillator",
+  aroon: "Aroon Indicator",
+  vortex: "Vortex Indicator",
+  tii: "Trend Intensity Index",
+  zscore: "Price Z-Score",
+  bbPctB: "Bollinger %B",
+  hurst: "Hurst Exponent",
 };
 
 const FULL_NAME_FR: Record<IndicatorKind, string> = {
@@ -86,6 +180,18 @@ const FULL_NAME_FR: Record<IndicatorKind, string> = {
   maCross: "Croisement de moyennes mobiles",
   macdCross: "Croisement du signal MACD",
   fib: "Retracement de Fibonacci",
+  keltner: "Canaux de Keltner",
+  donchian: "Canaux de Donchian",
+  chaikinVol: "Volatilité de Chaikin",
+  ad: "Ligne d'accumulation/distribution",
+  cmf: "Chaikin Money Flow",
+  volOsc: "Oscillateur de volume",
+  aroon: "Indicateur Aroon",
+  vortex: "Indicateur Vortex",
+  tii: "Indice d'intensité de tendance",
+  zscore: "Score Z du prix",
+  bbPctB: "Bollinger %B",
+  hurst: "Exposant de Hurst",
 };
 
 export function kindFullName(kind: IndicatorKind, lang: Lang = "en"): string {
@@ -118,6 +224,18 @@ export function defaultSpec(kind: IndicatorKind): IndicatorSpec {
     case "maCross": return { kind: "maCross", fastPeriod: 50, slowPeriod: 200, maType: "sma" };
     case "macdCross": return { kind: "macdCross", fast: 12, slow: 26, signal: 9 };
     case "fib": return { kind: "fib" };
+    case "keltner": return { kind: "keltner", period: 20, atrPeriod: 20, multiplier: 2 };
+    case "donchian": return { kind: "donchian", period: 20 };
+    case "chaikinVol": return { kind: "chaikinVol", emaPeriod: 10, rocPeriod: 10 };
+    case "ad": return { kind: "ad" };
+    case "cmf": return { kind: "cmf", period: 20 };
+    case "volOsc": return { kind: "volOsc", fast: 5, slow: 20 };
+    case "aroon": return { kind: "aroon", period: 25 };
+    case "vortex": return { kind: "vortex", period: 14 };
+    case "tii": return { kind: "tii", majorPeriod: 60, minorPeriod: 30 };
+    case "zscore": return { kind: "zscore", period: 20 };
+    case "bbPctB": return { kind: "bbPctB", period: 20, stdDev: 2 };
+    case "hurst": return { kind: "hurst", period: 100 };
   }
 }
 
@@ -146,6 +264,20 @@ export function defaultColor(kind: IndicatorKind): IndicatorColor {
     case "macdCross":
       return { kind: "macdCross", bull: "#16a34a", bear: "#dc2626" };
     case "fib": return "#c026d3";
+    case "keltner":
+      return { kind: "keltner", upper: "#0ea5e9", middle: "#0369a1", lower: "#0ea5e9" };
+    case "donchian":
+      return { kind: "donchian", upper: "#a855f7", middle: "#6b21a8", lower: "#a855f7" };
+    case "chaikinVol": return "#f59e0b";
+    case "ad": return "#0d9488";
+    case "cmf": return "#059669";
+    case "volOsc": return "#eab308";
+    case "aroon": return { kind: "aroon", up: "#16a34a", down: "#dc2626" };
+    case "vortex": return { kind: "vortex", plus: "#2563eb", minus: "#ea580c" };
+    case "tii": return "#8b5cf6";
+    case "zscore": return "#d946ef";
+    case "bbPctB": return "#db2777";
+    case "hurst": return "#0f766e";
   }
 }
 
@@ -171,6 +303,18 @@ const KIND_DESCRIPTIONS_EN: Record<IndicatorKind, string> = {
   maCross: "MA Cross — plots a fast and a slow moving average on the price chart and marks every crossover. The classic 50/200 SMA pair produces the 'Golden Cross' (fast crosses above slow — bullish regime) and 'Death Cross' (fast crosses below — bearish). Configurable periods and SMA/EMA.",
   macdCross: "MACD Signal Cross — runs MACD and flags every time the MACD line crosses its signal line: up-arrow for bullish, down-arrow for bearish. Use alongside a trend filter to avoid choppy-market whipsaws. Defaults 12/26/9.",
   fib: "Fibonacci Retracement — draws horizontal levels (23.6%, 38.2%, 50%, 61.8%, 78.6%) between the highest high and lowest low of the loaded range (or the last N candles if a lookback is set). Direction (uptrend vs downtrend retracement) is auto-detected from which swing came last. Popular with discretionary traders as potential pullback/support zones; the 38.2%, 50%, and 61.8% levels are the most watched. Effectiveness relies partly on self-fulfilling prophecy — expect reactions, not guarantees.",
+  keltner: "Keltner Channels — volatility-based envelope around an EMA(period) with upper/lower bands at ATR(atrPeriod) × multiplier. Unlike Bollinger Bands (which use standard deviation), Keltner uses true range, so bands are smoother and less prone to rapid whipsaws. Price riding the upper band signals strong uptrend; breakouts outside the channel often mark trend initiations. Defaults period 20, ATR 20, multiplier 2.",
+  donchian: "Donchian Channels — upper band = highest high over N bars, lower band = lowest low over N bars, middle = their average. The original turtle-trading breakout signal: enter long on a close above the upper band, exit on a break of the lower. Also doubles as a trailing-stop tool and support/resistance finder. Default period 20 (classic 'Turtle' breakout).",
+  chaikinVol: "Chaikin Volatility — measures the rate of change of an EMA(emaPeriod) of (high − low) over the last rocPeriod bars, expressed as a percentage. Rising values mean volatility is expanding (often around breakouts or panic moves); falling values signal contracting ranges (consolidation). Unlike ATR, which tracks absolute range, Chaikin Vol tracks the relative change — useful for spotting volatility regime shifts. Defaults 10/10.",
+  ad: "Accumulation/Distribution — cumulative volume weighted by where the close falls within each bar's range: near the high adds, near the low subtracts. Similar in spirit to OBV but more nuanced, because partial bars contribute partially. Rising A/D with rising price confirms the trend; divergence (price up, A/D flat/falling) often precedes reversals.",
+  cmf: "Chaikin Money Flow — sum of Money Flow Volume over N bars divided by sum of volume over the same window. Bounded roughly −1 to +1. Positive readings indicate buying pressure (closes concentrated near highs on strong volume); negative indicate distribution. Sustained CMF > 0.1 = healthy accumulation; < −0.1 = meaningful selling pressure. Default period 20.",
+  volOsc: "Volume Oscillator — percent difference between a fast and a slow SMA of volume: ((fast − slow) / slow) × 100. Positive = recent volume above the longer-term average (increased participation, often around breakouts or climax moves); negative = drying up (consolidation, trend exhaustion). Defaults 5/20.",
+  aroon: "Aroon Indicator — two lines (Aroon Up / Aroon Down) each bounded 0–100 that measure how recently the N-period high or low occurred. Aroon Up = ((N − bars since highest high) / N) × 100; Aroon Down mirrors for lows. Crossovers flag trend changes; readings above 70 signal strong trend direction, below 30 = absence of trend. Default period 25.",
+  vortex: "Vortex Indicator — two lines (VI+ and VI−) that quantify directional movement pressure. VM+ = |high − prev low|, VM− = |low − prev high|; VI+ = ΣVM+/ΣTR, VI− = ΣVM−/ΣTR over N bars. Bullish when VI+ crosses above VI−, bearish on the reverse cross. The wider the spread, the stronger the trend. Default period 14.",
+  tii: "Trend Intensity Index — gauges how lopsided recent price deviations from a long-term SMA have been. Computes close − SMA(majorPeriod), sums positive vs absolute negative deviations over minorPeriod bars, then reports 100 × sumPos / (sumPos + sumNeg). Bounded 0–100; readings > 80 = strong uptrend, < 20 = strong downtrend, 50 = balance. Defaults 60/30.",
+  zscore: "Price Z-Score — standardised distance of the current close from its rolling SMA, expressed in standard deviations: (close − SMA(N)) / stdev(N). Zero = price sits on the mean; ±2 = a two-sigma stretch (rare); ±3 = extreme. Classic mean-reversion tool: fade extremes back toward zero, or use the zero-line cross as a trend confirmation. Default period 20.",
+  bbPctB: "Bollinger %B — where price sits inside its Bollinger Bands, rescaled 0–1: (close − lower) / (upper − lower). %B = 1 means price touches the upper band; 0 means the lower; 0.5 = the middle SMA. Above 1 or below 0 = outside the bands (overextension). Easier to track than the bands themselves for divergences and reversion setups. Defaults period 20, stdDev 2.",
+  hurst: "Hurst Exponent — advanced long-memory statistic estimating whether a time series is trending, mean-reverting, or a random walk. Computed via rescaled-range (R/S) analysis across multiple dyadic scales within a lookback window, with the slope of log(R/S) vs log(scale) giving H. H > 0.5 = persistent trends (momentum works); H < 0.5 = anti-persistent / mean-reverting (fade works); H ≈ 0.5 = random walk (neither). Needs long windows to be reliable — default 100.",
 };
 
 const KIND_DESCRIPTIONS_FR: Record<IndicatorKind, string> = {
@@ -195,6 +339,18 @@ const KIND_DESCRIPTIONS_FR: Record<IndicatorKind, string> = {
   maCross: "Croisement de moyennes mobiles — trace une moving average rapide et une lente sur le graphique des prix et marque chaque croisement. Le classique 50/200 en SMA donne le « Golden Cross » (la rapide franchit la lente à la hausse — régime haussier) et le « Death Cross » (franchissement à la baisse). Périodes et type (SMA/EMA) configurables.",
   macdCross: "Croisement du signal MACD — exécute la MACD et marque chaque franchissement de la ligne de signal : flèche haute = haussier, flèche basse = baissier. À utiliser avec un filtre de tendance pour éviter les faux signaux en marché chaotique. Défauts 12/26/9.",
   fib: "Retracement de Fibonacci — trace des niveaux horizontaux (23,6 %, 38,2 %, 50 %, 61,8 %, 78,6 %) entre le plus haut et le plus bas de la plage chargée (ou des N dernières bougies si un lookback est défini). La direction (retracement d'une tendance haussière ou baissière) est détectée automatiquement selon le dernier swing. Populaire chez les traders discrétionnaires comme zones potentielles de repli/support ; les niveaux 38,2 %, 50 % et 61,8 % sont les plus surveillés. L'efficacité vient en partie d'une prophétie auto-réalisatrice — attendez-vous à des réactions, pas à des garanties.",
+  keltner: "Canaux de Keltner — enveloppe de volatilité autour d'une EMA(période) avec bandes supérieure/inférieure à ATR(atrPériode) × multiplicateur. Contrairement aux Bandes de Bollinger (écart-type), Keltner utilise le true range : bandes plus lisses et moins sensibles aux faux signaux. Le prix longeant la bande supérieure signale une forte tendance haussière ; les cassures hors du canal marquent souvent un démarrage de tendance. Défauts période 20, ATR 20, multiplicateur 2.",
+  donchian: "Canaux de Donchian — bande supérieure = plus haut des N dernières bougies, bande inférieure = plus bas des N dernières, centre = leur moyenne. Le signal de cassure originel des Turtle Traders : achat sur clôture au-dessus de la bande supérieure, sortie sous la bande inférieure. Utile aussi comme stop suiveur et repère de support/résistance. Défaut : période 20 (cassure classique des Turtles).",
+  chaikinVol: "Volatilité de Chaikin — mesure le taux de variation d'une EMA(emaPériode) de (haut − bas) sur les rocPériode dernières bougies, en pourcentage. Des valeurs en hausse indiquent une volatilité en expansion (souvent lors de cassures ou mouvements de panique) ; en baisse, des plages qui se contractent (consolidation). Contrairement à l'ATR qui suit la plage absolue, Chaikin Vol suit la variation relative — utile pour repérer les changements de régime de volatilité. Défauts 10/10.",
+  ad: "Accumulation/Distribution — volume cumulé pondéré par la position de la clôture dans la plage de chaque bougie : proche du haut = ajout, proche du bas = soustraction. Similaire à l'OBV mais plus nuancé, car les bougies partielles contribuent partiellement. Une A/D haussière avec prix haussier confirme la tendance ; les divergences (prix en hausse, A/D plate ou en baisse) précèdent souvent les retournements.",
+  cmf: "Chaikin Money Flow — somme du Money Flow Volume sur N bougies divisée par la somme du volume sur la même fenêtre. Borné environ entre −1 et +1. Des valeurs positives indiquent une pression acheteuse (clôtures proches des hauts avec fort volume) ; négatives, une distribution. Un CMF soutenu > 0,1 = accumulation saine ; < −0,1 = pression vendeuse significative. Défaut : période 20.",
+  volOsc: "Oscillateur de volume — différence en pourcentage entre une SMA rapide et une SMA lente du volume : ((rapide − lente) / lente) × 100. Positif = volume récent au-dessus de la moyenne long terme (participation accrue, souvent autour des cassures ou des mouvements climax) ; négatif = assèchement (consolidation, essoufflement de tendance). Défauts 5/20.",
+  aroon: "Indicateur Aroon — deux lignes (Aroon Up / Aroon Down) bornées 0–100 qui mesurent à quel point le plus haut ou le plus bas sur N périodes est récent. Aroon Up = ((N − barres depuis le plus haut) / N) × 100 ; Aroon Down est le miroir pour les plus bas. Les croisements signalent des changements de tendance ; au-dessus de 70 = direction de tendance forte, en dessous de 30 = absence de tendance. Défaut : période 25.",
+  vortex: "Indicateur Vortex — deux lignes (VI+ et VI−) qui quantifient la pression de mouvement directionnel. VM+ = |haut − bas préc.|, VM− = |bas − haut préc.| ; VI+ = ΣVM+/ΣTR, VI− = ΣVM−/ΣTR sur N barres. Haussier lorsque VI+ franchit VI− à la hausse, baissier sur le croisement inverse. Plus l'écart est large, plus la tendance est forte. Défaut : période 14.",
+  tii: "Indice d'intensité de tendance — mesure à quel point les écarts récents du prix à une SMA long terme sont asymétriques. Calcule close − SMA(majorPeriod), somme les écarts positifs contre les écarts négatifs absolus sur minorPeriod barres, puis rapporte 100 × sommePos / (sommePos + sommeNeg). Borné 0–100 ; > 80 = forte tendance haussière, < 20 = forte tendance baissière, 50 = équilibre. Défauts 60/30.",
+  zscore: "Score Z du prix — distance standardisée de la clôture par rapport à sa SMA glissante, exprimée en écarts-types : (clôture − SMA(N)) / écart-type(N). Zéro = le prix se situe sur la moyenne ; ±2 = étirement à deux sigmas (rare) ; ±3 = extrême. Outil classique de retour à la moyenne : fader les extrêmes vers zéro, ou utiliser le franchissement de zéro comme confirmation de tendance. Défaut : période 20.",
+  bbPctB: "Bollinger %B — position du prix dans ses Bandes de Bollinger, rééchelonnée 0–1 : (clôture − inférieure) / (supérieure − inférieure). %B = 1 signifie que le prix touche la bande supérieure ; 0 la bande inférieure ; 0,5 = la SMA centrale. Au-dessus de 1 ou en dessous de 0 = hors bandes (excès). Plus facile à suivre que les bandes elles-mêmes pour détecter divergences et setups de retour à la moyenne. Défauts : période 20, écart-type 2.",
+  hurst: "Exposant de Hurst — statistique avancée de mémoire longue estimant si une série temporelle est en tendance, en retour à la moyenne, ou une marche aléatoire. Calculé par l'analyse d'étendue réajustée (R/S) sur plusieurs échelles dyadiques dans une fenêtre de lookback ; la pente de log(R/S) vs log(échelle) donne H. H > 0,5 = tendances persistantes (le momentum fonctionne) ; H < 0,5 = anti-persistant / retour à la moyenne (le fade fonctionne) ; H ≈ 0,5 = marche aléatoire (ni l'un ni l'autre). Nécessite de longues fenêtres pour être fiable — défaut : 100.",
 };
 
 export function kindDescription(kind: IndicatorKind, lang: Lang = "en"): string {
@@ -223,6 +379,18 @@ const KIND_ONELINER_EN: Record<IndicatorKind, string> = {
   maCross: "Golden Cross (50 above 200) = bullish regime, Death Cross = bearish.",
   macdCross: "Flags every MACD/signal crossover — use with a trend filter to avoid whipsaws.",
   fib: "Classic pullback zones: 38.2%, 50%, 61.8% — reactions, not guarantees.",
+  keltner: "EMA envelope with ATR-based bands — smoother than Bollinger; channel breaks mark trend starts.",
+  donchian: "Classic turtle breakout: buy above upper, sell below lower band over N bars.",
+  chaikinVol: "Rate of change of EMA(H−L) — rising = volatility expanding, falling = contracting.",
+  ad: "Cumulative volume weighted by close position in range — confirms trend, divergences warn of reversal.",
+  cmf: "Positive = accumulation, negative = distribution; sustained |CMF| > 0.1 is meaningful.",
+  volOsc: "% difference of fast vs slow volume SMA — positive = participation rising, negative = drying up.",
+  aroon: "Aroon Up/Down (0–100) — tracks how recently the period high/low printed; crossovers flag trend changes.",
+  vortex: "VI+ / VI− crossovers flag trend changes; wider spread = stronger trend.",
+  tii: "0–100 — above 80 = strong uptrend, below 20 = strong downtrend, near 50 = no trend.",
+  zscore: "Standardised distance from the mean in σ — ±2 is stretched, ±3 extreme; classic mean-reversion fade.",
+  bbPctB: "0–1 inside the Bollinger Bands; >1 or <0 = outside, overextension warning.",
+  hurst: "H > 0.5 = trending (momentum works), < 0.5 = mean-reverting, ≈ 0.5 = random walk.",
 };
 
 const KIND_ONELINER_FR: Record<IndicatorKind, string> = {
@@ -247,6 +415,18 @@ const KIND_ONELINER_FR: Record<IndicatorKind, string> = {
   maCross: "Golden Cross (50 au-dessus de 200) = régime haussier, Death Cross = baissier.",
   macdCross: "Signale chaque croisement MACD/signal — à combiner avec un filtre de tendance.",
   fib: "Zones de repli classiques : 38,2 %, 50 %, 61,8 % — réactions, pas garanties.",
+  keltner: "Enveloppe EMA avec bandes ATR — plus lisse que Bollinger ; les cassures du canal marquent les débuts de tendance.",
+  donchian: "Cassure Turtle classique : achat au-dessus de la bande supérieure, vente sous la bande inférieure sur N bougies.",
+  chaikinVol: "Taux de variation de EMA(H−B) — en hausse = volatilité qui s'étend, en baisse = qui se contracte.",
+  ad: "Volume cumulé pondéré par la position de la clôture — confirme la tendance, les divergences alertent d'un retournement.",
+  cmf: "Positif = accumulation, négatif = distribution ; un |CMF| soutenu > 0,1 est significatif.",
+  volOsc: "Écart % entre SMA rapide et lente du volume — positif = participation en hausse, négatif = qui s'assèche.",
+  aroon: "Aroon Up/Down (0–100) — suit la fraîcheur du plus haut/plus bas ; les croisements signalent des changements de tendance.",
+  vortex: "Croisements VI+ / VI− : signalent des changements de tendance ; écart large = tendance forte.",
+  tii: "0–100 — au-dessus de 80 = forte tendance haussière, en dessous de 20 = forte tendance baissière, autour de 50 = pas de tendance.",
+  zscore: "Distance standardisée à la moyenne en σ — ±2 étiré, ±3 extrême ; fade classique de retour à la moyenne.",
+  bbPctB: "0–1 dans les Bandes de Bollinger ; >1 ou <0 = hors bandes, excès.",
+  hurst: "H > 0,5 = tendance (le momentum fonctionne), < 0,5 = retour à la moyenne, ≈ 0,5 = marche aléatoire.",
 };
 
 export function kindOneliner(kind: IndicatorKind, lang: Lang = "en"): string {
@@ -267,11 +447,15 @@ export function formatLabel(spec: IndicatorSpec): string {
     case "adx":
     case "stochRsi":
     case "williamsR":
+    case "zscore":
+    case "hurst":
       return `${kindLabel(spec.kind)} ${spec.period}`;
     case "macd":
       return `MACD ${spec.fast}/${spec.slow}/${spec.signal}`;
     case "bbands":
       return `BBands ${spec.period}/${spec.stdDev}`;
+    case "bbPctB":
+      return `BB %B ${spec.period}/${spec.stdDev}`;
     case "stoch":
       return `Stoch ${spec.period}/${spec.signal}/${spec.smooth}`;
     case "obv":
@@ -290,6 +474,24 @@ export function formatLabel(spec: IndicatorSpec): string {
       return `MACD Cross ${spec.fast}/${spec.slow}/${spec.signal}`;
     case "fib":
       return spec.lookback != null ? `Fib (${spec.lookback})` : "Fib";
+    case "keltner":
+      return `Keltner ${spec.period}/${spec.atrPeriod}×${spec.multiplier}`;
+    case "donchian":
+      return `Donchian ${spec.period}`;
+    case "chaikinVol":
+      return `Chaikin Vol ${spec.emaPeriod}/${spec.rocPeriod}`;
+    case "ad":
+      return "A/D";
+    case "cmf":
+      return `CMF ${spec.period}`;
+    case "volOsc":
+      return `Vol Osc ${spec.fast}/${spec.slow}`;
+    case "aroon":
+      return `Aroon ${spec.period}`;
+    case "vortex":
+      return `Vortex ${spec.period}`;
+    case "tii":
+      return `TII ${spec.majorPeriod}/${spec.minorPeriod}`;
   }
 }
 
@@ -320,11 +522,14 @@ function sortKey(spec: IndicatorSpec): string {
     case "adx":
     case "stochRsi":
     case "williamsR":
+    case "zscore":
+    case "hurst":
       return `${prefix}|${pad(spec.period)}`;
     case "macd":
     case "macdCross":
       return `${prefix}|${pad(spec.fast)}|${pad(spec.slow)}|${pad(spec.signal)}`;
     case "bbands":
+    case "bbPctB":
       return `${prefix}|${pad(spec.period)}|${pad(Math.round(spec.stdDev * 100))}`;
     case "stoch":
       return `${prefix}|${pad(spec.period)}|${pad(spec.signal)}|${pad(spec.smooth)}`;
@@ -337,6 +542,23 @@ function sortKey(spec: IndicatorSpec): string {
       return prefix;
     case "fib":
       return `${prefix}|${pad(spec.lookback ?? 0)}`;
+    case "donchian":
+      return `${prefix}|${pad(spec.period)}`;
+    case "keltner":
+      return `${prefix}|${pad(spec.period)}|${pad(spec.atrPeriod)}|${pad(Math.round(spec.multiplier * 100))}`;
+    case "chaikinVol":
+      return `${prefix}|${pad(spec.emaPeriod)}|${pad(spec.rocPeriod)}`;
+    case "ad":
+      return prefix;
+    case "cmf":
+      return `${prefix}|${pad(spec.period)}`;
+    case "volOsc":
+      return `${prefix}|${pad(spec.fast)}|${pad(spec.slow)}`;
+    case "aroon":
+    case "vortex":
+      return `${prefix}|${pad(spec.period)}`;
+    case "tii":
+      return `${prefix}|${pad(spec.majorPeriod)}|${pad(spec.minorPeriod)}`;
   }
 }
 

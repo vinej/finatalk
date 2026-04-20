@@ -147,6 +147,8 @@ type MacdSeries = { time: number; macd: number; signal: number; histogram: numbe
 type BandsSeries = { time: number; upper: number; middle: number; lower: number }[];
 type StochSeries = { time: number; k: number; d: number }[];
 type AdxSeries = { time: number; adx: number; pdi: number; mdi: number }[];
+type AroonSeries = { time: number; up: number; down: number }[];
+type VortexSeries = { time: number; plus: number; minus: number }[];
 type CrossEvent = { time: number; direction: "bull" | "bear"; price: number };
 type MaCrossSeries = { fast: LineSeries; slow: LineSeries; events: CrossEvent[] };
 type MacdCrossSeries = { macd: MacdSeries; events: CrossEvent[] };
@@ -180,7 +182,19 @@ type IndicatorResult =
   | { kind: "fib"; spec: Extract<IndicatorSpecT, { kind: "fib" }>; series: FibSeries }
   | { kind: "psar"; spec: Extract<IndicatorSpecT, { kind: "psar" }>; series: LineSeries }
   | { kind: "maCross"; spec: Extract<IndicatorSpecT, { kind: "maCross" }>; series: MaCrossSeries }
-  | { kind: "macdCross"; spec: Extract<IndicatorSpecT, { kind: "macdCross" }>; series: MacdCrossSeries };
+  | { kind: "macdCross"; spec: Extract<IndicatorSpecT, { kind: "macdCross" }>; series: MacdCrossSeries }
+  | { kind: "keltner"; spec: Extract<IndicatorSpecT, { kind: "keltner" }>; series: BandsSeries }
+  | { kind: "donchian"; spec: Extract<IndicatorSpecT, { kind: "donchian" }>; series: BandsSeries }
+  | { kind: "chaikinVol"; spec: Extract<IndicatorSpecT, { kind: "chaikinVol" }>; series: LineSeries }
+  | { kind: "ad"; spec: Extract<IndicatorSpecT, { kind: "ad" }>; series: LineSeries }
+  | { kind: "cmf"; spec: Extract<IndicatorSpecT, { kind: "cmf" }>; series: LineSeries }
+  | { kind: "volOsc"; spec: Extract<IndicatorSpecT, { kind: "volOsc" }>; series: LineSeries }
+  | { kind: "aroon"; spec: Extract<IndicatorSpecT, { kind: "aroon" }>; series: AroonSeries }
+  | { kind: "vortex"; spec: Extract<IndicatorSpecT, { kind: "vortex" }>; series: VortexSeries }
+  | { kind: "tii"; spec: Extract<IndicatorSpecT, { kind: "tii" }>; series: LineSeries }
+  | { kind: "zscore"; spec: Extract<IndicatorSpecT, { kind: "zscore" }>; series: LineSeries }
+  | { kind: "bbPctB"; spec: Extract<IndicatorSpecT, { kind: "bbPctB" }>; series: LineSeries }
+  | { kind: "hurst"; spec: Extract<IndicatorSpecT, { kind: "hurst" }>; series: LineSeries };
 
 export type RunAnalysisInput = {
   symbol: string;
@@ -343,7 +357,7 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
       return { kind: "williamsR", spec, series };
     }
     case "obv": {
-      const obv = new OBV(1);
+      const obv = new OBV(2);
       const series: LineSeries = [];
       for (const c of candles) {
         const v = obv.update(
@@ -454,6 +468,305 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
         prevHist = histN;
       }
       return { kind: "macdCross", spec, series: { macd: series, events } };
+    }
+    case "keltner": {
+      const ema = new EMA(spec.period);
+      const atr = new ATR(spec.atrPeriod);
+      const series: BandsSeries = [];
+      for (const c of candles) {
+        const m = ema.update(c.close, false);
+        const a = atr.update({ high: c.high, low: c.low, close: c.close }, false);
+        if (m != null && a != null) {
+          const mv = Number(m);
+          const av = Number(a);
+          series.push({
+            time: c.time,
+            upper: mv + spec.multiplier * av,
+            middle: mv,
+            lower: mv - spec.multiplier * av,
+          });
+        }
+      }
+      return { kind: "keltner", spec, series };
+    }
+    case "donchian": {
+      const series: BandsSeries = [];
+      for (let i = spec.period - 1; i < candles.length; i++) {
+        let hi = -Infinity;
+        let lo = Infinity;
+        for (let j = i - spec.period + 1; j <= i; j++) {
+          const c = candles[j]!;
+          if (c.high > hi) hi = c.high;
+          if (c.low < lo) lo = c.low;
+        }
+        series.push({
+          time: candles[i]!.time,
+          upper: hi,
+          middle: (hi + lo) / 2,
+          lower: lo,
+        });
+      }
+      return { kind: "donchian", spec, series };
+    }
+    case "chaikinVol": {
+      const ema = new EMA(spec.emaPeriod);
+      const emaValues: Array<{ time: number; value: number } | null> = [];
+      for (const c of candles) {
+        const v = ema.update(c.high - c.low, false);
+        emaValues.push(v != null ? { time: c.time, value: Number(v) } : null);
+      }
+      const series: LineSeries = [];
+      for (let i = 0; i < emaValues.length; i++) {
+        const cur = emaValues[i];
+        const prev = emaValues[i - spec.rocPeriod];
+        if (cur && prev && prev.value !== 0) {
+          series.push({
+            time: cur.time,
+            value: ((cur.value - prev.value) / prev.value) * 100,
+          });
+        }
+      }
+      return { kind: "chaikinVol", spec, series };
+    }
+    case "ad": {
+      const series: LineSeries = [];
+      let ad = 0;
+      for (const c of candles) {
+        const range = c.high - c.low;
+        const mfv = range > 0 ? (((c.close - c.low) - (c.high - c.close)) / range) * c.volume : 0;
+        ad += mfv;
+        series.push({ time: c.time, value: ad });
+      }
+      return { kind: "ad", spec, series };
+    }
+    case "cmf": {
+      const mfv: number[] = [];
+      const vols: number[] = [];
+      for (const c of candles) {
+        const range = c.high - c.low;
+        mfv.push(range > 0 ? (((c.close - c.low) - (c.high - c.close)) / range) * c.volume : 0);
+        vols.push(c.volume);
+      }
+      const series: LineSeries = [];
+      for (let i = spec.period - 1; i < candles.length; i++) {
+        let mfvSum = 0;
+        let volSum = 0;
+        for (let j = i - spec.period + 1; j <= i; j++) {
+          mfvSum += mfv[j]!;
+          volSum += vols[j]!;
+        }
+        if (volSum > 0) {
+          series.push({ time: candles[i]!.time, value: mfvSum / volSum });
+        }
+      }
+      return { kind: "cmf", spec, series };
+    }
+    case "volOsc": {
+      const fastMa = new SMA(spec.fast);
+      const slowMa = new SMA(spec.slow);
+      const series: LineSeries = [];
+      for (const c of candles) {
+        const f = fastMa.update(c.volume, false);
+        const s = slowMa.update(c.volume, false);
+        if (f != null && s != null) {
+          const sv = Number(s);
+          if (sv !== 0) {
+            series.push({ time: c.time, value: ((Number(f) - sv) / sv) * 100 });
+          }
+        }
+      }
+      return { kind: "volOsc", spec, series };
+    }
+    case "aroon": {
+      const series: AroonSeries = [];
+      for (let i = spec.period; i < candles.length; i++) {
+        let hi = -Infinity;
+        let lo = Infinity;
+        let hiIdx = i;
+        let loIdx = i;
+        for (let j = i - spec.period; j <= i; j++) {
+          const c = candles[j]!;
+          if (c.high > hi) { hi = c.high; hiIdx = j; }
+          if (c.low < lo) { lo = c.low; loIdx = j; }
+        }
+        const barsSinceHi = i - hiIdx;
+        const barsSinceLo = i - loIdx;
+        const up = ((spec.period - barsSinceHi) / spec.period) * 100;
+        const down = ((spec.period - barsSinceLo) / spec.period) * 100;
+        series.push({ time: candles[i]!.time, up, down });
+      }
+      return { kind: "aroon", spec, series };
+    }
+    case "vortex": {
+      const vmPlus: number[] = [];
+      const vmMinus: number[] = [];
+      const tr: number[] = [];
+      for (let i = 0; i < candles.length; i++) {
+        const c = candles[i]!;
+        if (i === 0) {
+          vmPlus.push(0);
+          vmMinus.push(0);
+          tr.push(c.high - c.low);
+          continue;
+        }
+        const prev = candles[i - 1]!;
+        vmPlus.push(Math.abs(c.high - prev.low));
+        vmMinus.push(Math.abs(c.low - prev.high));
+        tr.push(Math.max(
+          c.high - c.low,
+          Math.abs(c.high - prev.close),
+          Math.abs(c.low - prev.close),
+        ));
+      }
+      const series: VortexSeries = [];
+      for (let i = spec.period; i < candles.length; i++) {
+        let sumPlus = 0;
+        let sumMinus = 0;
+        let sumTr = 0;
+        for (let j = i - spec.period + 1; j <= i; j++) {
+          sumPlus += vmPlus[j]!;
+          sumMinus += vmMinus[j]!;
+          sumTr += tr[j]!;
+        }
+        if (sumTr > 0) {
+          series.push({
+            time: candles[i]!.time,
+            plus: sumPlus / sumTr,
+            minus: sumMinus / sumTr,
+          });
+        }
+      }
+      return { kind: "vortex", spec, series };
+    }
+    case "tii": {
+      const sma = new SMA(spec.majorPeriod);
+      const deviations: Array<{ time: number; dev: number } | null> = [];
+      for (const c of candles) {
+        const v = sma.update(c.close, false);
+        deviations.push(v != null ? { time: c.time, dev: c.close - Number(v) } : null);
+      }
+      const series: LineSeries = [];
+      for (let i = 0; i < deviations.length; i++) {
+        const cur = deviations[i];
+        if (!cur) continue;
+        let sumPos = 0;
+        let sumNeg = 0;
+        let count = 0;
+        for (let j = Math.max(0, i - spec.minorPeriod + 1); j <= i; j++) {
+          const d = deviations[j];
+          if (!d) continue;
+          if (d.dev > 0) sumPos += d.dev;
+          else if (d.dev < 0) sumNeg += -d.dev;
+          count++;
+        }
+        if (count < spec.minorPeriod) continue;
+        const total = sumPos + sumNeg;
+        const tii = total > 0 ? (100 * sumPos) / total : 50;
+        series.push({ time: cur.time, value: tii });
+      }
+      return { kind: "tii", spec, series };
+    }
+    case "zscore": {
+      const series: LineSeries = [];
+      for (let i = spec.period - 1; i < candles.length; i++) {
+        let sum = 0;
+        for (let j = i - spec.period + 1; j <= i; j++) sum += candles[j]!.close;
+        const mean = sum / spec.period;
+        let sq = 0;
+        for (let j = i - spec.period + 1; j <= i; j++) {
+          const d = candles[j]!.close - mean;
+          sq += d * d;
+        }
+        const std = Math.sqrt(sq / spec.period);
+        if (std > 0) {
+          series.push({ time: candles[i]!.time, value: (candles[i]!.close - mean) / std });
+        }
+      }
+      return { kind: "zscore", spec, series };
+    }
+    case "bbPctB": {
+      const bb = new BollingerBands(spec.period, spec.stdDev);
+      const series: LineSeries = [];
+      for (const c of candles) {
+        const v = bb.update(c.close, false);
+        if (v == null) continue;
+        const upper = Number(v.upper);
+        const lower = Number(v.lower);
+        const width = upper - lower;
+        if (width > 0) {
+          series.push({ time: c.time, value: (c.close - lower) / width });
+        }
+      }
+      return { kind: "bbPctB", spec, series };
+    }
+    case "hurst": {
+      const series: LineSeries = [];
+      // Need spec.period + 1 prices to compute spec.period log returns
+      for (let i = spec.period; i < candles.length; i++) {
+        const returns: number[] = [];
+        for (let j = i - spec.period + 1; j <= i; j++) {
+          const prev = candles[j - 1]!.close;
+          const cur = candles[j]!.close;
+          if (prev > 0 && cur > 0) returns.push(Math.log(cur / prev));
+        }
+        const n = returns.length;
+        if (n < 20) continue;
+        // R/S analysis across dyadic scales
+        const scales: number[] = [];
+        for (let k = 8; k <= Math.floor(n / 2); k *= 2) scales.push(k);
+        if (scales.length < 2) continue;
+        const logScales: number[] = [];
+        const logRS: number[] = [];
+        for (const k of scales) {
+          const chunks = Math.floor(n / k);
+          let total = 0;
+          let valid = 0;
+          for (let c = 0; c < chunks; c++) {
+            const start = c * k;
+            let mean = 0;
+            for (let j = 0; j < k; j++) mean += returns[start + j]!;
+            mean /= k;
+            let cum = 0;
+            let mn = Infinity;
+            let mx = -Infinity;
+            let sq = 0;
+            for (let j = 0; j < k; j++) {
+              const d = returns[start + j]! - mean;
+              cum += d;
+              if (cum < mn) mn = cum;
+              if (cum > mx) mx = cum;
+              sq += d * d;
+            }
+            const range = mx - mn;
+            const std = Math.sqrt(sq / k);
+            if (std > 0 && range > 0) {
+              total += range / std;
+              valid++;
+            }
+          }
+          if (valid > 0) {
+            logScales.push(Math.log(k));
+            logRS.push(Math.log(total / valid));
+          }
+        }
+        if (logScales.length < 2) continue;
+        const N = logScales.length;
+        let sumX = 0;
+        let sumY = 0;
+        let sumXY = 0;
+        let sumXX = 0;
+        for (let j = 0; j < N; j++) {
+          sumX += logScales[j]!;
+          sumY += logRS[j]!;
+          sumXY += logScales[j]! * logRS[j]!;
+          sumXX += logScales[j]! * logScales[j]!;
+        }
+        const denom = N * sumXX - sumX * sumX;
+        if (denom === 0) continue;
+        const slope = (N * sumXY - sumX * sumY) / denom;
+        series.push({ time: candles[i]!.time, value: slope });
+      }
+      return { kind: "hurst", spec, series };
     }
   }
 }

@@ -104,7 +104,13 @@ export function MarketChart({
                 ? c.adx
                 : c.kind === "maCross"
                   ? c.fast
-                  : c.bull;
+                  : c.kind === "macdCross"
+                    ? c.bull
+                    : c.kind === "aroon"
+                      ? c.up
+                      : c.kind === "vortex"
+                        ? c.plus
+                        : c.middle;
 
       if (
         r.kind === "sma" ||
@@ -142,7 +148,14 @@ export function MarketChart({
         r.kind === "atr" ||
         r.kind === "stochRsi" ||
         r.kind === "williamsR" ||
-        r.kind === "obv"
+        r.kind === "obv" ||
+        r.kind === "ad" ||
+        r.kind === "cmf" ||
+        r.kind === "volOsc" ||
+        r.kind === "tii" ||
+        r.kind === "zscore" ||
+        r.kind === "bbPctB" ||
+        r.kind === "hurst"
       ) {
         const pane = nextPane++;
         const s = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 2 }, pane);
@@ -230,6 +243,57 @@ export function MarketChart({
             lineStyles[pct] = isKey ? 2 : 3;
           }
         }
+      } else if (r.kind === "keltner") {
+        const kc =
+          typeof c === "object" && c.kind === "keltner"
+            ? c
+            : { upper: "#0ea5e9", middle: "#0369a1", lower: "#0ea5e9" };
+        const upper = chart.addSeries(LineSeries, { color: kc.upper, lineWidth: 1 });
+        const middle = chart.addSeries(LineSeries, { color: kc.middle, lineWidth: 1, lineStyle: 2 });
+        const lower = chart.addSeries(LineSeries, { color: kc.lower, lineWidth: 1 });
+        upper.setData(r.series.map((p) => ({ time: p.time as Time, value: p.upper })));
+        middle.setData(r.series.map((p) => ({ time: p.time as Time, value: p.middle })));
+        lower.setData(r.series.map((p) => ({ time: p.time as Time, value: p.lower })));
+        seriesRef.current.push(upper, middle, lower);
+      } else if (r.kind === "donchian") {
+        const dc =
+          typeof c === "object" && c.kind === "donchian"
+            ? c
+            : { upper: "#a855f7", middle: "#6b21a8", lower: "#a855f7" };
+        const upper = chart.addSeries(LineSeries, { color: dc.upper, lineWidth: 1 });
+        const middle = chart.addSeries(LineSeries, { color: dc.middle, lineWidth: 1, lineStyle: 2 });
+        const lower = chart.addSeries(LineSeries, { color: dc.lower, lineWidth: 1 });
+        upper.setData(r.series.map((p) => ({ time: p.time as Time, value: p.upper })));
+        middle.setData(r.series.map((p) => ({ time: p.time as Time, value: p.middle })));
+        lower.setData(r.series.map((p) => ({ time: p.time as Time, value: p.lower })));
+        seriesRef.current.push(upper, middle, lower);
+      } else if (r.kind === "chaikinVol") {
+        const pane = nextPane++;
+        const s = chart.addSeries(LineSeries, { color: lineColor, lineWidth: 2 }, pane);
+        s.setData(r.series.map((p) => ({ time: p.time as Time, value: p.value })));
+        seriesRef.current.push(s);
+      } else if (r.kind === "aroon") {
+        const ac =
+          typeof c === "object" && c.kind === "aroon"
+            ? c
+            : { up: "#16a34a", down: "#dc2626" };
+        const pane = nextPane++;
+        const upLine = chart.addSeries(LineSeries, { color: ac.up, lineWidth: 2 }, pane);
+        const downLine = chart.addSeries(LineSeries, { color: ac.down, lineWidth: 2 }, pane);
+        upLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.up })));
+        downLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.down })));
+        seriesRef.current.push(upLine, downLine);
+      } else if (r.kind === "vortex") {
+        const vc =
+          typeof c === "object" && c.kind === "vortex"
+            ? c
+            : { plus: "#2563eb", minus: "#ea580c" };
+        const pane = nextPane++;
+        const plusLine = chart.addSeries(LineSeries, { color: vc.plus, lineWidth: 2 }, pane);
+        const minusLine = chart.addSeries(LineSeries, { color: vc.minus, lineWidth: 2 }, pane);
+        plusLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.plus })));
+        minusLine.setData(r.series.map((p) => ({ time: p.time as Time, value: p.minus })));
+        seriesRef.current.push(plusLine, minusLine);
       } else if (r.kind === "macdCross") {
         const mc =
           typeof c === "object" && c.kind === "macdCross"

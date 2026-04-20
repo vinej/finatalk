@@ -30,9 +30,20 @@ function summarizeSpec(spec: ActiveIndicator["spec"]): string {
       return `${kindLabel(spec.kind)} ${spec.step}/${spec.max}`;
     case "obv":
     case "vwap":
+    case "ad":
       return kindLabel(spec.kind);
+    case "volOsc":
+      return `${kindLabel(spec.kind)} ${spec.fast}/${spec.slow}`;
     case "fib":
       return spec.lookback != null ? `${kindLabel(spec.kind)} (${spec.lookback})` : kindLabel(spec.kind);
+    case "keltner":
+      return `${kindLabel(spec.kind)} ${spec.period}/${spec.atrPeriod}×${spec.multiplier}`;
+    case "chaikinVol":
+      return `${kindLabel(spec.kind)} ${spec.emaPeriod}/${spec.rocPeriod}`;
+    case "tii":
+      return `${kindLabel(spec.kind)} ${spec.majorPeriod}/${spec.minorPeriod}`;
+    case "bbPctB":
+      return `${kindLabel(spec.kind)} ${spec.period}, ${spec.stdDev}σ`;
     default:
       return `${kindLabel(spec.kind)} ${(spec as { period: number }).period}`;
   }

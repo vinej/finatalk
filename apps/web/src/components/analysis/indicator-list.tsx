@@ -50,6 +50,31 @@ function Swatch({ color, dim }: { color: IndicatorColor; dim?: boolean }) {
       </span>
     );
   }
+  if (color.kind === "keltner" || color.kind === "donchian") {
+    return (
+      <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/3" style={{ backgroundColor: color.upper }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.middle }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.lower }} />
+      </span>
+    );
+  }
+  if (color.kind === "aroon") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.up }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.down }} />
+      </span>
+    );
+  }
+  if (color.kind === "vortex") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.plus }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.minus }} />
+      </span>
+    );
+  }
   return (
     <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
       <span className="h-full w-1/3" style={{ backgroundColor: color.adx }} />
@@ -177,7 +202,10 @@ function EditForm({
     spec.kind === "wma" || spec.kind === "dema" || spec.kind === "rsi" ||
     spec.kind === "mom" || spec.kind === "roc" ||
     spec.kind === "atr" || spec.kind === "adx" ||
-    spec.kind === "stochRsi" || spec.kind === "williamsR";
+    spec.kind === "stochRsi" || spec.kind === "williamsR" ||
+    spec.kind === "donchian" || spec.kind === "cmf" ||
+    spec.kind === "aroon" || spec.kind === "vortex" ||
+    spec.kind === "zscore";
 
   return (
     <form onSubmit={submit} className="grid gap-3">
@@ -267,6 +295,52 @@ function EditForm({
             onChange={(v) => setSpec({ kind: "fib", ...(v >= 10 ? { lookback: v } : {}) })}
           />
         )}
+        {spec.kind === "keltner" && (
+          <>
+            <NumberField label={t("analysis.period")} value={spec.period} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, period: v })} />
+            <NumberField label={t("analysis.atrPeriod")} value={spec.atrPeriod} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, atrPeriod: v })} />
+            <NumberField label={t("analysis.multiplier")} value={spec.multiplier} min={0.1} max={10} step={0.1}
+              onChange={(v) => setSpec({ ...spec, multiplier: v })} />
+          </>
+        )}
+        {spec.kind === "chaikinVol" && (
+          <>
+            <NumberField label={t("analysis.emaPeriod")} value={spec.emaPeriod} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, emaPeriod: v })} />
+            <NumberField label={t("analysis.rocPeriod")} value={spec.rocPeriod} min={1} max={500}
+              onChange={(v) => setSpec({ ...spec, rocPeriod: v })} />
+          </>
+        )}
+        {spec.kind === "volOsc" && (
+          <>
+            <NumberField label={t("analysis.fast")} value={spec.fast} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, fast: v })} />
+            <NumberField label={t("analysis.slow")} value={spec.slow} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, slow: v })} />
+          </>
+        )}
+        {spec.kind === "tii" && (
+          <>
+            <NumberField label={t("analysis.majorPeriod")} value={spec.majorPeriod} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, majorPeriod: v })} />
+            <NumberField label={t("analysis.minorPeriod")} value={spec.minorPeriod} min={1} max={500}
+              onChange={(v) => setSpec({ ...spec, minorPeriod: v })} />
+          </>
+        )}
+        {spec.kind === "bbPctB" && (
+          <>
+            <NumberField label={t("analysis.period")} value={spec.period} min={2} max={500}
+              onChange={(v) => setSpec({ ...spec, period: v })} />
+            <NumberField label={t("analysis.stdDev")} value={spec.stdDev} min={0.1} max={10} step={0.1}
+              onChange={(v) => setSpec({ ...spec, stdDev: v })} />
+          </>
+        )}
+        {spec.kind === "hurst" && (
+          <NumberField label={t("analysis.period")} value={spec.period} min={20} max={2000}
+            onChange={(v) => setSpec({ ...spec, period: v })} />
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -312,6 +386,29 @@ function EditForm({
               onChange={(v) => setColor({ ...color, bull: v })} />
             <ColorField label={t("analysis.colorBear")} value={color.bear}
               onChange={(v) => setColor({ ...color, bear: v })} />
+          </>
+        ) : typeof color === "object" && (color.kind === "keltner" || color.kind === "donchian") ? (
+          <>
+            <ColorField label={t("analysis.colorUpper")} value={color.upper}
+              onChange={(v) => setColor({ ...color, upper: v })} />
+            <ColorField label={t("analysis.colorMiddle")} value={color.middle}
+              onChange={(v) => setColor({ ...color, middle: v })} />
+            <ColorField label={t("analysis.colorLower")} value={color.lower}
+              onChange={(v) => setColor({ ...color, lower: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "aroon" ? (
+          <>
+            <ColorField label={t("analysis.colorUp")} value={color.up}
+              onChange={(v) => setColor({ kind: "aroon", up: v, down: color.down })} />
+            <ColorField label={t("analysis.colorDown")} value={color.down}
+              onChange={(v) => setColor({ kind: "aroon", up: color.up, down: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "vortex" ? (
+          <>
+            <ColorField label={t("analysis.colorPlus")} value={color.plus}
+              onChange={(v) => setColor({ kind: "vortex", plus: v, minus: color.minus })} />
+            <ColorField label={t("analysis.colorMinus")} value={color.minus}
+              onChange={(v) => setColor({ kind: "vortex", plus: color.plus, minus: v })} />
           </>
         ) : (
           <ColorField
