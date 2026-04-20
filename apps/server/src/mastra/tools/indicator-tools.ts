@@ -208,6 +208,48 @@ const INDICATORS = [
     defaultPeriod: 100,
     bestFor: "regime filter — H > 0.5 trending (momentum), < 0.5 mean-reverting, ≈ 0.5 random",
   },
+  {
+    kind: "liqSweep",
+    name: "Liquidity Sweep",
+    measures: "bars that pierce the prior N-bar high/low but close back inside the range",
+    defaultPeriod: "lookback 10",
+    bestFor: "flagging stop-hunts/fake-outs at range extremes; often precede mean-reversion moves",
+  },
+  {
+    kind: "fvg",
+    name: "Fair Value Gap",
+    measures: "3-bar price imbalances (gap between bar[-2] and bar[0] wicks)",
+    defaultPeriod: "lookback 200, showFilled off",
+    bestFor: "identifying unfilled imbalance zones that often act as magnet/reaction levels",
+  },
+  {
+    kind: "srLevels",
+    name: "Support / Resistance (auto)",
+    measures: "horizontal levels clustered from fractal swing pivots, ranked by touches × recency",
+    defaultPeriod: "lookback 500, strength 3, tol 0.5%, maxLevels 8",
+    bestFor: "objective S/R zones for stop placement and reaction entries, especially in range regimes",
+  },
+  {
+    kind: "pivots",
+    name: "Pivot Points",
+    measures: "classical / Fibonacci / Camarilla levels from the prior period's H/L/C",
+    defaultPeriod: "classic, weekly",
+    bestFor: "static intraday / weekly reference levels; PP bias + R1/S1 reaction; R2/S2 targets",
+  },
+  {
+    kind: "volProfile",
+    name: "Volume Profile",
+    measures: "price-binned volume distribution over the lookback window with POC + value area",
+    defaultPeriod: "lookback 200, bins 40, value area 70%",
+    bestFor: "structural price acceptance map; POC acts as magnet, VAH/VAL as support/resistance",
+  },
+  {
+    kind: "orderBlock",
+    name: "Order Blocks",
+    measures: "last opposite-colour candle before an impulse move ≥ threshold (SMC / ICT concept)",
+    defaultPeriod: "lookback 200, impulse 1.5%",
+    bestFor: "premium/discount retest zones on pullbacks; strong when paired with HTF bias + sweeps",
+  },
 ] as const;
 
 export const listAvailableIndicators = createTool({
@@ -314,6 +356,37 @@ export const analyzeSymbol = createTool({
         stdDev: z.number().min(0.1).max(10),
       }),
       z.object({ kind: z.literal("hurst"), period: z.number().int().min(20).max(2000) }),
+      z.object({ kind: z.literal("liqSweep"), lookback: z.number().int().min(3).max(200) }),
+      z.object({
+        kind: z.literal("fvg"),
+        lookback: z.number().int().min(10).max(2000),
+        showFilled: z.boolean(),
+      }),
+      z.object({
+        kind: z.literal("srLevels"),
+        lookback: z.number().int().min(30).max(5000),
+        strength: z.number().int().min(1).max(20),
+        tolerancePct: z.number().min(0.05).max(5),
+        maxLevels: z.number().int().min(2).max(30),
+      }),
+      z.object({
+        kind: z.literal("pivots"),
+        method: z.enum(["classic", "fib", "camarilla"]),
+        timeframe: z.enum(["weekly", "monthly"]),
+      }),
+      z.object({
+        kind: z.literal("volProfile"),
+        lookback: z.number().int().min(20).max(5000),
+        bins: z.number().int().min(10).max(200),
+        valueAreaPct: z.number().min(0.5).max(0.95),
+        showHistogram: z.boolean(),
+      }),
+      z.object({
+        kind: z.literal("orderBlock"),
+        lookback: z.number().int().min(20).max(2000),
+        impulsePct: z.number().min(0.5).max(20),
+        showMitigated: z.boolean(),
+      }),
     ])).default([]),
   }),
   execute: async ({ symbol, range, interval, indicators }) => {

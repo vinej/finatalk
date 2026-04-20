@@ -11,4 +11,10 @@ export type IndicatorColor =
   | { kind: "keltner"; upper: string; middle: string; lower: string }
   | { kind: "donchian"; upper: string; middle: string; lower: string }
   | { kind: "aroon"; up: string; down: string }
-  | { kind: "vortex"; plus: string; minus: string };
+  | { kind: "vortex"; plus: string; minus: string }
+  | { kind: "liqSweep"; highSweep: string; lowSweep: string }
+  | { kind: "fvg"; bullish: string; bearish: string }
+  | { kind: "srLevels"; support: string; resistance: string }
+  | { kind: "pivots"; pp: string; resistance: string; support: string }
+  | { kind: "volProfile"; poc: string; valueArea: string; histogram: string }
+  | { kind: "orderBlock"; bullish: string; bearish: string };

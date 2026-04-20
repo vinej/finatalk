@@ -341,6 +341,60 @@ const TA_GUIDE_EN: Record<IndicatorKind, TaGuideEntry> = {
       { title: "QuantStart — Hurst Exponent in Python", url: "https://www.quantstart.com/articles/Basics-of-Statistical-Mean-Reversion-Testing/" },
     ],
   },
+  liqSweep: {
+    when: "Use Liquidity Sweeps when you're trading structure — they flag the 'stop run' bars where price briefly takes out a recent swing high or low to trigger resting stops, then reverses. Core building block of ICT / Smart Money Concepts strategies; works best when paired with higher-timeframe bias and an order block or FVG nearby.",
+    how: "For each bar, compute the highest high and lowest low over the prior N bars. A high sweep = the bar's high exceeds the prior N-bar high AND its close is back below that level (rejection). A low sweep is the mirror. Default lookback 10; 20–50 for stronger structural sweeps on higher timeframes. Rendered as down-arrows above bars on high sweeps and up-arrows below bars on low sweeps.",
+    analyse: "High sweep followed by red close = sellers defended the high, often a short trigger; low sweep followed by green close = buyers absorbed supply, often a long trigger. Stack multiple sweeps at the same level = strong liquidity zone. False signals in strong trends — in a runaway uptrend, 'sweeps' of prior highs get continuation, not reversal. Combine with an HTF bias filter (daily trend, key level proximity) before fading.",
+    links: [
+      { title: "Babypips — Liquidity Grabs / Stop Hunts", url: "https://www.babypips.com/learn/forex/what-is-liquidity" },
+      { title: "Inner Circle Trader — Liquidity (concepts overview)", url: "https://www.investopedia.com/terms/s/stop-hunting.asp" },
+    ],
+  },
+  fvg: {
+    when: "Use Fair Value Gaps (FVG) when you want to spot price imbalances left behind by impulsive moves — unfilled gaps often act as magnets/support/resistance on revisits. Popular tool in ICT / Smart Money Concepts workflows, and useful as a structural level for stop placement even outside that framework.",
+    how: "A bullish FVG forms when low[i] > high[i-2] (the three-bar window leaves an unfilled gap below the middle bar's impulse up); bearish when high[i] < low[i-2]. Gap range = (high[i-2], low[i]) for bullish, (high[i], low[i-2]) for bearish. The gap is 'filled' once a later bar trades back into that range. Lookback controls how far back to scan; toggle showFilled to include gaps that have already been traded through. Rendered as horizontal lines from the creation bar through the fill point (or the chart edge if still open).",
+    analyse: "Unfilled FVGs near current price = high-probability reaction zones (price often dips into them before continuing). A stack of unfilled bullish FVGs stair-stepping up = strong trend with imbalance. When price fills a large FVG quickly with a strong close, treat it as continuation; rejection mid-gap often marks the reversal. Most useful on higher timeframes (daily/weekly) where gaps tend to respect; on short timeframes, gaps fill faster and noise dominates.",
+    links: [
+      { title: "Investopedia — Fair Value Gap (general)", url: "https://www.investopedia.com/terms/g/gap.asp" },
+      { title: "TrendSpider — Fair Value Gap Indicator", url: "https://trendspider.com/learning-center/fair-value-gaps/" },
+    ],
+  },
+  srLevels: {
+    when: "Use auto Support / Resistance when you want objective horizontal levels derived from the chart's own swing pivots — no manual drawing. Best on ranging or rotational markets where price revisits the same zones; invaluable for stop placement and reaction entries.",
+    how: "Detect fractal swing highs/lows using N bars on each side (strength), then cluster nearby pivots within tolerancePct% of each other. Rank clusters by touches × recency and keep the top maxLevels. Defaults: lookback 500 bars, strength 3, tolerance 0.5%, 8 levels. Levels are drawn as horizontal segments from the first pivot that formed the cluster to the current bar; thicker lines = more touches.",
+    analyse: "Price approaching a cluster with many touches = high-probability reaction; a clean break + close through with volume flips the level's role (resistance → support and vice versa). Multiple levels stacking at the same price = stronger zone. Weak in strong trends — levels break in sequence and chasing them produces whipsaws. Pair with a trend filter (SMA/ADX) so you only fade levels in range regimes.",
+    links: [
+      { title: "Investopedia — Support and Resistance Basics", url: "https://www.investopedia.com/trading/support-and-resistance-basics/" },
+      { title: "StockCharts — Support and Resistance", url: "https://chartschool.stockcharts.com/table-of-contents/chart-analysis/support-and-resistance" },
+    ],
+  },
+  pivots: {
+    when: "Use Pivot Points when you want pre-computed intraday/weekly reference levels that floor traders and many algos still watch. Useful as static targets and reversal zones, especially when a market opens near a pivot level.",
+    how: "Classic: PP=(H+L+C)/3 from the prior period; R1=2·PP−L, S1=2·PP−H, R2=PP+(H−L), S2=PP−(H−L), R3=H+2·(PP−L), S3=L−2·(H−PP). Fibonacci variant uses PP ± 0.382/0.618/1.0 × range. Camarilla: C ± 1.1·range/{12,6,4,2} (tighter levels for mean reversion). Pick weekly timeframe for daily charts, monthly for weekly+. Levels are drawn as horizontal segments spanning the period.",
+    analyse: "Price holding above PP = bullish bias for the period, below = bearish. R1/S1 are first-reaction levels (mean-revert trades); R2/S2 and beyond mark extension targets / exhaustion zones. Camarilla H3/L3 breakouts are popular momentum triggers. Classic pivots work best in quiet markets; in strong trends price runs straight through the outer levels — use them as targets, not fades.",
+    links: [
+      { title: "Investopedia — Pivot Points", url: "https://www.investopedia.com/terms/p/pivotpoint.asp" },
+      { title: "StockCharts — Pivot Points", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/pivot-points" },
+    ],
+  },
+  volProfile: {
+    when: "Use Volume Profile when you want to see WHERE (at which prices) trading happened, not just when. The profile reveals high-acceptance zones (value) and low-acceptance zones (rejection) — a richer structural map than time-based volume alone.",
+    how: "Split the lookback window's price range into N bins (default 40). Distribute each bar's volume across all bins its high–low range covers. The Point of Control (POC) is the bin with the highest volume; the Value Area contains valueAreaPct of total volume (default 70%), expanded greedily around POC. Optionally overlay a horizontal histogram showing bin volumes. Works best on lookbacks of 100–500 bars.",
+    analyse: "POC = magnet: price gravitates back to the highest-accepted price. VAH/VAL (top/bottom of value area) act as support/resistance; acceptance above VAH = rotation higher, rejection back = return to value. Low-Volume Nodes (thin bins between two high-volume shelves) tend to be traversed quickly — good targets, poor reaction levels. In trends, watch for a new POC forming higher/lower = value migration, confirming the move.",
+    links: [
+      { title: "Investopedia — Volume Profile", url: "https://www.investopedia.com/terms/v/volume-weighted-average-price-vwap.asp" },
+      { title: "TradingView — Volume Profile (how-to)", url: "https://www.tradingview.com/support/solutions/43000502040-volume-profile/" },
+    ],
+  },
+  orderBlock: {
+    when: "Use Order Blocks when you trade with a Smart Money Concepts / ICT framework and want to mark the last opposite-colour candle before a strong impulse — areas where large participants likely positioned. They often act as premium/discount zones on pullbacks.",
+    how: "Scan each bar: if the next move's magnitude ≥ impulsePct (default 1.5%), mark the last bearish candle before a bullish impulse as a bullish OB (zone = low→high of that candle), and mirror for bearish OBs. A block is 'mitigated' when price revisits its range. Lookback limits how far back to scan. Toggle showMitigated to keep already-retested zones on the chart. Rendered as shaded bands between the candle's high and low, extending to current bar.",
+    analyse: "First retest of an unmitigated bullish OB with a bullish reaction = classic long setup (stop below the block's low). Pair with HTF trend and a liquidity sweep or FVG inside the block for higher conviction. Mitigated blocks lose edge — their significance is mostly spent. Blocks near round numbers, prior S/R, or session opens tend to react more reliably. Works poorly in chop: too many impulses that reverse.",
+    links: [
+      { title: "Babypips — Order Blocks explained", url: "https://www.babypips.com/learn/forex/what-is-an-order-block" },
+      { title: "Investopedia — Supply and Demand Zones", url: "https://www.investopedia.com/articles/forex/101215/forex-trading-primer-supply-and-demand.asp" },
+    ],
+  },
 };
 
 const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
@@ -641,6 +695,60 @@ const TA_GUIDE_FR: Record<IndicatorKind, TaGuideEntry> = {
     links: [
       { title: "Wikipedia — Exposant de Hurst", url: "https://fr.wikipedia.org/wiki/Exposant_de_Hurst" },
       { title: "QuantStart — Hurst Exponent in Python (anglais)", url: "https://www.quantstart.com/articles/Basics-of-Statistical-Mean-Reversion-Testing/" },
+    ],
+  },
+  liqSweep: {
+    when: "Utilisez les sweeps de liquidité quand vous tradez la structure — ils signalent les barres de « chasse aux stops » où le prix perce brièvement un plus haut ou plus bas de swing récent pour déclencher les stops en attente, puis se retourne. Brique de base des stratégies ICT / Smart Money Concepts ; fonctionne mieux couplé à un biais de timeframe supérieur et à un order block ou FVG à proximité.",
+    how: "Pour chaque barre, calcule le plus haut et le plus bas sur les N barres précédentes. Sweep du haut = le plus haut de la barre dépasse le plus haut sur N barres ET sa clôture revient sous ce niveau (rejet). Sweep du bas = miroir. Lookback par défaut 10 ; 20–50 pour des sweeps structurels plus forts sur les timeframes hautes. Affiché en flèches descendantes au-dessus des barres pour les sweeps du haut et flèches ascendantes en dessous pour les sweeps du bas.",
+    analyse: "Sweep du haut suivi d'une clôture rouge = les vendeurs ont défendu le sommet, souvent un déclencheur short ; sweep du bas suivi d'une clôture verte = les acheteurs ont absorbé l'offre, souvent un déclencheur long. Plusieurs sweeps empilés au même niveau = zone de liquidité forte. Faux signaux en tendance forte — dans une tendance haussière galopante, les « sweeps » des sommets donnent continuation, pas renversement. Combinez avec un filtre de biais HTF (tendance journalière, proximité d'un niveau clé) avant de fader.",
+    links: [
+      { title: "Babypips — Liquidity Grabs / Stop Hunts (anglais)", url: "https://www.babypips.com/learn/forex/what-is-liquidity" },
+      { title: "Investopedia — Stop Hunting (anglais)", url: "https://www.investopedia.com/terms/s/stop-hunting.asp" },
+    ],
+  },
+  fvg: {
+    when: "Utilisez les Fair Value Gaps (FVG) quand vous voulez repérer les déséquilibres de prix laissés par des mouvements impulsifs — les gaps non remplis agissent souvent comme aimants / supports / résistances lors des revisites. Outil populaire dans les workflows ICT / Smart Money Concepts, et utile comme niveau structurel pour le placement de stops même hors de ce cadre.",
+    how: "Un FVG haussier se forme lorsque bas[i] > haut[i-2] (la fenêtre de trois barres laisse un espace non rempli sous l'impulsion haussière de la barre du milieu) ; baissier lorsque haut[i] < bas[i-2]. Plage du gap = (haut[i-2], bas[i]) pour haussier, (haut[i], bas[i-2]) pour baissier. Le gap est « rempli » dès qu'une barre ultérieure retrade dans cette plage. Le lookback contrôle jusqu'où remonter ; la bascule showFilled inclut les gaps déjà traversés. Rendu en lignes horizontales de la barre de création jusqu'au point de remplissage (ou au bord du graphique si encore ouvert).",
+    analyse: "FVG non remplis proches du prix actuel = zones de réaction à haute probabilité (le prix les retouche souvent avant de continuer). Un empilement de FVG haussiers non remplis en escalier = tendance forte avec déséquilibre. Quand le prix remplit un grand FVG rapidement avec une clôture forte, considérez-le comme une continuation ; un rejet à mi-gap marque souvent le retournement. Surtout utile sur les timeframes hautes (journalière/hebdomadaire) où les gaps ont tendance à respecter ; sur les timeframes courtes, les gaps se remplissent plus vite et le bruit domine.",
+    links: [
+      { title: "Investopedia — Fair Value Gap (général, anglais)", url: "https://www.investopedia.com/terms/g/gap.asp" },
+      { title: "TrendSpider — Fair Value Gap Indicator (anglais)", url: "https://trendspider.com/learning-center/fair-value-gaps/" },
+    ],
+  },
+  srLevels: {
+    when: "Utilisez les supports / résistances automatiques quand vous voulez des niveaux horizontaux objectifs dérivés des pivots du graphique — sans tracé manuel. Idéal sur les marchés en range ou rotationnels où le prix revient sur les mêmes zones ; indispensable pour le placement des stops et les entrées en réaction.",
+    how: "Détecte les pivots fractals (plus hauts/bas avec N barres de chaque côté — paramètre strength), puis regroupe les pivots proches dans une tolérance de tolerancePct%. Classe les clusters par nombre de touches × récence et conserve les top maxLevels. Valeurs par défaut : lookback 500 barres, strength 3, tolérance 0,5 %, 8 niveaux. Les niveaux sont tracés en segments horizontaux du premier pivot du cluster jusqu'à la barre courante ; trait plus épais = plus de touches.",
+    analyse: "Prix qui approche un cluster avec beaucoup de touches = réaction probable ; une cassure nette + clôture avec volume inverse le rôle du niveau (résistance → support et vice versa). Plusieurs niveaux empilés au même prix = zone plus forte. Faible en tendance forte — les niveaux cassent en séquence et les chasser produit des whipsaws. Combinez avec un filtre de tendance (SMA/ADX) pour ne fader les niveaux qu'en régime de range.",
+    links: [
+      { title: "Investopedia — Supports et résistances (anglais)", url: "https://www.investopedia.com/trading/support-and-resistance-basics/" },
+      { title: "StockCharts — Support and Resistance (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/chart-analysis/support-and-resistance" },
+    ],
+  },
+  pivots: {
+    when: "Utilisez les Pivot Points quand vous voulez des niveaux de référence intraday / hebdomadaires précalculés, encore surveillés par les traders de parquet et beaucoup d'algos. Utiles comme cibles statiques et zones de retournement, surtout quand un marché ouvre près d'un pivot.",
+    how: "Classique : PP=(H+B+C)/3 de la période précédente ; R1=2·PP−B, S1=2·PP−H, R2=PP+(H−B), S2=PP−(H−B), R3=H+2·(PP−B), S3=B−2·(H−PP). Variante Fibonacci : PP ± 0,382/0,618/1,0 × amplitude. Camarilla : C ± 1,1·amplitude/{12,6,4,2} (niveaux plus serrés pour le mean reversion). Choisissez le timeframe hebdomadaire pour les graphes journaliers, mensuel pour les hebdomadaires et plus. Les niveaux sont tracés en segments horizontaux couvrant la période.",
+    analyse: "Prix qui tient au-dessus du PP = biais haussier pour la période, en dessous = baissier. R1/S1 sont les premiers niveaux de réaction (trades mean-revert) ; R2/S2 et au-delà marquent les cibles d'extension / zones d'épuisement. Les cassures de Camarilla H3/L3 sont des déclencheurs momentum populaires. Les pivots classiques marchent mieux en marché calme ; en tendance forte, le prix traverse les niveaux extérieurs — utilisez-les comme cibles, pas comme fades.",
+    links: [
+      { title: "Investopedia — Pivot Points (anglais)", url: "https://www.investopedia.com/terms/p/pivotpoint.asp" },
+      { title: "StockCharts — Pivot Points (anglais)", url: "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/pivot-points" },
+    ],
+  },
+  volProfile: {
+    when: "Utilisez le Volume Profile quand vous voulez voir OÙ (à quels prix) le trading a eu lieu, pas juste quand. Le profil révèle les zones de forte acceptation (value) et les zones de rejet (low-volume nodes) — une carte structurelle plus riche que le volume temporel seul.",
+    how: "Découpe la plage de prix de la fenêtre de lookback en N bins (par défaut 40). Répartit le volume de chaque barre sur tous les bins couverts par son amplitude haut–bas. Le Point of Control (POC) est le bin au plus haut volume ; la Value Area contient valueAreaPct du volume total (par défaut 70 %), élargie autour du POC de manière gloutonne. Optionnellement, superpose un histogramme horizontal des volumes par bin. Fonctionne mieux sur des lookbacks de 100–500 barres.",
+    analyse: "POC = aimant : le prix revient vers le prix le plus accepté. VAH/VAL (haut/bas de la value area) agissent comme support/résistance ; acceptation au-dessus du VAH = rotation haussière, rejet vers le bas = retour dans la value. Les Low-Volume Nodes (bins fins entre deux étagères de fort volume) sont traversés rapidement — bonnes cibles, mauvais niveaux de réaction. En tendance, surveillez un nouveau POC qui se forme plus haut/bas = migration de la value, confirmant le mouvement.",
+    links: [
+      { title: "Investopedia — Volume Profile (anglais)", url: "https://www.investopedia.com/terms/v/volume-weighted-average-price-vwap.asp" },
+      { title: "TradingView — Volume Profile (tutoriel, anglais)", url: "https://www.tradingview.com/support/solutions/43000502040-volume-profile/" },
+    ],
+  },
+  orderBlock: {
+    when: "Utilisez les Order Blocks quand vous tradez avec un cadre Smart Money Concepts / ICT et voulez marquer la dernière bougie de couleur opposée avant une impulsion forte — des zones où les gros participants se sont probablement positionnés. Elles agissent souvent comme zones premium/discount lors des pullbacks.",
+    how: "Scanne chaque barre : si l'amplitude du mouvement suivant ≥ impulsePct (par défaut 1,5 %), marque la dernière bougie baissière avant une impulsion haussière comme OB haussier (zone = bas→haut de cette bougie), miroir pour les OB baissiers. Un bloc est « mitigé » quand le prix revient dans sa plage. Le lookback limite la profondeur de scan. La bascule showMitigated garde sur le graphe les zones déjà retestées. Rendu en bandes entre le haut et le bas de la bougie, prolongées jusqu'à la barre courante.",
+    analyse: "Premier retest d'un OB haussier non mitigé avec une réaction haussière = setup long classique (stop sous le bas du bloc). Combinez avec la tendance HTF et un sweep de liquidité ou FVG à l'intérieur du bloc pour plus de conviction. Les blocs mitigés perdent leur edge — leur signification est en grande partie consommée. Les blocs près des chiffres ronds, d'anciens S/R, ou des ouvertures de session réagissent plus fiablement. Peu efficace en chop : trop d'impulsions qui s'inversent.",
+    links: [
+      { title: "Babypips — Order Blocks (anglais)", url: "https://www.babypips.com/learn/forex/what-is-an-order-block" },
+      { title: "Investopedia — Zones d'offre et de demande (anglais)", url: "https://www.investopedia.com/articles/forex/101215/forex-trading-primer-supply-and-demand.asp" },
     ],
   },
 };

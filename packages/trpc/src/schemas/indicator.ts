@@ -89,6 +89,40 @@ export const IndicatorSpec = z.discriminatedUnion("kind", [
     stdDev: z.number().min(0.1).max(10),
   }),
   z.object({ kind: z.literal("hurst"), period: z.number().int().min(20).max(2000) }),
+  z.object({
+    kind: z.literal("liqSweep"),
+    lookback: z.number().int().min(3).max(200),
+  }),
+  z.object({
+    kind: z.literal("fvg"),
+    lookback: z.number().int().min(10).max(2000),
+    showFilled: z.boolean(),
+  }),
+  z.object({
+    kind: z.literal("srLevels"),
+    lookback: z.number().int().min(30).max(5000),
+    strength: z.number().int().min(1).max(20),
+    tolerancePct: z.number().min(0.05).max(5),
+    maxLevels: z.number().int().min(2).max(30),
+  }),
+  z.object({
+    kind: z.literal("pivots"),
+    method: z.enum(["classic", "fib", "camarilla"]),
+    timeframe: z.enum(["weekly", "monthly"]),
+  }),
+  z.object({
+    kind: z.literal("volProfile"),
+    lookback: z.number().int().min(20).max(5000),
+    bins: z.number().int().min(10).max(200),
+    valueAreaPct: z.number().min(0.5).max(0.95),
+    showHistogram: z.boolean(),
+  }),
+  z.object({
+    kind: z.literal("orderBlock"),
+    lookback: z.number().int().min(20).max(2000),
+    impulsePct: z.number().min(0.5).max(20),
+    showMitigated: z.boolean(),
+  }),
 ]);
 export type IndicatorSpec = z.infer<typeof IndicatorSpec>;
 
@@ -146,6 +180,38 @@ export const IndicatorColor = z.union([
     kind: z.literal("vortex"),
     plus: HexColor,
     minus: HexColor,
+  }),
+  z.object({
+    kind: z.literal("liqSweep"),
+    highSweep: HexColor,
+    lowSweep: HexColor,
+  }),
+  z.object({
+    kind: z.literal("fvg"),
+    bullish: HexColor,
+    bearish: HexColor,
+  }),
+  z.object({
+    kind: z.literal("srLevels"),
+    support: HexColor,
+    resistance: HexColor,
+  }),
+  z.object({
+    kind: z.literal("pivots"),
+    pp: HexColor,
+    resistance: HexColor,
+    support: HexColor,
+  }),
+  z.object({
+    kind: z.literal("volProfile"),
+    poc: HexColor,
+    valueArea: HexColor,
+    histogram: HexColor,
+  }),
+  z.object({
+    kind: z.literal("orderBlock"),
+    bullish: HexColor,
+    bearish: HexColor,
   }),
 ]);
 export type IndicatorColor = z.infer<typeof IndicatorColor>;

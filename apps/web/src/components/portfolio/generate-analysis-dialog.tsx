@@ -44,6 +44,18 @@ function summarizeSpec(spec: ActiveIndicator["spec"]): string {
       return `${kindLabel(spec.kind)} ${spec.majorPeriod}/${spec.minorPeriod}`;
     case "bbPctB":
       return `${kindLabel(spec.kind)} ${spec.period}, ${spec.stdDev}σ`;
+    case "liqSweep":
+      return `${kindLabel(spec.kind)} ${spec.lookback}`;
+    case "fvg":
+      return `${kindLabel(spec.kind)} ${spec.lookback}${spec.showFilled ? " +filled" : ""}`;
+    case "srLevels":
+      return `${kindLabel(spec.kind)} ${spec.lookback}/${spec.strength} ±${spec.tolerancePct}%`;
+    case "pivots":
+      return `${kindLabel(spec.kind)} ${spec.method} ${spec.timeframe}`;
+    case "volProfile":
+      return `${kindLabel(spec.kind)} ${spec.lookback}/${spec.bins} @${Math.round(spec.valueAreaPct * 100)}%`;
+    case "orderBlock":
+      return `${kindLabel(spec.kind)} ${spec.lookback} ≥${spec.impulsePct}%${spec.showMitigated ? " +mit" : ""}`;
     default:
       return `${kindLabel(spec.kind)} ${(spec as { period: number }).period}`;
   }

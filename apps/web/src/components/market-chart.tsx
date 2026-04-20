@@ -110,7 +110,19 @@ export function MarketChart({
                       ? c.up
                       : c.kind === "vortex"
                         ? c.plus
-                        : c.middle;
+                        : c.kind === "liqSweep"
+                          ? c.highSweep
+                          : c.kind === "fvg"
+                            ? c.bullish
+                            : c.kind === "srLevels"
+                              ? c.support
+                              : c.kind === "pivots"
+                                ? c.pp
+                                : c.kind === "volProfile"
+                                  ? c.poc
+                                  : c.kind === "orderBlock"
+                                    ? c.bullish
+                                    : c.middle;
 
       if (
         r.kind === "sma" ||
@@ -313,6 +325,213 @@ export function MarketChart({
           shape: ev.direction === "bull" ? "arrowUp" : "arrowDown",
           color: ev.direction === "bull" ? mc.bull : mc.bear,
           text: ev.direction === "bull" ? "MACD ↑" : "MACD ↓",
+        }));
+        if (markers.length > 0) {
+          markersRef.current.push(createSeriesMarkers(candle, markers));
+        }
+      } else if (r.kind === "liqSweep") {
+        const lc =
+          typeof c === "object" && c.kind === "liqSweep"
+            ? c
+            : { highSweep: "#dc2626", lowSweep: "#16a34a" };
+        const markers: SeriesMarker<Time>[] = r.series.events.map((ev) => ({
+          time: ev.time as Time,
+          position: ev.type === "high" ? "aboveBar" : "belowBar",
+          shape: ev.type === "high" ? "arrowDown" : "arrowUp",
+          color: ev.type === "high" ? lc.highSweep : lc.lowSweep,
+          text: ev.type === "high" ? "Sweep ↓" : "Sweep ↑",
+        }));
+        if (markers.length > 0) {
+          markersRef.current.push(createSeriesMarkers(candle, markers));
+        }
+      } else if (r.kind === "fvg") {
+        const fc =
+          typeof c === "object" && c.kind === "fvg"
+            ? c
+            : { bullish: "#16a34a", bearish: "#dc2626" };
+        const lastTime = candles.at(-1)?.time;
+        for (const g of r.series.gaps) {
+          const color = g.type === "bullish" ? fc.bullish : fc.bearish;
+          const endTime = (g.endTime ?? lastTime ?? g.time) as Time;
+          const lineStyle = g.filled ? 2 : 0;
+          const topLine = chart.addSeries(LineSeries, {
+            color,
+            lineWidth: 1,
+            lineStyle,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          const bottomLine = chart.addSeries(LineSeries, {
+            color,
+            lineWidth: 1,
+            lineStyle,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          topLine.setData([
+            { time: g.time as Time, value: g.top },
+            { time: endTime, value: g.top },
+          ]);
+          bottomLine.setData([
+            { time: g.time as Time, value: g.bottom },
+            { time: endTime, value: g.bottom },
+          ]);
+          seriesRef.current.push(topLine, bottomLine);
+        }
+        const markers: SeriesMarker<Time>[] = r.series.gaps.map((g) => ({
+          time: g.time as Time,
+          position: g.type === "bullish" ? "belowBar" : "aboveBar",
+          shape: "circle",
+          color: g.type === "bullish" ? fc.bullish : fc.bearish,
+          text: g.type === "bullish" ? "FVG↑" : "FVG↓",
+        }));
+        if (markers.length > 0) {
+          markersRef.current.push(createSeriesMarkers(candle, markers));
+        }
+      } else if (r.kind === "srLevels") {
+        const sc =
+          typeof c === "object" && c.kind === "srLevels"
+            ? c
+            : { support: "#16a34a", resistance: "#dc2626" };
+        for (const lvl of r.series.levels) {
+          const color = lvl.type === "support" ? sc.support : sc.resistance;
+          const line = chart.addSeries(LineSeries, {
+            color,
+            lineWidth: Math.min(3, 1 + Math.floor(lvl.touches / 3)) as 1 | 2 | 3,
+            lineStyle: 0,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          line.setData([
+            { time: r.series.startTime as Time, value: lvl.price },
+            { time: r.series.endTime as Time, value: lvl.price },
+          ]);
+          seriesRef.current.push(line);
+        }
+      } else if (r.kind === "pivots") {
+        const pc =
+          typeof c === "object" && c.kind === "pivots"
+            ? c
+            : { pp: "#6366f1", resistance: "#dc2626", support: "#16a34a" };
+        for (const period of r.series.periods) {
+          for (const lvl of period.levels) {
+            const color = lvl.role === "pp" ? pc.pp : lvl.role === "resistance" ? pc.resistance : pc.support;
+            const line = chart.addSeries(LineSeries, {
+              color,
+              lineWidth: lvl.role === "pp" ? 2 : 1,
+              lineStyle: lvl.role === "pp" ? 0 : 2,
+              lastValueVisible: false,
+              priceLineVisible: false,
+            });
+            line.setData([
+              { time: period.startTime as Time, value: lvl.price },
+              { time: period.endTime as Time, value: lvl.price },
+            ]);
+            seriesRef.current.push(line);
+          }
+        }
+      } else if (r.kind === "volProfile") {
+        const vc =
+          typeof c === "object" && c.kind === "volProfile"
+            ? c
+            : { poc: "#f59e0b", valueArea: "#60a5fa", histogram: "#94a3b8" };
+        const s = r.series;
+        if (s.bins.length > 0) {
+          const pocLine = chart.addSeries(LineSeries, {
+            color: vc.poc,
+            lineWidth: 2,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          pocLine.setData([
+            { time: s.startTime as Time, value: s.poc },
+            { time: s.endTime as Time, value: s.poc },
+          ]);
+          seriesRef.current.push(pocLine);
+          const vahLine = chart.addSeries(LineSeries, {
+            color: vc.valueArea,
+            lineWidth: 1,
+            lineStyle: 2,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          vahLine.setData([
+            { time: s.startTime as Time, value: s.vah },
+            { time: s.endTime as Time, value: s.vah },
+          ]);
+          const valLine = chart.addSeries(LineSeries, {
+            color: vc.valueArea,
+            lineWidth: 1,
+            lineStyle: 2,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          valLine.setData([
+            { time: s.startTime as Time, value: s.val },
+            { time: s.endTime as Time, value: s.val },
+          ]);
+          seriesRef.current.push(vahLine, valLine);
+          if (r.spec.showHistogram) {
+            const maxVol = Math.max(...s.bins.map((b) => b.volume));
+            if (maxVol > 0) {
+              for (const bin of s.bins) {
+                if (bin.volume <= 0) continue;
+                const lineWidth = Math.max(1, Math.min(4, Math.round((bin.volume / maxVol) * 4))) as 1 | 2 | 3 | 4;
+                const line = chart.addSeries(LineSeries, {
+                  color: vc.histogram,
+                  lineWidth,
+                  lastValueVisible: false,
+                  priceLineVisible: false,
+                });
+                line.setData([
+                  { time: s.startTime as Time, value: bin.price },
+                  { time: s.endTime as Time, value: bin.price },
+                ]);
+                seriesRef.current.push(line);
+              }
+            }
+          }
+        }
+      } else if (r.kind === "orderBlock") {
+        const oc =
+          typeof c === "object" && c.kind === "orderBlock"
+            ? c
+            : { bullish: "#16a34a", bearish: "#dc2626" };
+        const lastTime = candles.at(-1)?.time;
+        for (const b of r.series.blocks) {
+          const color = b.type === "bullish" ? oc.bullish : oc.bearish;
+          const endTime = (b.endTime ?? lastTime ?? b.time) as Time;
+          const lineStyle = b.mitigated ? 2 : 0;
+          const topLine = chart.addSeries(LineSeries, {
+            color,
+            lineWidth: 2,
+            lineStyle,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          const bottomLine = chart.addSeries(LineSeries, {
+            color,
+            lineWidth: 2,
+            lineStyle,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          topLine.setData([
+            { time: b.time as Time, value: b.top },
+            { time: endTime, value: b.top },
+          ]);
+          bottomLine.setData([
+            { time: b.time as Time, value: b.bottom },
+            { time: endTime, value: b.bottom },
+          ]);
+          seriesRef.current.push(topLine, bottomLine);
+        }
+        const markers: SeriesMarker<Time>[] = r.series.blocks.map((b) => ({
+          time: b.time as Time,
+          position: b.type === "bullish" ? "belowBar" : "aboveBar",
+          shape: "square",
+          color: b.type === "bullish" ? oc.bullish : oc.bearish,
+          text: b.type === "bullish" ? "OB↑" : "OB↓",
         }));
         if (markers.length > 0) {
           markersRef.current.push(createSeriesMarkers(candle, markers));

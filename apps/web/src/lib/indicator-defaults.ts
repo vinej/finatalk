@@ -16,6 +16,8 @@ export const KINDS: IndicatorKind[] = [
   "ad", "cmf", "volOsc",
   "aroon", "vortex", "tii",
   "zscore", "bbPctB", "hurst",
+  "liqSweep", "fvg",
+  "srLevels", "pivots", "volProfile", "orderBlock",
 ];
 
 export type IndicatorCategory = "trend" | "momentum" | "volatility" | "volume" | "hybrid";
@@ -58,6 +60,12 @@ const KIND_CATEGORY: Record<IndicatorKind, IndicatorCategory> = {
   zscore: "momentum",
   bbPctB: "volatility",
   hurst: "hybrid",
+  liqSweep: "hybrid",
+  fvg: "hybrid",
+  srLevels: "hybrid",
+  pivots: "hybrid",
+  volProfile: "volume",
+  orderBlock: "hybrid",
 };
 
 export function kindCategory(kind: IndicatorKind): IndicatorCategory {
@@ -119,6 +127,12 @@ export function kindLabel(kind: IndicatorKind): string {
     case "zscore": return "Z-Score";
     case "bbPctB": return "BB %B";
     case "hurst": return "Hurst";
+    case "liqSweep": return "Liq Sweep";
+    case "fvg": return "FVG";
+    case "srLevels": return "S/R";
+    case "pivots": return "Pivots";
+    case "volProfile": return "Vol Profile";
+    case "orderBlock": return "Order Block";
   }
 }
 
@@ -156,6 +170,12 @@ const FULL_NAME_EN: Record<IndicatorKind, string> = {
   zscore: "Price Z-Score",
   bbPctB: "Bollinger %B",
   hurst: "Hurst Exponent",
+  liqSweep: "Liquidity Sweep",
+  fvg: "Fair Value Gap",
+  srLevels: "Support/Resistance Levels",
+  pivots: "Pivot Points",
+  volProfile: "Volume Profile",
+  orderBlock: "Order Block",
 };
 
 const FULL_NAME_FR: Record<IndicatorKind, string> = {
@@ -192,6 +212,12 @@ const FULL_NAME_FR: Record<IndicatorKind, string> = {
   zscore: "Score Z du prix",
   bbPctB: "Bollinger %B",
   hurst: "Exposant de Hurst",
+  liqSweep: "Sweep de liquidité",
+  fvg: "Fair Value Gap",
+  srLevels: "Niveaux de support/résistance",
+  pivots: "Points pivots",
+  volProfile: "Profil de volume",
+  orderBlock: "Order Block",
 };
 
 export function kindFullName(kind: IndicatorKind, lang: Lang = "en"): string {
@@ -236,6 +262,16 @@ export function defaultSpec(kind: IndicatorKind): IndicatorSpec {
     case "zscore": return { kind: "zscore", period: 20 };
     case "bbPctB": return { kind: "bbPctB", period: 20, stdDev: 2 };
     case "hurst": return { kind: "hurst", period: 100 };
+    case "liqSweep": return { kind: "liqSweep", lookback: 10 };
+    case "fvg": return { kind: "fvg", lookback: 200, showFilled: false };
+    case "srLevels":
+      return { kind: "srLevels", lookback: 500, strength: 3, tolerancePct: 0.5, maxLevels: 8 };
+    case "pivots":
+      return { kind: "pivots", method: "classic", timeframe: "weekly" };
+    case "volProfile":
+      return { kind: "volProfile", lookback: 200, bins: 40, valueAreaPct: 0.7, showHistogram: false };
+    case "orderBlock":
+      return { kind: "orderBlock", lookback: 200, impulsePct: 1.5, showMitigated: false };
   }
 }
 
@@ -278,6 +314,16 @@ export function defaultColor(kind: IndicatorKind): IndicatorColor {
     case "zscore": return "#d946ef";
     case "bbPctB": return "#db2777";
     case "hurst": return "#0f766e";
+    case "liqSweep": return { kind: "liqSweep", highSweep: "#dc2626", lowSweep: "#16a34a" };
+    case "fvg": return { kind: "fvg", bullish: "#16a34a", bearish: "#dc2626" };
+    case "srLevels":
+      return { kind: "srLevels", support: "#16a34a", resistance: "#dc2626" };
+    case "pivots":
+      return { kind: "pivots", pp: "#6366f1", resistance: "#dc2626", support: "#16a34a" };
+    case "volProfile":
+      return { kind: "volProfile", poc: "#f59e0b", valueArea: "#60a5fa", histogram: "#94a3b8" };
+    case "orderBlock":
+      return { kind: "orderBlock", bullish: "#16a34a", bearish: "#dc2626" };
   }
 }
 
@@ -315,6 +361,12 @@ const KIND_DESCRIPTIONS_EN: Record<IndicatorKind, string> = {
   zscore: "Price Z-Score — standardised distance of the current close from its rolling SMA, expressed in standard deviations: (close − SMA(N)) / stdev(N). Zero = price sits on the mean; ±2 = a two-sigma stretch (rare); ±3 = extreme. Classic mean-reversion tool: fade extremes back toward zero, or use the zero-line cross as a trend confirmation. Default period 20.",
   bbPctB: "Bollinger %B — where price sits inside its Bollinger Bands, rescaled 0–1: (close − lower) / (upper − lower). %B = 1 means price touches the upper band; 0 means the lower; 0.5 = the middle SMA. Above 1 or below 0 = outside the bands (overextension). Easier to track than the bands themselves for divergences and reversion setups. Defaults period 20, stdDev 2.",
   hurst: "Hurst Exponent — advanced long-memory statistic estimating whether a time series is trending, mean-reverting, or a random walk. Computed via rescaled-range (R/S) analysis across multiple dyadic scales within a lookback window, with the slope of log(R/S) vs log(scale) giving H. H > 0.5 = persistent trends (momentum works); H < 0.5 = anti-persistent / mean-reverting (fade works); H ≈ 0.5 = random walk (neither). Needs long windows to be reliable — default 100.",
+  liqSweep: "Liquidity Sweep — detects stop-hunt bars where price briefly pierces a recent N-bar high (or low) and then closes back inside the prior range. A bearish sweep runs the highs then rejects; a bullish sweep runs the lows then reclaims. Markers are placed on the sweeping bar and the swept level is highlighted. Default lookback 10 (use 20–50 for stronger structural sweeps). Works well paired with order-block or supply/demand levels.",
+  fvg: "Fair Value Gap (FVG) — three-bar price imbalance where bar[i-2] and bar[i] do not overlap, leaving a 'gap' that the middle bar created with an impulsive move. Bullish FVG when low[i] > high[i-2] (gap is unfilled space below); bearish when high[i] < low[i-2]. Unfilled gaps often act as magnets/support/resistance on revisits. The lookback controls how far back gaps are detected; showFilled toggles whether to keep gaps that have already been traded through.",
+  srLevels: "Support/Resistance Levels — auto-detected horizontal levels built from fractal swing pivots. A pivot is a bar whose high (or low) is more extreme than the N bars on each side (strength = N). Nearby pivots are clustered into a single level within a tolerance % band; each level is tagged support/resistance based on its position relative to the current close and ranked by touch count (× recency). The most-touched levels often act as genuine supply/demand zones. Tune: strength (3–5 swing), tolerancePct (0.3–1.5%), maxLevels (5–15).",
+  pivots: "Pivot Points — floor-trader levels derived from the prior period's high/low/close. Three variants: classic (PP = (H+L+C)/3, R/S at ±range multiples), fibonacci (R/S at 0.382/0.618/1.0 of range), and camarilla (R/S at close ± k×range, k = 1.1 × {1/12, 1/6, 1/4, 1/2}). Timeframe = weekly (daily charts) or monthly (weekly+ charts). Intraday traders anchor trades and stops against PP/R1/S1; swing traders watch R2/R3 / S2/S3 as extension and climax targets. Levels refresh at each new period boundary.",
+  volProfile: "Volume Profile — horizontal distribution of traded volume across price (the 'VPVR' view). Price is binned into N buckets across the lookback window; volume in each bar is spread across the bins it touched. POC (Point of Control) = bin with the highest volume. Value Area = contiguous range around POC containing valueAreaPct (default 70%) of total volume; its bounds are VAH (top) and VAL (bottom). POC/VAH/VAL act as magnets and decision levels; low-volume nodes (LVN) often produce fast moves. Orthogonal to time-series volume indicators.",
+  orderBlock: "Order Block — last opposite-colour candle immediately before an impulsive move in the opposite direction. Bullish OB: the last bearish candle before a strong rally (next close > OB high AND move ≥ impulsePct). Bearish OB: the last bullish candle before a sharp drop. The OB zone is the high/low range of that candle, and is marked 'mitigated' once price later revisits it. Unmitigated order blocks often act as supply/demand re-entry zones on retests. Tune: lookback (scan window), impulsePct (move threshold), showMitigated (keep or hide traded-through OBs).",
 };
 
 const KIND_DESCRIPTIONS_FR: Record<IndicatorKind, string> = {
@@ -351,6 +403,12 @@ const KIND_DESCRIPTIONS_FR: Record<IndicatorKind, string> = {
   zscore: "Score Z du prix — distance standardisée de la clôture par rapport à sa SMA glissante, exprimée en écarts-types : (clôture − SMA(N)) / écart-type(N). Zéro = le prix se situe sur la moyenne ; ±2 = étirement à deux sigmas (rare) ; ±3 = extrême. Outil classique de retour à la moyenne : fader les extrêmes vers zéro, ou utiliser le franchissement de zéro comme confirmation de tendance. Défaut : période 20.",
   bbPctB: "Bollinger %B — position du prix dans ses Bandes de Bollinger, rééchelonnée 0–1 : (clôture − inférieure) / (supérieure − inférieure). %B = 1 signifie que le prix touche la bande supérieure ; 0 la bande inférieure ; 0,5 = la SMA centrale. Au-dessus de 1 ou en dessous de 0 = hors bandes (excès). Plus facile à suivre que les bandes elles-mêmes pour détecter divergences et setups de retour à la moyenne. Défauts : période 20, écart-type 2.",
   hurst: "Exposant de Hurst — statistique avancée de mémoire longue estimant si une série temporelle est en tendance, en retour à la moyenne, ou une marche aléatoire. Calculé par l'analyse d'étendue réajustée (R/S) sur plusieurs échelles dyadiques dans une fenêtre de lookback ; la pente de log(R/S) vs log(échelle) donne H. H > 0,5 = tendances persistantes (le momentum fonctionne) ; H < 0,5 = anti-persistant / retour à la moyenne (le fade fonctionne) ; H ≈ 0,5 = marche aléatoire (ni l'un ni l'autre). Nécessite de longues fenêtres pour être fiable — défaut : 100.",
+  liqSweep: "Sweep de liquidité — détecte les barres de « chasse aux stops » où le prix perce brièvement un plus haut (ou plus bas) sur N barres puis clôture à l'intérieur de la plage précédente. Un sweep baissier balaie les hauts puis rejette ; un sweep haussier balaie les bas puis reprend. Des marqueurs sont placés sur la barre de sweep et le niveau balayé est surligné. Défaut lookback 10 (utilisez 20–50 pour des sweeps structurels plus forts). Fonctionne bien couplé à des order blocks ou zones d'offre/demande.",
+  fvg: "Fair Value Gap (FVG) — déséquilibre de prix sur trois barres où barre[i-2] et barre[i] ne se chevauchent pas, laissant un « trou » créé par la barre du milieu avec un mouvement impulsif. FVG haussier lorsque bas[i] > haut[i-2] (espace non rempli en dessous) ; baissier lorsque haut[i] < bas[i-2]. Les gaps non remplis agissent souvent comme des aimants / supports / résistances lors des revisites. Le lookback contrôle jusqu'où remonter pour détecter les gaps ; showFilled bascule l'affichage des gaps déjà traversés.",
+  srLevels: "Niveaux de support/résistance — niveaux horizontaux auto-détectés à partir de pivots fractaux. Un pivot est une barre dont le haut (ou bas) dépasse celui des N barres de chaque côté (strength = N). Les pivots proches sont regroupés en un même niveau dans une tolérance en % ; chaque niveau est classé support/résistance selon sa position par rapport à la clôture courante, puis ordonné par nombre de touches (× fraîcheur). Les niveaux les plus touchés agissent souvent comme de véritables zones d'offre/demande. Paramètres : strength (3–5 swing), tolerancePct (0,3–1,5 %), maxLevels (5–15).",
+  pivots: "Points pivots — niveaux de « floor trader » dérivés du haut/bas/clôture de la période précédente. Trois variantes : classique (PP = (H+B+C)/3, R/S à ± multiples de la range), fibonacci (R/S à 0,382/0,618/1,0 × range) et camarilla (R/S à close ± k×range, k = 1,1 × {1/12, 1/6, 1/4, 1/2}). Timeframe = weekly (graphiques daily) ou monthly (weekly+). Les traders intraday ancrent leurs entrées/stops sur PP/R1/S1 ; les swing traders surveillent R2/R3 / S2/S3 comme cibles d'extension. Les niveaux se renouvellent à chaque nouvelle période.",
+  volProfile: "Profil de volume — distribution horizontale du volume échangé par niveau de prix (vue « VPVR »). Le prix est réparti en N bins sur la fenêtre lookback ; le volume de chaque bougie est redistribué sur les bins qu'elle touche. POC (Point of Control) = bin au plus fort volume. La Value Area = plage contiguë autour du POC contenant valueAreaPct (défaut 70 %) du volume total ; ses bornes sont VAH (haut) et VAL (bas). POC/VAH/VAL agissent comme aimants et niveaux de décision ; les LVN (low-volume nodes) favorisent les mouvements rapides. Orthogonal aux indicateurs de volume temporels.",
+  orderBlock: "Order Block — dernière bougie de couleur opposée juste avant un mouvement impulsif. OB haussier : dernière bougie baissière avant un rally fort (close suivante > haut de l'OB ET mouvement ≥ impulsePct). OB baissier : dernière bougie haussière avant une chute nette. La zone d'OB est la plage haut/bas de cette bougie, marquée « mitigée » lorsque le prix revient dans la zone. Les order blocks non mitigés agissent souvent comme zones d'offre/demande pour les ré-entrées sur retest. Paramètres : lookback (fenêtre), impulsePct (seuil de mouvement), showMitigated (garder ou masquer les OBs traversés).",
 };
 
 export function kindDescription(kind: IndicatorKind, lang: Lang = "en"): string {
@@ -391,6 +449,12 @@ const KIND_ONELINER_EN: Record<IndicatorKind, string> = {
   zscore: "Standardised distance from the mean in σ — ±2 is stretched, ±3 extreme; classic mean-reversion fade.",
   bbPctB: "0–1 inside the Bollinger Bands; >1 or <0 = outside, overextension warning.",
   hurst: "H > 0.5 = trending (momentum works), < 0.5 = mean-reverting, ≈ 0.5 = random walk.",
+  liqSweep: "Stop-hunt bars that pierce N-bar highs/lows then close back inside — classic SMC structure trigger.",
+  fvg: "Three-bar price imbalance — unfilled gaps often act as magnets and support/resistance on revisits.",
+  srLevels: "Auto-detected horizontal support/resistance from clustered swing pivots — ranked by touches.",
+  pivots: "Floor-trader pivot levels (classic, fibonacci, or camarilla) from prior period's H/L/C.",
+  volProfile: "Horizontal volume distribution — POC, VAH, VAL mark price magnets and decision levels.",
+  orderBlock: "Last opposite-colour candle before an impulsive move — often a supply/demand re-entry zone.",
 };
 
 const KIND_ONELINER_FR: Record<IndicatorKind, string> = {
@@ -427,6 +491,12 @@ const KIND_ONELINER_FR: Record<IndicatorKind, string> = {
   zscore: "Distance standardisée à la moyenne en σ — ±2 étiré, ±3 extrême ; fade classique de retour à la moyenne.",
   bbPctB: "0–1 dans les Bandes de Bollinger ; >1 ou <0 = hors bandes, excès.",
   hurst: "H > 0,5 = tendance (le momentum fonctionne), < 0,5 = retour à la moyenne, ≈ 0,5 = marche aléatoire.",
+  liqSweep: "Barres de chasse aux stops qui percent les hauts/bas sur N barres puis clôturent à l'intérieur — déclencheur SMC classique.",
+  fvg: "Déséquilibre de prix sur trois barres — les gaps non remplis agissent souvent comme aimants et support/résistance lors des revisites.",
+  srLevels: "Support/résistance auto-détectés à partir de pivots de swing regroupés — classés par touches.",
+  pivots: "Points pivots de floor-trader (classique, fibonacci ou camarilla) à partir du H/B/C précédent.",
+  volProfile: "Distribution horizontale du volume — POC, VAH, VAL marquent les aimants et niveaux de décision.",
+  orderBlock: "Dernière bougie opposée avant un mouvement impulsif — souvent une zone d'offre/demande pour la ré-entrée.",
 };
 
 export function kindOneliner(kind: IndicatorKind, lang: Lang = "en"): string {
@@ -492,6 +562,18 @@ export function formatLabel(spec: IndicatorSpec): string {
       return `Vortex ${spec.period}`;
     case "tii":
       return `TII ${spec.majorPeriod}/${spec.minorPeriod}`;
+    case "liqSweep":
+      return `Liq Sweep ${spec.lookback}`;
+    case "fvg":
+      return `FVG ${spec.lookback}${spec.showFilled ? " (+filled)" : ""}`;
+    case "srLevels":
+      return `S/R ${spec.lookback}×${spec.strength} (${spec.tolerancePct}%)`;
+    case "pivots":
+      return `${spec.method === "classic" ? "Pivots" : spec.method === "fib" ? "Fib Pivots" : "Camarilla"} (${spec.timeframe === "weekly" ? "W" : "M"})`;
+    case "volProfile":
+      return `Vol Profile ${spec.lookback}/${spec.bins}b (${Math.round(spec.valueAreaPct * 100)}%)`;
+    case "orderBlock":
+      return `OB ${spec.lookback} ≥${spec.impulsePct}%${spec.showMitigated ? " (+mit)" : ""}`;
   }
 }
 
@@ -559,6 +641,18 @@ function sortKey(spec: IndicatorSpec): string {
       return `${prefix}|${pad(spec.period)}`;
     case "tii":
       return `${prefix}|${pad(spec.majorPeriod)}|${pad(spec.minorPeriod)}`;
+    case "liqSweep":
+      return `${prefix}|${pad(spec.lookback)}`;
+    case "fvg":
+      return `${prefix}|${pad(spec.lookback)}|${spec.showFilled ? "1" : "0"}`;
+    case "srLevels":
+      return `${prefix}|${pad(spec.lookback)}|${pad(spec.strength)}|${pad(Math.round(spec.tolerancePct * 100))}|${pad(spec.maxLevels)}`;
+    case "pivots":
+      return `${prefix}|${spec.method}|${spec.timeframe}`;
+    case "volProfile":
+      return `${prefix}|${pad(spec.lookback)}|${pad(spec.bins)}|${pad(Math.round(spec.valueAreaPct * 100))}|${spec.showHistogram ? "1" : "0"}`;
+    case "orderBlock":
+      return `${prefix}|${pad(spec.lookback)}|${pad(Math.round(spec.impulsePct * 100))}|${spec.showMitigated ? "1" : "0"}`;
   }
 }
 

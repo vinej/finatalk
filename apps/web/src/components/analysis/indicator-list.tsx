@@ -75,6 +75,56 @@ function Swatch({ color, dim }: { color: IndicatorColor; dim?: boolean }) {
       </span>
     );
   }
+  if (color.kind === "liqSweep") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.highSweep }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.lowSweep }} />
+      </span>
+    );
+  }
+  if (color.kind === "fvg") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.bullish }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.bearish }} />
+      </span>
+    );
+  }
+  if (color.kind === "srLevels") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.support }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.resistance }} />
+      </span>
+    );
+  }
+  if (color.kind === "pivots") {
+    return (
+      <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/3" style={{ backgroundColor: color.support }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.pp }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.resistance }} />
+      </span>
+    );
+  }
+  if (color.kind === "volProfile") {
+    return (
+      <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/3" style={{ backgroundColor: color.histogram }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.valueArea }} />
+        <span className="h-full w-1/3" style={{ backgroundColor: color.poc }} />
+      </span>
+    );
+  }
+  if (color.kind === "orderBlock") {
+    return (
+      <span className="flex h-3 w-4 shrink-0 overflow-hidden rounded-sm" style={style}>
+        <span className="h-full w-1/2" style={{ backgroundColor: color.bullish }} />
+        <span className="h-full w-1/2" style={{ backgroundColor: color.bearish }} />
+      </span>
+    );
+  }
   return (
     <span className="flex h-3 w-5 shrink-0 overflow-hidden rounded-sm" style={style}>
       <span className="h-full w-1/3" style={{ backgroundColor: color.adx }} />
@@ -341,6 +391,110 @@ function EditForm({
           <NumberField label={t("analysis.period")} value={spec.period} min={20} max={2000}
             onChange={(v) => setSpec({ ...spec, period: v })} />
         )}
+        {spec.kind === "liqSweep" && (
+          <NumberField label={t("analysis.lookback")} value={spec.lookback} min={3} max={200}
+            onChange={(v) => setSpec({ ...spec, lookback: v })} />
+        )}
+        {spec.kind === "fvg" && (
+          <>
+            <NumberField label={t("analysis.lookback")} value={spec.lookback} min={10} max={2000}
+              onChange={(v) => setSpec({ ...spec, lookback: v })} />
+            <div className="grid gap-1.5">
+              <Label>{t("analysis.showFilled")}</Label>
+              <label className="flex h-10 items-center gap-2 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={spec.showFilled}
+                  onChange={(e) => setSpec({ ...spec, showFilled: e.target.checked })}
+                />
+                <span className="text-[var(--color-muted-foreground)]">{t("analysis.showFilledHint")}</span>
+              </label>
+            </div>
+          </>
+        )}
+        {spec.kind === "srLevels" && (
+          <>
+            <NumberField label={t("analysis.lookback")} value={spec.lookback} min={30} max={5000}
+              onChange={(v) => setSpec({ ...spec, lookback: v })} />
+            <NumberField label={t("analysis.strength")} value={spec.strength} min={1} max={20}
+              onChange={(v) => setSpec({ ...spec, strength: v })} />
+            <NumberField label={t("analysis.tolerancePct")} value={spec.tolerancePct} min={0.05} max={5} step={0.05}
+              onChange={(v) => setSpec({ ...spec, tolerancePct: v })} />
+            <NumberField label={t("analysis.maxLevels")} value={spec.maxLevels} min={2} max={30}
+              onChange={(v) => setSpec({ ...spec, maxLevels: v })} />
+          </>
+        )}
+        {spec.kind === "pivots" && (
+          <>
+            <div className="grid gap-1.5">
+              <Label>{t("analysis.pivotMethod")}</Label>
+              <select
+                value={spec.method}
+                onChange={(e) =>
+                  setSpec({ ...spec, method: e.target.value as "classic" | "fib" | "camarilla" })
+                }
+                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
+              >
+                <option value="classic">{t("analysis.pivotClassic")}</option>
+                <option value="fib">{t("analysis.pivotFib")}</option>
+                <option value="camarilla">{t("analysis.pivotCamarilla")}</option>
+              </select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>{t("analysis.pivotTimeframe")}</Label>
+              <select
+                value={spec.timeframe}
+                onChange={(e) =>
+                  setSpec({ ...spec, timeframe: e.target.value as "weekly" | "monthly" })
+                }
+                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
+              >
+                <option value="weekly">{t("analysis.pivotWeekly")}</option>
+                <option value="monthly">{t("analysis.pivotMonthly")}</option>
+              </select>
+            </div>
+          </>
+        )}
+        {spec.kind === "volProfile" && (
+          <>
+            <NumberField label={t("analysis.lookback")} value={spec.lookback} min={20} max={5000}
+              onChange={(v) => setSpec({ ...spec, lookback: v })} />
+            <NumberField label={t("analysis.bins")} value={spec.bins} min={10} max={200}
+              onChange={(v) => setSpec({ ...spec, bins: v })} />
+            <NumberField label={t("analysis.valueAreaPct")} value={spec.valueAreaPct} min={0.5} max={0.95} step={0.05}
+              onChange={(v) => setSpec({ ...spec, valueAreaPct: v })} />
+            <div className="grid gap-1.5">
+              <Label>{t("analysis.showHistogram")}</Label>
+              <label className="flex h-10 items-center gap-2 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={spec.showHistogram}
+                  onChange={(e) => setSpec({ ...spec, showHistogram: e.target.checked })}
+                />
+                <span className="text-[var(--color-muted-foreground)]">{t("analysis.showHistogramHint")}</span>
+              </label>
+            </div>
+          </>
+        )}
+        {spec.kind === "orderBlock" && (
+          <>
+            <NumberField label={t("analysis.lookback")} value={spec.lookback} min={20} max={2000}
+              onChange={(v) => setSpec({ ...spec, lookback: v })} />
+            <NumberField label={t("analysis.impulsePct")} value={spec.impulsePct} min={0.5} max={20} step={0.1}
+              onChange={(v) => setSpec({ ...spec, impulsePct: v })} />
+            <div className="grid gap-1.5">
+              <Label>{t("analysis.showMitigated")}</Label>
+              <label className="flex h-10 items-center gap-2 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={spec.showMitigated}
+                  onChange={(e) => setSpec({ ...spec, showMitigated: e.target.checked })}
+                />
+                <span className="text-[var(--color-muted-foreground)]">{t("analysis.showMitigatedHint")}</span>
+              </label>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -409,6 +563,52 @@ function EditForm({
               onChange={(v) => setColor({ kind: "vortex", plus: v, minus: color.minus })} />
             <ColorField label={t("analysis.colorMinus")} value={color.minus}
               onChange={(v) => setColor({ kind: "vortex", plus: color.plus, minus: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "liqSweep" ? (
+          <>
+            <ColorField label={t("analysis.colorHighSweep")} value={color.highSweep}
+              onChange={(v) => setColor({ kind: "liqSweep", highSweep: v, lowSweep: color.lowSweep })} />
+            <ColorField label={t("analysis.colorLowSweep")} value={color.lowSweep}
+              onChange={(v) => setColor({ kind: "liqSweep", highSweep: color.highSweep, lowSweep: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "fvg" ? (
+          <>
+            <ColorField label={t("analysis.colorBullish")} value={color.bullish}
+              onChange={(v) => setColor({ kind: "fvg", bullish: v, bearish: color.bearish })} />
+            <ColorField label={t("analysis.colorBearish")} value={color.bearish}
+              onChange={(v) => setColor({ kind: "fvg", bullish: color.bullish, bearish: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "srLevels" ? (
+          <>
+            <ColorField label={t("analysis.colorSupport")} value={color.support}
+              onChange={(v) => setColor({ kind: "srLevels", support: v, resistance: color.resistance })} />
+            <ColorField label={t("analysis.colorResistance")} value={color.resistance}
+              onChange={(v) => setColor({ kind: "srLevels", support: color.support, resistance: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "pivots" ? (
+          <>
+            <ColorField label={t("analysis.colorPp")} value={color.pp}
+              onChange={(v) => setColor({ kind: "pivots", pp: v, resistance: color.resistance, support: color.support })} />
+            <ColorField label={t("analysis.colorResistance")} value={color.resistance}
+              onChange={(v) => setColor({ kind: "pivots", pp: color.pp, resistance: v, support: color.support })} />
+            <ColorField label={t("analysis.colorSupport")} value={color.support}
+              onChange={(v) => setColor({ kind: "pivots", pp: color.pp, resistance: color.resistance, support: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "volProfile" ? (
+          <>
+            <ColorField label={t("analysis.colorPoc")} value={color.poc}
+              onChange={(v) => setColor({ kind: "volProfile", poc: v, valueArea: color.valueArea, histogram: color.histogram })} />
+            <ColorField label={t("analysis.colorValueArea")} value={color.valueArea}
+              onChange={(v) => setColor({ kind: "volProfile", poc: color.poc, valueArea: v, histogram: color.histogram })} />
+            <ColorField label={t("analysis.colorHistogram")} value={color.histogram}
+              onChange={(v) => setColor({ kind: "volProfile", poc: color.poc, valueArea: color.valueArea, histogram: v })} />
+          </>
+        ) : typeof color === "object" && color.kind === "orderBlock" ? (
+          <>
+            <ColorField label={t("analysis.colorBullish")} value={color.bullish}
+              onChange={(v) => setColor({ kind: "orderBlock", bullish: v, bearish: color.bearish })} />
+            <ColorField label={t("analysis.colorBearish")} value={color.bearish}
+              onChange={(v) => setColor({ kind: "orderBlock", bullish: color.bullish, bearish: v })} />
           </>
         ) : (
           <ColorField

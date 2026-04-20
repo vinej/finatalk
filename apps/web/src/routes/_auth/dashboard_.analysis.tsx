@@ -1016,6 +1016,38 @@ function latestEntry(result: AnalyzeResult): Record<string, unknown> | undefined
       level618: s.levels.find((l) => l.ratio === 0.618)?.price,
     };
   }
+  if (result.kind === "liqSweep") {
+    const e = result.series.events.at(-1);
+    return e ? { type: e.type, level: e.level, wick: e.wickPrice, time: e.time } : undefined;
+  }
+  if (result.kind === "fvg") {
+    const g = result.series.gaps.at(-1);
+    return g
+      ? { type: g.type, top: g.top, bottom: g.bottom, filled: g.filled, time: g.time }
+      : undefined;
+  }
+  if (result.kind === "srLevels") {
+    const top = result.series.levels[0];
+    return top
+      ? { price: top.price, touches: top.touches, type: top.type, count: result.series.levels.length }
+      : undefined;
+  }
+  if (result.kind === "pivots") {
+    const last = result.series.periods.at(-1);
+    if (!last) return undefined;
+    const out: Record<string, number> = { time: last.startTime };
+    for (const l of last.levels) out[l.label] = l.price;
+    return out;
+  }
+  if (result.kind === "volProfile") {
+    return { poc: result.series.poc, vah: result.series.vah, val: result.series.val };
+  }
+  if (result.kind === "orderBlock") {
+    const b = result.series.blocks.at(-1);
+    return b
+      ? { type: b.type, top: b.top, bottom: b.bottom, mitigated: b.mitigated, time: b.time }
+      : undefined;
+  }
   return result.series[result.series.length - 1];
 }
 
@@ -1063,6 +1095,18 @@ function cellLabel(result: AnalyzeResult): string {
       return `BB%B ${result.spec.period}/${result.spec.stdDev}`;
     case "hurst":
       return `HURST ${result.spec.period}`;
+    case "liqSweep":
+      return `LIQ SWEEP ${result.spec.lookback}`;
+    case "fvg":
+      return `FVG ${result.spec.lookback}${result.spec.showFilled ? "+" : ""}`;
+    case "srLevels":
+      return `S/R ${result.spec.lookback}/${result.spec.strength}`;
+    case "pivots":
+      return `PIVOTS ${result.spec.method.toUpperCase()} ${result.spec.timeframe}`;
+    case "volProfile":
+      return `VP ${result.spec.lookback}/${result.spec.bins}`;
+    case "orderBlock":
+      return `OB ${result.spec.lookback}/${result.spec.impulsePct}%`;
     default:
       return `${result.kind.toUpperCase()} ${result.spec.period}`;
   }
@@ -1093,6 +1137,35 @@ function formatLast(kind: string, last: Record<string, number | unknown>): strin
   }
   if (kind === "vortex") {
     return `+${fmt(last.plus)} / −${fmt(last.minus)}`;
+  }
+  if (kind === "liqSweep") {
+    if (last.type == null) return "—";
+    const arrow = last.type === "high" ? "↓" : "↑";
+    return `${arrow} ${fmt(last.level)}`;
+  }
+  if (kind === "fvg") {
+    if (last.type == null) return "—";
+    const arrow = last.type === "bullish" ? "↑" : "↓";
+    const tag = last.filled ? " (filled)" : "";
+    return `${arrow} ${fmt(last.bottom)}–${fmt(last.top)}${tag}`;
+  }
+  if (kind === "srLevels") {
+    if (last.price == null) return "—";
+    const arrow = last.type === "support" ? "↑" : "↓";
+    const c = typeof last.count === "number" ? ` · ${last.count}` : "";
+    return `${arrow} ${fmt(last.price)} ×${fmt(last.touches)}${c}`;
+  }
+  if (kind === "pivots") {
+    return `PP ${fmt(last.PP)} · R1 ${fmt(last.R1)} · S1 ${fmt(last.S1)}`;
+  }
+  if (kind === "volProfile") {
+    return `POC ${fmt(last.poc)} · VAH ${fmt(last.vah)} · VAL ${fmt(last.val)}`;
+  }
+  if (kind === "orderBlock") {
+    if (last.type == null) return "—";
+    const arrow = last.type === "bullish" ? "↑" : "↓";
+    const tag = last.mitigated ? " (mit.)" : "";
+    return `${arrow} ${fmt(last.bottom)}–${fmt(last.top)}${tag}`;
   }
   return fmt(last.value);
 }

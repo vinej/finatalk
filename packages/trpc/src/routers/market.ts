@@ -149,6 +149,49 @@ type StochSeries = { time: number; k: number; d: number }[];
 type AdxSeries = { time: number; adx: number; pdi: number; mdi: number }[];
 type AroonSeries = { time: number; up: number; down: number }[];
 type VortexSeries = { time: number; plus: number; minus: number }[];
+type LiqSweepEvent = { time: number; type: "high" | "low"; level: number; wickPrice: number };
+type LiqSweepSeries = { events: LiqSweepEvent[] };
+type FvgGap = {
+  time: number;
+  endTime: number | null;
+  top: number;
+  bottom: number;
+  type: "bullish" | "bearish";
+  filled: boolean;
+  filledTime: number | null;
+};
+type FvgSeries = { gaps: FvgGap[] };
+type SrLevel = {
+  price: number;
+  type: "support" | "resistance";
+  touches: number;
+  firstTime: number;
+  lastTime: number;
+};
+type SrLevelsSeries = { startTime: number; endTime: number; levels: SrLevel[] };
+type PivotLevel = { label: string; price: number; role: "pp" | "resistance" | "support" };
+type PivotPeriod = { startTime: number; endTime: number; levels: PivotLevel[] };
+type PivotsSeries = { periods: PivotPeriod[] };
+type VolProfileBin = { price: number; volume: number };
+type VolProfileSeries = {
+  startTime: number;
+  endTime: number;
+  bins: VolProfileBin[];
+  poc: number;
+  vah: number;
+  val: number;
+  binWidth: number;
+};
+type OrderBlockZone = {
+  time: number;
+  endTime: number | null;
+  top: number;
+  bottom: number;
+  type: "bullish" | "bearish";
+  mitigated: boolean;
+  mitigatedTime: number | null;
+};
+type OrderBlockSeries = { blocks: OrderBlockZone[] };
 type CrossEvent = { time: number; direction: "bull" | "bear"; price: number };
 type MaCrossSeries = { fast: LineSeries; slow: LineSeries; events: CrossEvent[] };
 type MacdCrossSeries = { macd: MacdSeries; events: CrossEvent[] };
@@ -194,7 +237,13 @@ type IndicatorResult =
   | { kind: "tii"; spec: Extract<IndicatorSpecT, { kind: "tii" }>; series: LineSeries }
   | { kind: "zscore"; spec: Extract<IndicatorSpecT, { kind: "zscore" }>; series: LineSeries }
   | { kind: "bbPctB"; spec: Extract<IndicatorSpecT, { kind: "bbPctB" }>; series: LineSeries }
-  | { kind: "hurst"; spec: Extract<IndicatorSpecT, { kind: "hurst" }>; series: LineSeries };
+  | { kind: "hurst"; spec: Extract<IndicatorSpecT, { kind: "hurst" }>; series: LineSeries }
+  | { kind: "liqSweep"; spec: Extract<IndicatorSpecT, { kind: "liqSweep" }>; series: LiqSweepSeries }
+  | { kind: "fvg"; spec: Extract<IndicatorSpecT, { kind: "fvg" }>; series: FvgSeries }
+  | { kind: "srLevels"; spec: Extract<IndicatorSpecT, { kind: "srLevels" }>; series: SrLevelsSeries }
+  | { kind: "pivots"; spec: Extract<IndicatorSpecT, { kind: "pivots" }>; series: PivotsSeries }
+  | { kind: "volProfile"; spec: Extract<IndicatorSpecT, { kind: "volProfile" }>; series: VolProfileSeries }
+  | { kind: "orderBlock"; spec: Extract<IndicatorSpecT, { kind: "orderBlock" }>; series: OrderBlockSeries };
 
 export type RunAnalysisInput = {
   symbol: string;
@@ -247,6 +296,58 @@ export function indicatorTail(r: IndicatorResult): {
       level618: s.levels.find((l) => l.ratio === 0.618)?.price ?? Number.NaN,
     };
     return { last, tail: [last] };
+  }
+  if (r.kind === "liqSweep") {
+    const tail = r.series.events.slice(-5).map((e) => ({
+      time: e.time,
+      level: e.level,
+      wick: e.wickPrice,
+      dir: e.type === "high" ? 1 : -1,
+    }));
+    return { last: tail.at(-1) ?? null, tail };
+  }
+  if (r.kind === "fvg") {
+    const tail = r.series.gaps.slice(-5).map((g) => ({
+      time: g.time,
+      top: g.top,
+      bottom: g.bottom,
+      dir: g.type === "bullish" ? 1 : -1,
+      filled: g.filled ? 1 : 0,
+    }));
+    return { last: tail.at(-1) ?? null, tail };
+  }
+  if (r.kind === "srLevels") {
+    const tail = r.series.levels.slice(0, 5).map((l) => ({
+      price: l.price,
+      touches: l.touches,
+      dir: l.type === "support" ? 1 : -1,
+    }));
+    return { last: tail.at(0) ?? null, tail };
+  }
+  if (r.kind === "pivots") {
+    const last = r.series.periods.at(-1);
+    if (!last) return { last: null, tail: [] };
+    const obj: Record<string, number> = { time: last.startTime };
+    for (const l of last.levels) obj[l.label] = l.price;
+    return { last: obj, tail: [obj] };
+  }
+  if (r.kind === "volProfile") {
+    const last: Record<string, number> = {
+      poc: r.series.poc,
+      vah: r.series.vah,
+      val: r.series.val,
+    };
+    return { last, tail: [last] };
+  }
+  if (r.kind === "orderBlock") {
+    const tail = r.series.blocks.slice(-5).map((b) => ({
+      time: b.time,
+      top: b.top,
+      bottom: b.bottom,
+      dir: b.type === "bullish" ? 1 : -1,
+      mitigated: b.mitigated ? 1 : 0,
+    }));
+    return { last: tail.at(-1) ?? null, tail };
   }
   return {
     last: r.series.at(-1) ?? null,
@@ -767,6 +868,324 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
         series.push({ time: candles[i]!.time, value: slope });
       }
       return { kind: "hurst", spec, series };
+    }
+    case "liqSweep": {
+      const events: LiqSweepEvent[] = [];
+      for (let i = spec.lookback; i < candles.length; i++) {
+        let priorHigh = -Infinity;
+        let priorLow = Infinity;
+        for (let j = i - spec.lookback; j < i; j++) {
+          if (candles[j]!.high > priorHigh) priorHigh = candles[j]!.high;
+          if (candles[j]!.low < priorLow) priorLow = candles[j]!.low;
+        }
+        const bar = candles[i]!;
+        if (bar.high > priorHigh && bar.close < priorHigh) {
+          events.push({ time: bar.time, type: "high", level: priorHigh, wickPrice: bar.high });
+        }
+        if (bar.low < priorLow && bar.close > priorLow) {
+          events.push({ time: bar.time, type: "low", level: priorLow, wickPrice: bar.low });
+        }
+      }
+      return { kind: "liqSweep", spec, series: { events } };
+    }
+    case "fvg": {
+      const start = Math.max(2, candles.length - spec.lookback);
+      const gaps: FvgGap[] = [];
+      for (let i = start; i < candles.length; i++) {
+        const a = candles[i - 2]!;
+        const c = candles[i]!;
+        if (c.low > a.high) {
+          gaps.push({
+            time: c.time,
+            endTime: null,
+            top: c.low,
+            bottom: a.high,
+            type: "bullish",
+            filled: false,
+            filledTime: null,
+          });
+        } else if (c.high < a.low) {
+          gaps.push({
+            time: c.time,
+            endTime: null,
+            top: a.low,
+            bottom: c.high,
+            type: "bearish",
+            filled: false,
+            filledTime: null,
+          });
+        }
+      }
+      // Mark filled gaps: for each gap, scan forward for a bar that revisits the gap range.
+      for (const g of gaps) {
+        for (let i = 0; i < candles.length; i++) {
+          const bar = candles[i]!;
+          if (bar.time <= g.time) continue;
+          if (g.type === "bullish" && bar.low <= g.bottom) {
+            g.filled = true;
+            g.filledTime = bar.time;
+            g.endTime = bar.time;
+            break;
+          }
+          if (g.type === "bearish" && bar.high >= g.top) {
+            g.filled = true;
+            g.filledTime = bar.time;
+            g.endTime = bar.time;
+            break;
+          }
+        }
+      }
+      const filtered = spec.showFilled ? gaps : gaps.filter((g) => !g.filled);
+      return { kind: "fvg", spec, series: { gaps: filtered } };
+    }
+    case "srLevels": {
+      const start = Math.max(spec.strength, candles.length - spec.lookback);
+      const end = candles.length - spec.strength;
+      const pivots: { time: number; price: number; type: "support" | "resistance" }[] = [];
+      for (let i = start; i < end; i++) {
+        const bar = candles[i]!;
+        let isHigh = true;
+        let isLow = true;
+        for (let k = 1; k <= spec.strength; k++) {
+          const left = candles[i - k]!;
+          const right = candles[i + k]!;
+          if (!(bar.high > left.high && bar.high > right.high)) isHigh = false;
+          if (!(bar.low < left.low && bar.low < right.low)) isLow = false;
+          if (!isHigh && !isLow) break;
+        }
+        if (isHigh) pivots.push({ time: bar.time, price: bar.high, type: "resistance" });
+        if (isLow) pivots.push({ time: bar.time, price: bar.low, type: "support" });
+      }
+      const lastClose = candles.at(-1)?.close ?? null;
+      const tol = (spec.tolerancePct / 100);
+      const clusters: {
+        prices: number[];
+        times: number[];
+        type: "support" | "resistance";
+      }[] = [];
+      for (const p of pivots) {
+        const ref = p.price;
+        const match = clusters.find(
+          (c) => c.type === p.type && Math.abs(c.prices[0]! - ref) / ref <= tol,
+        );
+        if (match) {
+          match.prices.push(p.price);
+          match.times.push(p.time);
+        } else {
+          clusters.push({ prices: [p.price], times: [p.time], type: p.type });
+        }
+      }
+      let levels: SrLevel[] = clusters.map((c) => ({
+        price: c.prices.reduce((a, b) => a + b, 0) / c.prices.length,
+        type: c.type,
+        touches: c.prices.length,
+        firstTime: Math.min(...c.times),
+        lastTime: Math.max(...c.times),
+      }));
+      if (lastClose != null) {
+        for (const l of levels) {
+          l.type = l.price >= lastClose ? "resistance" : "support";
+        }
+      }
+      levels.sort((a, b) => b.touches - a.touches || b.lastTime - a.lastTime);
+      levels = levels.slice(0, spec.maxLevels);
+      const startTime = candles[start]?.time ?? candles[0]!.time;
+      const endTime = candles.at(-1)?.time ?? startTime;
+      return { kind: "srLevels", spec, series: { startTime, endTime, levels } };
+    }
+    case "pivots": {
+      const periods: PivotPeriod[] = [];
+      type Bucket = { startTime: number; endTime: number; high: number; low: number; close: number };
+      const buckets = new Map<string, Bucket>();
+      const order: string[] = [];
+      for (const c of candles) {
+        const d = new Date(c.time * 1000);
+        let key: string;
+        if (spec.timeframe === "weekly") {
+          const day = d.getUTCDay();
+          const diff = (day + 6) % 7;
+          const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - diff));
+          key = monday.toISOString().slice(0, 10);
+        } else {
+          key = `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}`;
+        }
+        const existing = buckets.get(key);
+        if (existing) {
+          existing.high = Math.max(existing.high, c.high);
+          existing.low = Math.min(existing.low, c.low);
+          existing.endTime = c.time;
+          existing.close = c.close;
+        } else {
+          buckets.set(key, { startTime: c.time, endTime: c.time, high: c.high, low: c.low, close: c.close });
+          order.push(key);
+        }
+      }
+      for (let i = 1; i < order.length; i++) {
+        const prev = buckets.get(order[i - 1]!)!;
+        const curr = buckets.get(order[i]!)!;
+        const h = prev.high;
+        const l = prev.low;
+        const c = prev.close;
+        const range = h - l;
+        const pp = (h + l + c) / 3;
+        const levels: PivotLevel[] = [{ label: "PP", price: pp, role: "pp" }];
+        if (spec.method === "classic") {
+          levels.push({ label: "R1", price: 2 * pp - l, role: "resistance" });
+          levels.push({ label: "R2", price: pp + range, role: "resistance" });
+          levels.push({ label: "R3", price: h + 2 * (pp - l), role: "resistance" });
+          levels.push({ label: "S1", price: 2 * pp - h, role: "support" });
+          levels.push({ label: "S2", price: pp - range, role: "support" });
+          levels.push({ label: "S3", price: l - 2 * (h - pp), role: "support" });
+        } else if (spec.method === "fib") {
+          levels.push({ label: "R1", price: pp + 0.382 * range, role: "resistance" });
+          levels.push({ label: "R2", price: pp + 0.618 * range, role: "resistance" });
+          levels.push({ label: "R3", price: pp + 1.0 * range, role: "resistance" });
+          levels.push({ label: "S1", price: pp - 0.382 * range, role: "support" });
+          levels.push({ label: "S2", price: pp - 0.618 * range, role: "support" });
+          levels.push({ label: "S3", price: pp - 1.0 * range, role: "support" });
+        } else {
+          const k = 1.1;
+          levels.push({ label: "R1", price: c + (k * range) / 12, role: "resistance" });
+          levels.push({ label: "R2", price: c + (k * range) / 6, role: "resistance" });
+          levels.push({ label: "R3", price: c + (k * range) / 4, role: "resistance" });
+          levels.push({ label: "R4", price: c + (k * range) / 2, role: "resistance" });
+          levels.push({ label: "S1", price: c - (k * range) / 12, role: "support" });
+          levels.push({ label: "S2", price: c - (k * range) / 6, role: "support" });
+          levels.push({ label: "S3", price: c - (k * range) / 4, role: "support" });
+          levels.push({ label: "S4", price: c - (k * range) / 2, role: "support" });
+        }
+        periods.push({ startTime: curr.startTime, endTime: curr.endTime, levels });
+      }
+      return { kind: "pivots", spec, series: { periods } };
+    }
+    case "volProfile": {
+      const start = Math.max(0, candles.length - spec.lookback);
+      const slice = candles.slice(start);
+      if (slice.length === 0) {
+        return {
+          kind: "volProfile",
+          spec,
+          series: { startTime: 0, endTime: 0, bins: [], poc: 0, vah: 0, val: 0, binWidth: 0 },
+        };
+      }
+      let hi = -Infinity;
+      let lo = Infinity;
+      for (const c of slice) {
+        if (c.high > hi) hi = c.high;
+        if (c.low < lo) lo = c.low;
+      }
+      if (!Number.isFinite(hi) || !Number.isFinite(lo) || hi <= lo) {
+        return {
+          kind: "volProfile",
+          spec,
+          series: { startTime: slice[0]!.time, endTime: slice.at(-1)!.time, bins: [], poc: 0, vah: 0, val: 0, binWidth: 0 },
+        };
+      }
+      const binWidth = (hi - lo) / spec.bins;
+      const bins: VolProfileBin[] = [];
+      for (let i = 0; i < spec.bins; i++) {
+        bins.push({ price: lo + binWidth * (i + 0.5), volume: 0 });
+      }
+      for (const c of slice) {
+        const barRange = c.high - c.low;
+        if (barRange <= 0) {
+          const idx = Math.min(spec.bins - 1, Math.max(0, Math.floor((c.close - lo) / binWidth)));
+          bins[idx]!.volume += c.volume;
+          continue;
+        }
+        const share = c.volume / spec.bins;
+        const lowIdx = Math.max(0, Math.floor((c.low - lo) / binWidth));
+        const highIdx = Math.min(spec.bins - 1, Math.floor((c.high - lo) / binWidth));
+        const span = highIdx - lowIdx + 1;
+        const per = (c.volume * (span / spec.bins)) / span;
+        for (let i = lowIdx; i <= highIdx; i++) bins[i]!.volume += per;
+        void share;
+      }
+      let pocIdx = 0;
+      for (let i = 1; i < bins.length; i++) if (bins[i]!.volume > bins[pocIdx]!.volume) pocIdx = i;
+      const totalVol = bins.reduce((a, b) => a + b.volume, 0);
+      const target = totalVol * spec.valueAreaPct;
+      let cum = bins[pocIdx]!.volume;
+      let lowI = pocIdx;
+      let highI = pocIdx;
+      while (cum < target && (lowI > 0 || highI < bins.length - 1)) {
+        const upNext = highI < bins.length - 1 ? bins[highI + 1]!.volume : -1;
+        const dnNext = lowI > 0 ? bins[lowI - 1]!.volume : -1;
+        if (upNext >= dnNext) {
+          highI += 1;
+          cum += bins[highI]!.volume;
+        } else {
+          lowI -= 1;
+          cum += bins[lowI]!.volume;
+        }
+      }
+      return {
+        kind: "volProfile",
+        spec,
+        series: {
+          startTime: slice[0]!.time,
+          endTime: slice.at(-1)!.time,
+          bins,
+          poc: bins[pocIdx]!.price,
+          vah: bins[highI]!.price,
+          val: bins[lowI]!.price,
+          binWidth,
+        },
+      };
+    }
+    case "orderBlock": {
+      const start = Math.max(1, candles.length - spec.lookback);
+      const blocks: OrderBlockZone[] = [];
+      const thr = spec.impulsePct / 100;
+      for (let i = start; i < candles.length - 1; i++) {
+        const ob = candles[i]!;
+        const next = candles[i + 1]!;
+        const move = Math.abs(next.close - ob.close) / ob.close;
+        if (move < thr) continue;
+        const bearishOb = ob.close < ob.open;
+        const bullishOb = ob.close > ob.open;
+        if (bearishOb && next.close > ob.high) {
+          blocks.push({
+            time: ob.time,
+            endTime: null,
+            top: ob.high,
+            bottom: ob.low,
+            type: "bullish",
+            mitigated: false,
+            mitigatedTime: null,
+          });
+        } else if (bullishOb && next.close < ob.low) {
+          blocks.push({
+            time: ob.time,
+            endTime: null,
+            top: ob.high,
+            bottom: ob.low,
+            type: "bearish",
+            mitigated: false,
+            mitigatedTime: null,
+          });
+        }
+      }
+      for (const b of blocks) {
+        for (let i = 0; i < candles.length; i++) {
+          const bar = candles[i]!;
+          if (bar.time <= b.time) continue;
+          if (b.type === "bullish" && bar.low <= b.top && bar.low >= b.bottom) {
+            b.mitigated = true;
+            b.mitigatedTime = bar.time;
+            b.endTime = bar.time;
+            break;
+          }
+          if (b.type === "bearish" && bar.high >= b.bottom && bar.high <= b.top) {
+            b.mitigated = true;
+            b.mitigatedTime = bar.time;
+            b.endTime = bar.time;
+            break;
+          }
+        }
+      }
+      const filtered = spec.showMitigated ? blocks : blocks.filter((b) => !b.mitigated);
+      return { kind: "orderBlock", spec, series: { blocks: filtered } };
     }
   }
 }
