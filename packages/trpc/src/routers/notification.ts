@@ -2,6 +2,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { notification } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
+import { IdInput } from "../schemas/common";
 
 export const notificationRouter = createTRPCRouter({
   list: protectedProcedure
@@ -35,7 +36,7 @@ export const notificationRouter = createTRPCRouter({
   }),
 
   markRead: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .update(notification)
@@ -53,7 +54,7 @@ export const notificationRouter = createTRPCRouter({
   }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .delete(notification)

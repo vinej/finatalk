@@ -13,8 +13,12 @@ export function SortTh({
   dir: "asc" | "desc";
   align?: "left" | "right";
 }) {
+  const ariaSort = active ? (dir === "asc" ? "ascending" : "descending") : "none";
   return (
-    <th className={`px-2 py-2 ${align === "right" ? "text-right" : "text-left"}`}>
+    <th
+      aria-sort={ariaSort}
+      className={`px-2 py-2 ${align === "right" ? "text-right" : "text-left"}`}
+    >
       <button
         type="button"
         onClick={onClick}
@@ -27,7 +31,7 @@ export function SortTh({
         }
       >
         {children}
-        {active && <span className="text-[10px]">{dir === "asc" ? "▲" : "▼"}</span>}
+        {active && <span className="text-[10px]" aria-hidden>{dir === "asc" ? "▲" : "▼"}</span>}
       </button>
     </th>
   );

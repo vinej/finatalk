@@ -11,6 +11,7 @@ import {
   StoredIndicator,
   SymbolSchema,
 } from "../schemas/indicator";
+import { IdInput } from "../schemas/common";
 
 const TitleSchema = z.string().trim().min(1).max(120);
 const DescriptionSchema = z.string().max(2000);
@@ -80,7 +81,7 @@ export const analysisRouter = createTRPCRouter({
     }),
 
   getAnalysis: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .query(async ({ ctx, input }) => {
       const row = await findOwnedAnalysis(ctx, input.id);
       return {
@@ -179,7 +180,7 @@ export const analysisRouter = createTRPCRouter({
     }),
 
   deleteAnalysis: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       await findOwnedAnalysis(ctx, input.id);
       await ctx.db
@@ -208,7 +209,7 @@ export const analysisRouter = createTRPCRouter({
   }),
 
   getSavedChart: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .query(async ({ ctx, input }) => {
       const row = await findOwnedSavedChart(ctx, input.id);
       return {
@@ -273,7 +274,7 @@ export const analysisRouter = createTRPCRouter({
     }),
 
   deleteSavedChart: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       await findOwnedSavedChart(ctx, input.id);
       await ctx.db

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TabBar } from "@/components/ui/tab-bar";
 import { AlertsList, type AlertListItem } from "@/components/alerts/alerts-list";
 import { StrategySelect } from "@/components/strategy-select";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
@@ -89,23 +90,14 @@ function AlertsPage() {
         <p className="mt-1 text-xs text-[var(--color-muted-fg)]">{t("alerts.subtitle")}</p>
       </div>
 
-      <div className="flex gap-1 border-b border-[var(--color-border)]">
-        {(["manual", "strategy", "portfolio"] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setTab(k)}
-            className={cn(
-              "px-3 py-1.5 text-sm font-medium border-b-2 -mb-px",
-              tab === k
-                ? "border-[var(--color-primary)] text-[var(--color-fg)]"
-                : "border-transparent text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]",
-            )}
-          >
-            {t(`alerts.tab.${k}`)}
-          </button>
-        ))}
-      </div>
+      <TabBar
+        tabs={(["manual", "strategy", "portfolio"] as const).map((k) => ({
+          key: k,
+          label: t(`alerts.tab.${k}`),
+        }))}
+        activeKey={tab}
+        onSelect={setTab}
+      />
 
       {tab === "manual" && (
         <ManualTab initialSymbol={search.symbol ?? ""} utils={utils} assetTypeMap={assetTypeMap} />

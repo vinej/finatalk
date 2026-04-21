@@ -11,6 +11,7 @@ import {
   PortfolioTitleSchema,
 } from "../schemas/portfolio";
 import { RangeSchema, SymbolSchema } from "../schemas/indicator";
+import { IdInput } from "../schemas/common";
 import { generatePortfolioReport } from "../lib/pdf-report";
 import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
 import { resolveAssetType } from "../lib/market-provider";
@@ -174,7 +175,7 @@ export const portfolioRouter = createTRPCRouter({
   }),
 
   getPortfolio: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .query(async ({ ctx, input }) => {
       const p = await findOwnedPortfolio(ctx, input.id);
       const rows = await ctx.db
@@ -274,7 +275,7 @@ export const portfolioRouter = createTRPCRouter({
     }),
 
   deletePortfolio: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       await findOwnedPortfolio(ctx, input.id);
       await ctx.db
@@ -339,7 +340,7 @@ export const portfolioRouter = createTRPCRouter({
     }),
 
   deleteHolding: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       const { portfolio: p } = await findOwnedHolding(ctx, input.id);
       await ctx.db.delete(holding).where(eq(holding.id, input.id));
@@ -351,7 +352,7 @@ export const portfolioRouter = createTRPCRouter({
     }),
 
   getValuation: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .query(async ({ ctx, input }) => {
       const p = await findOwnedPortfolio(ctx, input.id);
       const currency = CurrencySchema.parse(p.currency);
@@ -511,7 +512,7 @@ export const portfolioRouter = createTRPCRouter({
     }),
 
   getPortfolioTaxSummary: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .query(async ({ ctx, input }) => {
       const p = await findOwnedPortfolio(ctx, input.id);
       const holdings = await ctx.db.query.holding.findMany({
@@ -595,7 +596,7 @@ export const portfolioRouter = createTRPCRouter({
     }),
 
   deleteTransaction: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       const tx = await ctx.db.query.transaction.findFirst({
         where: eq(transaction.id, input.id),

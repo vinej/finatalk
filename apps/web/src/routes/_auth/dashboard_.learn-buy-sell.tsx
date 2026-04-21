@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Markdown } from "@/components/ai/markdown";
 import { LinkChips } from "@/components/learn/link-chips";
 import { TopicMenu } from "@/components/learn/topic-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/ui/collapsible-card";
 import { BUY_SELL_GUIDE, type BuySellSection } from "@/lib/buy-sell-guide";
 import { pickLang } from "@/lib/lang";
 import type { TaLink } from "@/lib/ta-guide";
@@ -19,7 +19,6 @@ function LearnBuySellPage() {
   const lang = pickLang(i18n.language);
   const guide = BUY_SELL_GUIDE[lang];
   const [activeId, setActiveId] = useState<string>(guide.sections[0]?.id ?? "");
-  const [introOpen, setIntroOpen] = useState(true);
 
   const activeSection =
     guide.sections.find((s) => s.id === activeId) ?? guide.sections[0];
@@ -30,26 +29,12 @@ function LearnBuySellPage() {
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <Card className="shrink-0">
-        <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
-          <div className="flex items-start gap-2">
-            {introOpen ? (
-              <ChevronDown className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            ) : (
-              <ChevronRight className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            )}
-            <div className="flex flex-col gap-1">
-              <CardTitle>{t("learnTa.buySellTitle")}</CardTitle>
-              <p className="text-sm text-[var(--color-muted-fg)]">{t("learnTa.buySellSubtitle")}</p>
-            </div>
-          </div>
-        </CardHeader>
-        {introOpen && (
-          <CardContent>
-            <Markdown>{guide.intro}</Markdown>
-          </CardContent>
-        )}
-      </Card>
+      <CollapsibleCard
+        title={t("learnTa.buySellTitle")}
+        subtitle={t("learnTa.buySellSubtitle")}
+      >
+        <Markdown>{guide.intro}</Markdown>
+      </CollapsibleCard>
 
       <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_1fr]">
         <TopicMenu

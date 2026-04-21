@@ -21,6 +21,7 @@ import {
 import YahooFinance from "yahoo-finance2";
 import { z } from "zod";
 import { getOpenBBClient, isOpenBBEnabled, type OHLCVBar } from "@finatalk/openbb";
+import { requireOpenBBClient, tryOrNull, tryProviders } from "../lib/openbb-helpers";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import {
   IndicatorSpec,
@@ -38,7 +39,7 @@ import {
   fetchIndexConstituentsFromWikipedia,
   fetchTsxCompositeSymbols,
 } from "../lib/wikipedia-constituents";
-import { normalizeExchange } from "../market/exchanges";
+import { normalizeExchange, type YFQuote } from "../market/exchanges";
 
 const yf = new YahooFinance();
 
@@ -1315,12 +1316,11 @@ export const marketRouter = createTRPCRouter({
           newsCount: 0,
           enableFuzzyQuery: false,
         });
-        const quotes = Array.isArray(res?.quotes) ? res.quotes : [];
+        const quotes = Array.isArray(res?.quotes) ? (res.quotes as YFQuote[]) : [];
         const out: SymbolEntry[] = [];
         for (const q of quotes) {
-          const sym = (q as { symbol?: string }).symbol;
-          if (!sym) continue;
-          const qt = String((q as { quoteType?: string }).quoteType ?? "").toUpperCase();
+          if (!q.symbol) continue;
+          const qt = String(q.quoteType ?? "").toUpperCase();
           let assetType: AssetType;
           if (qt === "ETF") assetType = "etf";
           else if (qt === "MUTUALFUND") assetType = "mutualfund";
@@ -1330,13 +1330,9 @@ export const marketRouter = createTRPCRouter({
           else if (qt === "EQUITY") assetType = "stock";
           else continue;
           if (input.assetType && input.assetType !== "all" && input.assetType !== assetType) continue;
-          const name =
-            (q as { shortname?: string; longname?: string; name?: string }).shortname ??
-            (q as { longname?: string }).longname ??
-            (q as { name?: string }).name ??
-            sym;
-          const exchange = normalizeExchange((q as { exchange?: string }).exchange);
-          out.push({ symbol: sym, name, exchange, assetType });
+          const name = q.shortname ?? q.longname ?? q.name ?? q.symbol;
+          const exchange = normalizeExchange(q.exchange);
+          out.push({ symbol: q.symbol, name, exchange, assetType });
           if (out.length >= limit) break;
         }
         return { symbols: out };
@@ -1590,10 +1586,7 @@ export const marketRouter = createTRPCRouter({
   getCompanyProfile: protectedProcedure
     .input(z.object({ symbol: SymbolSchema }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      const client = getOpenBBClient();
+      const client = requireOpenBBClient();
       return client.getCompanyProfile(input.symbol.toUpperCase());
     }),
 
@@ -1605,10 +1598,7 @@ export const marketRouter = createTRPCRouter({
       limit: z.number().int().min(1).max(20).default(5),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      const client = getOpenBBClient();
+      const client = requireOpenBBClient();
       const symbol = input.symbol.toUpperCase();
       switch (input.statementType) {
         case "income": return client.getIncomeStatement(symbol, { period: input.period, limit: input.limit });
@@ -1623,10 +1613,7 @@ export const marketRouter = createTRPCRouter({
       expiration: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      const client = getOpenBBClient();
+      const client = requireOpenBBClient();
       return client.getOptionsChain(input.symbol.toUpperCase(), {
         expiration: input.expiration,
       });
@@ -1640,10 +1627,7 @@ export const marketRouter = createTRPCRouter({
       endDate: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      const client = getOpenBBClient();
+      const client = requireOpenBBClient();
       return client.getEconomicIndicators({
         country: input.country,
         indicator: input.indicator,
@@ -1659,10 +1643,7 @@ export const marketRouter = createTRPCRouter({
       endDate: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      const client = getOpenBBClient();
+      const client = requireOpenBBClient();
       return client.getFredSeries(input.seriesId, {
         startDate: input.startDate,
         endDate: input.endDate,
@@ -1694,19 +1675,11 @@ export const marketRouter = createTRPCRouter({
   getAnalystConsensus: protectedProcedure
     .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
+      const client = requireOpenBBClient();
       const providers = input.provider ? [input.provider] : ["yfinance", "fmp"];
-      for (const provider of providers) {
-        try {
-          const result = await getOpenBBClient().getAnalystConsensus(input.symbol, provider);
-          if (result) return result;
-        } catch {
-          // try next provider
-        }
-      }
-      return null;
+      return tryProviders(providers, (provider) =>
+        client.getAnalystConsensus(input.symbol, provider),
+      );
     }),
 
   getPriceTargets: protectedProcedure
@@ -1716,22 +1689,14 @@ export const marketRouter = createTRPCRouter({
       provider: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
+      const client = requireOpenBBClient();
       const providers = input.provider ? [input.provider] : ["benzinga", "fmp"];
-      for (const provider of providers) {
-        try {
-          const result = await getOpenBBClient().getPriceTargets(input.symbol, {
-            limit: input.limit,
-            provider,
-          });
-          if (result.length > 0) return result;
-        } catch {
-          // try next
-        }
-      }
-      return [];
+      const result = await tryProviders(
+        providers,
+        (provider) => client.getPriceTargets(input.symbol, { limit: input.limit, provider }),
+        (r) => r.length > 0,
+      );
+      return result ?? [];
     }),
 
   getInsiderTrading: protectedProcedure
@@ -1741,22 +1706,14 @@ export const marketRouter = createTRPCRouter({
       provider: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
+      const client = requireOpenBBClient();
       const providers = input.provider ? [input.provider] : ["sec", "fmp"];
-      for (const provider of providers) {
-        try {
-          const result = await getOpenBBClient().getInsiderTrading(input.symbol, {
-            limit: input.limit,
-            provider,
-          });
-          if (result.length > 0) return result;
-        } catch {
-          // try next
-        }
-      }
-      return [];
+      const result = await tryProviders(
+        providers,
+        (provider) => client.getInsiderTrading(input.symbol, { limit: input.limit, provider }),
+        (r) => r.length > 0,
+      );
+      return result ?? [];
     }),
 
   getInstitutionalHolders: protectedProcedure
@@ -1766,53 +1723,34 @@ export const marketRouter = createTRPCRouter({
       provider: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
+      const client = requireOpenBBClient();
       const providers = input.provider ? [input.provider] : ["fmp"];
-      for (const provider of providers) {
-        try {
-          const result = await getOpenBBClient().getInstitutionalHolders(input.symbol, {
-            limit: input.limit,
-            provider,
-          });
-          if (result.length > 0) return result;
-        } catch {
-          // try next
-        }
-      }
-      return [];
+      const result = await tryProviders(
+        providers,
+        (provider) => client.getInstitutionalHolders(input.symbol, { limit: input.limit, provider }),
+        (r) => r.length > 0,
+      );
+      return result ?? [];
     }),
 
   getShortInterest: protectedProcedure
     .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
+      const client = requireOpenBBClient();
       const providers = input.provider ? [input.provider] : ["finra"];
-      for (const provider of providers) {
-        try {
-          const result = await getOpenBBClient().getShortInterest(input.symbol, provider);
-          if (result.length > 0) return result;
-        } catch {
-          // try next
-        }
-      }
-      return [];
+      const result = await tryProviders(
+        providers,
+        (provider) => client.getShortInterest(input.symbol, provider),
+        (r) => r.length > 0,
+      );
+      return result ?? [];
     }),
 
   getEtfInfo: protectedProcedure
     .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      try {
-        return await getOpenBBClient().getEtfInfo(input.symbol, input.provider);
-      } catch {
-        return null;
-      }
+      const client = requireOpenBBClient();
+      return tryOrNull(() => client.getEtfInfo(input.symbol, input.provider));
     }),
 
   getEtfHoldings: protectedProcedure
@@ -1822,43 +1760,30 @@ export const marketRouter = createTRPCRouter({
       limit: z.number().int().min(1).max(200).optional(),
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      try {
-        return await getOpenBBClient().getEtfHoldings(input.symbol, {
+      const client = requireOpenBBClient();
+      const result = await tryOrNull(() =>
+        client.getEtfHoldings(input.symbol, {
           ...(input.provider ? { provider: input.provider } : {}),
           ...(input.limit != null ? { limit: input.limit } : {}),
-        });
-      } catch {
-        return [];
-      }
+        }),
+      );
+      return result ?? [];
     }),
 
   getEtfSectors: protectedProcedure
     .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      try {
-        return await getOpenBBClient().getEtfSectors(input.symbol, input.provider);
-      } catch {
-        return [];
-      }
+      const client = requireOpenBBClient();
+      const result = await tryOrNull(() => client.getEtfSectors(input.symbol, input.provider));
+      return result ?? [];
     }),
 
   getEtfCountries: protectedProcedure
     .input(z.object({ symbol: SymbolSchema, provider: z.string().optional() }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      try {
-        return await getOpenBBClient().getEtfCountries(input.symbol, input.provider);
-      } catch {
-        return [];
-      }
+      const client = requireOpenBBClient();
+      const result = await tryOrNull(() => client.getEtfCountries(input.symbol, input.provider));
+      return result ?? [];
     }),
 
   providerStatus: protectedProcedure
@@ -1881,10 +1806,7 @@ export const marketRouter = createTRPCRouter({
       interval: IntervalSchema,
     }))
     .query(async ({ input }) => {
-      if (!isOpenBBEnabled()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenBB is not enabled." });
-      }
-      const client = getOpenBBClient();
+      const client = requireOpenBBClient();
       const bars = await client.getCryptoHistorical(input.symbol.toUpperCase(), {
         startDate: rangeToPeriod1(input.range).toISOString().slice(0, 10),
         interval: input.interval,

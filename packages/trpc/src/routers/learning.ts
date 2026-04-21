@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { learningNote } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
+import { IdInput } from "../schemas/common";
 
 const TitleSchema = z.string().trim().min(1).max(120);
 const DescriptionSchema = z.string().max(500);
@@ -37,7 +38,7 @@ export const learningRouter = createTRPCRouter({
   }),
 
   get: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .query(async ({ ctx, input }) => {
       const row = await findOwned(ctx, input.id);
       return {
@@ -93,7 +94,7 @@ export const learningRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       await findOwned(ctx, input.id);
       await ctx.db

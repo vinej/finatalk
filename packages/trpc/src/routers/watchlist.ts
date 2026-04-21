@@ -5,6 +5,7 @@ import { z } from "zod";
 import { watchlist, watchlistItem } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import { SymbolSchema } from "../schemas/indicator";
+import { IdInput } from "../schemas/common";
 import { fetchCandlesWithCurrency } from "./market";
 
 export const watchlistRouter = createTRPCRouter({
@@ -62,7 +63,7 @@ export const watchlistRouter = createTRPCRouter({
     }),
 
   removeItem: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       const wl = await ctx.db.query.watchlist.findFirst({
         where: eq(watchlist.userId, ctx.user.id),

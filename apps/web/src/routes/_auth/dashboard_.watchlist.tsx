@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
 import { formatNum, formatPct } from "@/lib/format";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { SYMBOL_RE } from "@/lib/symbol";
 import { trpc } from "@/lib/trpc";
 
@@ -49,24 +50,23 @@ function WatchlistPage() {
   const [exchangeFilter, setExchangeFilter] = useState<string>("all");
   const [newSymbol, setNewSymbol] = useState("");
 
-  const addItem = trpc.watchlist.addItem.useMutation({
-    onSuccess: () => {
-      void utils.watchlist.get.invalidate();
-      setNewSymbol("");
-      toast.success(t("watchlist.added"));
-    },
-    onError: (e) => {
-      if (e.data?.code === "CONFLICT") toast.error(t("watchlist.duplicate"));
-      else toast.error(e.message);
-    },
-  });
-  const removeItem = trpc.watchlist.removeItem.useMutation({
-    onSuccess: () => {
-      void utils.watchlist.get.invalidate();
-      toast.success(t("watchlist.removed"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const addItem = trpc.watchlist.addItem.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.watchlist.get],
+      successMessage: t("watchlist.added"),
+      onSuccess: () => setNewSymbol(""),
+      errorMessage: (err) =>
+        (err as { data?: { code?: string }; message: string }).data?.code === "CONFLICT"
+          ? t("watchlist.duplicate")
+          : (err as Error).message,
+    }),
+  );
+  const removeItem = trpc.watchlist.removeItem.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.watchlist.get],
+      successMessage: t("watchlist.removed"),
+    }),
+  );
 
   function submitAdd(e: React.FormEvent) {
     e.preventDefault();

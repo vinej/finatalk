@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Markdown } from "@/components/ai/markdown";
 import { LinkChips } from "@/components/learn/link-chips";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/ui/collapsible-card";
 import { BUY_SELL_GUIDE } from "@/lib/buy-sell-guide";
 import { KINDS, kindDescription, kindFullName, kindLabel, type IndicatorKind } from "@/lib/indicator-defaults";
 import { pickLang, type Lang } from "@/lib/lang";
@@ -38,33 +38,18 @@ function LearnTAPage() {
     [lang],
   );
   const [active, setActive] = useState<LearnTaKey>("palette");
-  const [introOpen, setIntroOpen] = useState(true);
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <Card className="shrink-0">
-        <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
-          <div className="flex items-center gap-2">
-            {introOpen ? (
-              <ChevronDown className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            ) : (
-              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            )}
-            <CardTitle>{t("learnTa.title")}</CardTitle>
+      <CollapsibleCard title={t("learnTa.title")}>
+        <p className="text-sm text-[var(--color-muted-fg)]">{t("learnTa.intro")}</p>
+        <div>
+          <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
+            {t("learnTa.generalResources")}
           </div>
-        </CardHeader>
-        {introOpen && (
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-[var(--color-muted-fg)]">{t("learnTa.intro")}</p>
-            <div>
-              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-                {t("learnTa.generalResources")}
-              </div>
-              <LinkChips links={TA_GENERAL_LINKS[lang]} />
-            </div>
-          </CardContent>
-        )}
-      </Card>
+          <LinkChips links={TA_GENERAL_LINKS[lang]} />
+        </div>
+      </CollapsibleCard>
 
       <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_1fr]">
         <IndicatorMenu

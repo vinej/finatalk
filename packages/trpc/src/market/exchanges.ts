@@ -1,3 +1,12 @@
+export type YFQuote = {
+  symbol?: string;
+  shortname?: string;
+  longname?: string;
+  name?: string;
+  exchange?: string;
+  quoteType?: string;
+};
+
 export const EXCHANGE_MAP: Record<string, string> = {
   NMS: "NASDAQ",
   NGM: "NASDAQ",

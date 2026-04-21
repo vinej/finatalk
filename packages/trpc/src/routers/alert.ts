@@ -5,6 +5,7 @@ import { z } from "zod";
 import { alert } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import { SymbolSchema } from "../schemas/indicator";
+import { IdInput, IdWithEnabledInput, IdsInput, IdsWithEnabledInput } from "../schemas/common";
 import { ALERT_CONDITIONS, type AlertIndicatorParams } from "../constants/alerts";
 import { currentThresholdValue } from "../alerts/evaluator";
 import { fetchCandlesWithCurrency } from "./market";
@@ -180,14 +181,14 @@ export const alertRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(IdInput)
     .mutation(async ({ ctx, input }) => {
       await ctx.db.delete(alert).where(and(eq(alert.id, input.id), eq(alert.userId, ctx.user.id)));
       return { id: input.id };
     }),
 
   toggle: protectedProcedure
-    .input(z.object({ id: z.string(), enabled: z.boolean() }))
+    .input(IdWithEnabledInput)
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .update(alert)
@@ -197,7 +198,7 @@ export const alertRouter = createTRPCRouter({
     }),
 
   toggleMany: protectedProcedure
-    .input(z.object({ ids: z.array(z.string()).min(1).max(500), enabled: z.boolean() }))
+    .input(IdsWithEnabledInput)
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .update(alert)
@@ -232,7 +233,7 @@ export const alertRouter = createTRPCRouter({
     }),
 
   deleteMany: protectedProcedure
-    .input(z.object({ ids: z.array(z.string()).min(1).max(500) }))
+    .input(IdsInput)
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .delete(alert)

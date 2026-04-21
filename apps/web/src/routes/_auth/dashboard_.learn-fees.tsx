@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LinkChips } from "@/components/learn/link-chips";
 import { TopicMenu } from "@/components/learn/topic-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/ui/collapsible-card";
 import {
   FEES_GENERAL_LINKS,
   FEES_GUIDE,
@@ -21,7 +21,6 @@ function LearnFeesPage() {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
   const [activeTopic, setActiveTopic] = useState<FeeTopicKey>(FEE_TOPICS[0]);
-  const [introOpen, setIntroOpen] = useState(true);
   const menuItems = useMemo(
     () => FEE_TOPICS.map((k) => ({ key: k, label: FEES_GUIDE[lang][k].label })),
     [lang],
@@ -29,32 +28,18 @@ function LearnFeesPage() {
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <Card className="shrink-0">
-        <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
-          <div className="flex items-center gap-2">
-            {introOpen ? (
-              <ChevronDown className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            ) : (
-              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            )}
-            <CardTitle>{t("learnFees.title")}</CardTitle>
+      <CollapsibleCard title={t("learnFees.title")}>
+        <p className="text-sm text-[var(--color-muted-fg)]">{t("learnFees.intro")}</p>
+        <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/40 p-3 text-xs text-[var(--color-muted-fg)]">
+          {t("learnFees.disclaimer")}
+        </p>
+        <div>
+          <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
+            {t("learnFees.generalResources")}
           </div>
-        </CardHeader>
-        {introOpen && (
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-[var(--color-muted-fg)]">{t("learnFees.intro")}</p>
-            <p className="rounded-md border border-[var(--color-border)] bg-[var(--color-accent)]/40 p-3 text-xs text-[var(--color-muted-fg)]">
-              {t("learnFees.disclaimer")}
-            </p>
-            <div>
-              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-                {t("learnFees.generalResources")}
-              </div>
-              <LinkChips links={FEES_GENERAL_LINKS[lang]} />
-            </div>
-          </CardContent>
-        )}
-      </Card>
+          <LinkChips links={FEES_GENERAL_LINKS[lang]} />
+        </div>
+      </CollapsibleCard>
 
       <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_1fr]">
         <TopicMenu

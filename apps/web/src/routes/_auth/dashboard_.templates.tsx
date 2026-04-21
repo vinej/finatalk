@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard_/templates")({
@@ -33,38 +34,39 @@ function TemplatesPage() {
   const [publishDesc, setPublishDesc] = useState("");
   const [publishTags, setPublishTags] = useState("");
 
-  const publishMutation = trpc.template.publish.useMutation({
-    onSuccess: () => {
-      setPublishOpen(false);
-      setPublishPortfolioId("");
-      setPublishTitle("");
-      setPublishDesc("");
-      setPublishTags("");
-      utils.template.list.invalidate();
-      utils.template.myTemplates.invalidate();
-    },
-  });
+  const publishMutation = trpc.template.publish.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.template.list, utils.template.myTemplates],
+      onSuccess: () => {
+        setPublishOpen(false);
+        setPublishPortfolioId("");
+        setPublishTitle("");
+        setPublishDesc("");
+        setPublishTags("");
+      },
+    }),
+  );
 
   const [cloneId, setCloneId] = useState<string | null>(null);
   const [cloneName, setCloneName] = useState("");
   const [cloneBudget, setCloneBudget] = useState("");
 
-  const cloneMutation = trpc.template.clone.useMutation({
-    onSuccess: () => {
-      setCloneId(null);
-      setCloneName("");
-      setCloneBudget("");
-      utils.template.list.invalidate();
-      utils.portfolio.listPortfolios.invalidate();
-    },
-  });
+  const cloneMutation = trpc.template.clone.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.template.list, utils.portfolio.listPortfolios],
+      onSuccess: () => {
+        setCloneId(null);
+        setCloneName("");
+        setCloneBudget("");
+      },
+    }),
+  );
 
-  const deleteMutation = trpc.template.delete.useMutation({
-    onSuccess: () => {
-      utils.template.list.invalidate();
-      utils.template.myTemplates.invalidate();
-    },
-  });
+  const deleteMutation = trpc.template.delete.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.template.list, utils.template.myTemplates],
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

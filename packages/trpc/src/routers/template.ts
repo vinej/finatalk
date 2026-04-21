@@ -6,6 +6,7 @@ import { template, templateTag, portfolio, holding } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import { CurrencySchema, PortfolioTitleSchema } from "../schemas/portfolio";
 import { SymbolSchema } from "../schemas/indicator";
+import { UuidIdInput } from "../schemas/common";
 
 const TemplateHoldingSchema = z.object({
   symbol: SymbolSchema,
@@ -166,7 +167,7 @@ export const templateRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(UuidIdInput)
     .mutation(async ({ ctx, input }) => {
       const tpl = await ctx.db.query.template.findFirst({
         where: and(eq(template.id, input.id), eq(template.userId, ctx.user.id)),

@@ -7,6 +7,7 @@ import { Markdown } from "@/components/ai/markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard_/my-learning")({
@@ -34,13 +35,12 @@ function MyLearningPage() {
     }
   }, [notes, selectedId]);
 
-  const createMutation = trpc.learning.create.useMutation({
-    onSuccess: async ({ id }) => {
-      await utils.learning.list.invalidate();
-      setSelectedId(id);
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const createMutation = trpc.learning.create.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.learning.list],
+      onSuccess: ({ id }) => setSelectedId(id),
+    }),
+  );
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -162,23 +162,23 @@ function NoteEditor({ noteId }: { noteId: string }) {
     );
   }, [initial, title, description, content]);
 
-  const updateMutation = trpc.learning.update.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.learning.list.invalidate(),
-        utils.learning.get.invalidate({ id: noteId }),
-      ]);
-      toast.success(t("myLearning.saved"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const updateMutation = trpc.learning.update.useMutation(
+    buildMutationCallbacks({
+      successMessage: t("myLearning.saved"),
+      onSuccess: async () => {
+        await Promise.all([
+          utils.learning.list.invalidate(),
+          utils.learning.get.invalidate({ id: noteId }),
+        ]);
+      },
+    }),
+  );
 
-  const deleteMutation = trpc.learning.delete.useMutation({
-    onSuccess: async () => {
-      await utils.learning.list.invalidate();
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const deleteMutation = trpc.learning.delete.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.learning.list],
+    }),
+  );
 
   function handleSave() {
     const tt = title.trim();

@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OptionsSelect } from "@/components/ui/options-select";
+import { StatusCard } from "@/components/ui/status-card";
+import { TabBar } from "@/components/ui/tab-bar";
 import { EquityCurveCard } from "@/components/backtest/equity-curve-card";
 import { MetricsCard } from "@/components/backtest/metrics-card";
 import { TradesCard } from "@/components/backtest/trades-card";
@@ -173,23 +175,14 @@ function BacktestPage() {
         </CardHeader>
         {panelOpen && (
         <CardContent>
-          <div className="flex gap-1 border-b border-[var(--color-border)]">
-            {(["single", "sweep", "adhocPortfolio", "userPortfolio"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={
-                  "px-3 py-1.5 text-sm font-medium " +
-                  (mode === m
-                    ? "border-b-2 border-[var(--color-primary)] text-[var(--color-fg)]"
-                    : "text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]")
-                }
-              >
-                {t(`backtest.mode.${m}`)}
-              </button>
-            ))}
-          </div>
+          <TabBar
+            tabs={(["single", "sweep", "adhocPortfolio", "userPortfolio"] as const).map((m) => ({
+              key: m,
+              label: t(`backtest.mode.${m}`),
+            }))}
+            activeKey={mode}
+            onSelect={setMode}
+          />
           <form onSubmit={onSubmit} className="mt-4 flex flex-wrap items-end gap-3">
             {(mode === "single" || mode === "sweep") && (
               <SymbolPicker
@@ -271,12 +264,8 @@ function BacktestPage() {
       </Card>
 
       <div className="min-h-0 flex-1">
-        {query.isLoading && (
-          <Card><CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">{t("backtest.loading")}</CardContent></Card>
-        )}
-        {query.error && (
-          <Card><CardContent className="py-6 text-sm text-red-600">{query.error.message}</CardContent></Card>
-        )}
+        {query.isLoading && <StatusCard status="loading" message={t("backtest.loading")} />}
+        {query.error && <StatusCard status="error" message={query.error.message} />}
         {mode === "single" && result && (
           <div className="flex flex-col gap-4">
             <MetricsCard metrics={result.metrics} />
@@ -924,17 +913,11 @@ function PortfolioView({
   }, [symbols, queries, strategy, baseConfig, lang, weights]);
 
   if (symbols.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">
-          {t("backtest.portfolio.noneHint", { primary: primarySymbol })}
-        </CardContent>
-      </Card>
-    );
+    return <StatusCard status="empty" message={t("backtest.portfolio.noneHint", { primary: primarySymbol })} />;
   }
 
   if (loading) {
-    return <Card><CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">{t("backtest.loading")}</CardContent></Card>;
+    return <StatusCard status="loading" message={t("backtest.loading")} />;
   }
 
   return (
@@ -1084,31 +1067,19 @@ function UserPortfolioView({
   }, [valuationQuery.data]);
 
   if (!portfolioId) {
-    return (
-      <Card>
-        <CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">
-          {t("backtest.userPortfolio.pickHint")}
-        </CardContent>
-      </Card>
-    );
+    return <StatusCard status="empty" message={t("backtest.userPortfolio.pickHint")} />;
   }
 
   if (valuationQuery.isLoading) {
-    return <Card><CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">{t("backtest.loading")}</CardContent></Card>;
+    return <StatusCard status="loading" message={t("backtest.loading")} />;
   }
 
   if (valuationQuery.error) {
-    return <Card><CardContent className="py-6 text-sm text-red-600">{valuationQuery.error.message}</CardContent></Card>;
+    return <StatusCard status="error" message={valuationQuery.error.message} />;
   }
 
   if (legs.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">
-          {t("backtest.userPortfolio.noHoldings")}
-        </CardContent>
-      </Card>
-    );
+    return <StatusCard status="empty" message={t("backtest.userPortfolio.noHoldings")} />;
   }
 
   return (
