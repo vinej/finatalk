@@ -78,8 +78,7 @@ export const screenerRouter = createTRPCRouter({
       const results: ScreenerRow[] = [];
 
       const settled = await Promise.allSettled(
-        symbols.map(async (sym): Promise<ScreenerRow | null> => {
-          const symbol = sym.toUpperCase();
+        symbols.map(async (symbol): Promise<ScreenerRow | null> => {
           try {
             const { candles } = await fetchCandlesWithCurrency(symbol, "1y", "1d", null);
             if (candles.length < 2) return null;

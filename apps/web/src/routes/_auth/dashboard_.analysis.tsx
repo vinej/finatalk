@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
+import { Bell, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { StrategySelect } from "@/components/strategy-select";
 import { ConfidenceBadge } from "@/components/confidence-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronIcon } from "@/components/ui/chevron-icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OptionsSelect } from "@/components/ui/options-select";
@@ -48,6 +49,7 @@ import {
 } from "@/lib/ranges";
 import { CRYPTOS } from "@/lib/crypto";
 import { INDICES } from "@/lib/indices";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { SYMBOL_RE, sanitizeSymbol } from "@/lib/symbol";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
@@ -93,10 +95,11 @@ function AnalysisPage() {
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
   const [appliedStrategy, setAppliedStrategy] = useState<StrategyKind | null>(persisted?.appliedStrategy ?? null);
 
-  const confidenceMutation = trpc.research.getConfidence.useMutation({
-    onSuccess: (data) => setConfidence(data.confidence),
-    onError: (e) => toast.error(e.message),
-  });
+  const confidenceMutation = trpc.research.getConfidence.useMutation(
+    buildMutationCallbacks({
+      onSuccess: (data) => setConfidence(data.confidence),
+    }),
+  );
 
   function refreshConfidence() {
     if (!submittedSymbol) return;
@@ -202,20 +205,23 @@ function AnalysisPage() {
     },
   );
 
-  const updateAnalysisMutation = trpc.analysis.updateAnalysis.useMutation({
-    onSuccess: () => utils.analysis.listAnalyses.invalidate(),
-    onError: (err) => toast.error(err.message),
-  });
+  const updateAnalysisMutation = trpc.analysis.updateAnalysis.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.analysis.listAnalyses],
+    }),
+  );
 
-  const summarizeMutation = trpc.ai.summarizeChart.useMutation({
-    onSuccess: (data) => {
-      setLoadedAnalysisDescription(data.summary);
-      if (loadedAnalysisId) {
-        updateAnalysisMutation.mutate({ id: loadedAnalysisId, description: data.summary });
-      }
-    },
-    onError: (err) => toast.error(err.message ?? t("analysis.summarizeFailed")),
-  });
+  const summarizeMutation = trpc.ai.summarizeChart.useMutation(
+    buildMutationCallbacks({
+      errorMessage: (err) => (err instanceof Error ? err.message : null) ?? t("analysis.summarizeFailed"),
+      onSuccess: (data) => {
+        setLoadedAnalysisDescription(data.summary);
+        if (loadedAnalysisId) {
+          updateAnalysisMutation.mutate({ id: loadedAnalysisId, description: data.summary });
+        }
+      },
+    }),
+  );
 
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -482,11 +488,7 @@ function AnalysisPage() {
             aria-expanded={!controlsCollapsed}
             title={controlsCollapsed ? t("analysis.expand") : t("analysis.collapse")}
           >
-            {controlsCollapsed ? (
-              <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-            )}
+            <ChevronIcon open={!controlsCollapsed} />
             <CardTitle>
               {t("analysis.title")}
               {loadedAnalysisTitle && (
@@ -714,11 +716,7 @@ function AnalysisPage() {
               aria-expanded={!indicatorsCollapsed}
               title={indicatorsCollapsed ? t("analysis.expand") : t("analysis.collapse")}
             >
-              {indicatorsCollapsed ? (
-                <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-              )}
+              <ChevronIcon open={!indicatorsCollapsed} />
               <CardTitle className="text-base">
                 {appliedStrategy
                   ? t("analysis.indicatorsAccordingToStrategy", {
@@ -782,11 +780,7 @@ function AnalysisPage() {
               aria-expanded={!latestCollapsed}
               title={latestCollapsed ? t("analysis.expand") : t("analysis.collapse")}
             >
-              {latestCollapsed ? (
-                <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-              )}
+              <ChevronIcon open={!latestCollapsed} />
               <CardTitle className="text-base">{t("analysis.latest")}</CardTitle>
             </button>
           </CardHeader>

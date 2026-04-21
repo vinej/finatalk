@@ -116,7 +116,7 @@ export const alertRouter = createTRPCRouter({
       await ctx.db.insert(alert).values({
         id,
         userId: ctx.user.id,
-        symbol: input.symbol.toUpperCase(),
+        symbol: input.symbol,
         conditionType: input.conditionType,
         threshold: String(input.threshold),
         indicatorParams: params,
@@ -134,7 +134,7 @@ export const alertRouter = createTRPCRouter({
       const rows = input.alerts.map((a) => ({
         id: randomUUID(),
         userId: ctx.user.id,
-        symbol: a.symbol.toUpperCase(),
+        symbol: a.symbol,
         conditionType: a.conditionType,
         threshold: String(a.threshold),
         indicatorParams: normalizeParams(a.conditionType, a.indicatorParams),
@@ -216,7 +216,7 @@ export const alertRouter = createTRPCRouter({
     .query(async ({ input }) => {
       try {
         const { candles } = await fetchCandlesWithCurrency(
-          input.symbol.toUpperCase(),
+          input.symbol,
           "1y",
           "1d",
           null,

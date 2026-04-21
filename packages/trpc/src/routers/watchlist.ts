@@ -48,7 +48,7 @@ export const watchlistRouter = createTRPCRouter({
       const existing = await ctx.db.query.watchlistItem.findFirst({
         where: and(
           eq(watchlistItem.watchlistId, wl.id),
-          eq(watchlistItem.symbol, input.symbol.toUpperCase()),
+          eq(watchlistItem.symbol, input.symbol),
         ),
       });
       if (existing) throw new TRPCError({ code: "CONFLICT", message: "Symbol already in watchlist." });
@@ -56,7 +56,7 @@ export const watchlistRouter = createTRPCRouter({
       await ctx.db.insert(watchlistItem).values({
         id,
         watchlistId: wl.id,
-        symbol: input.symbol.toUpperCase(),
+        symbol: input.symbol,
         note: input.note ?? null,
       });
       return { id };
@@ -82,22 +82,22 @@ export const watchlistRouter = createTRPCRouter({
         input.symbols.map(async (symbol) => {
           try {
             const { candles, nativeCurrency } = await fetchCandlesWithCurrency(
-              symbol.toUpperCase(), "1mo", "1d", null,
+              symbol, "1mo", "1d", null,
             );
             if (candles.length === 0) {
-              return { symbol: symbol.toUpperCase(), lastClose: null, prevClose: null, nativeCurrency, error: "no data" as string | null };
+              return { symbol, lastClose: null, prevClose: null, nativeCurrency, error: "no data" as string | null };
             }
             const last = candles[candles.length - 1]!;
             const prev = candles.length > 1 ? candles[candles.length - 2]! : null;
             return {
-              symbol: symbol.toUpperCase(),
+              symbol,
               lastClose: last.close,
               prevClose: prev?.close ?? null,
               nativeCurrency,
               error: null as string | null,
             };
           } catch {
-            return { symbol: symbol.toUpperCase(), lastClose: null, prevClose: null, nativeCurrency: null, error: "fetch failed" as string | null };
+            return { symbol, lastClose: null, prevClose: null, nativeCurrency: null, error: "fetch failed" as string | null };
           }
         }),
       );

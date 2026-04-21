@@ -1349,7 +1349,7 @@ export const marketRouter = createTRPCRouter({
       convertTo: z.enum(["CAD"]).nullable().optional(),
     }))
     .query(async ({ input }) => {
-      const symbol = input.symbol.toUpperCase();
+      const symbol = input.symbol;
       const { candles, nativeCurrency, displayCurrency } = await fetchCandlesWithCurrency(
         symbol, input.range, input.interval, input.convertTo ?? null,
       );
@@ -1381,8 +1381,7 @@ export const marketRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const results = await Promise.all(
-        input.symbols.map(async (sym) => {
-          const symbol = sym.toUpperCase();
+        input.symbols.map(async (symbol) => {
           const { candles, nativeCurrency, displayCurrency } = await fetchCandlesWithCurrency(
             symbol, input.range, input.interval, input.convertTo ?? null,
           );
@@ -1451,8 +1450,7 @@ export const marketRouter = createTRPCRouter({
     .input(z.object({ symbols: z.array(SymbolSchema).min(1).max(50) }))
     .query(async ({ input }) => {
       const results = await Promise.all(
-        input.symbols.map(async (sym) => {
-          const symbol = sym.toUpperCase();
+        input.symbols.map(async (symbol) => {
           try {
             const summary = await yf.quoteSummary(symbol, {
               modules: ["summaryDetail", "calendarEvents"],
@@ -1498,8 +1496,7 @@ export const marketRouter = createTRPCRouter({
       const allEvents: CalendarEvent[] = [];
 
       const results = await Promise.allSettled(
-        input.symbols.map(async (sym) => {
-          const symbol = sym.toUpperCase();
+        input.symbols.map(async (symbol) => {
           const summary = await yf.quoteSummary(symbol, {
             modules: ["calendarEvents", "summaryDetail", "earningsHistory"],
           });
@@ -1587,7 +1584,7 @@ export const marketRouter = createTRPCRouter({
     .input(z.object({ symbol: SymbolSchema }))
     .query(async ({ input }) => {
       const client = requireOpenBBClient();
-      return client.getCompanyProfile(input.symbol.toUpperCase());
+      return client.getCompanyProfile(input.symbol);
     }),
 
   getFinancialStatements: protectedProcedure
@@ -1599,7 +1596,7 @@ export const marketRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const client = requireOpenBBClient();
-      const symbol = input.symbol.toUpperCase();
+      const symbol = input.symbol;
       switch (input.statementType) {
         case "income": return client.getIncomeStatement(symbol, { period: input.period, limit: input.limit });
         case "balance": return client.getBalanceSheet(symbol, { period: input.period, limit: input.limit });
@@ -1614,7 +1611,7 @@ export const marketRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const client = requireOpenBBClient();
-      return client.getOptionsChain(input.symbol.toUpperCase(), {
+      return client.getOptionsChain(input.symbol, {
         expiration: input.expiration,
       });
     }),

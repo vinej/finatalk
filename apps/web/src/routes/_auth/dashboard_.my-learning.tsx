@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Markdown } from "@/components/ai/markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronIcon } from "@/components/ui/chevron-icon";
 import { Input } from "@/components/ui/input";
 import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { trpc } from "@/lib/trpc";
@@ -47,11 +48,7 @@ function MyLearningPage() {
       <Card className="shrink-0">
         <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
           <div className="flex items-center gap-2">
-            {introOpen ? (
-              <ChevronDown className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            ) : (
-              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            )}
+            <ChevronIcon open={introOpen} className="h-5 w-5 shrink-0" />
             <CardTitle>{t("myLearning.title")}</CardTitle>
           </div>
         </CardHeader>

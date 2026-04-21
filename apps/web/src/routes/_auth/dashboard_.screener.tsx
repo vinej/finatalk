@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Filter, Loader2, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
 import { SortTh } from "@/components/ui/sort-th";
 import { formatNum, formatPct } from "@/lib/format";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import {
   loadScreenerState,
   saveScreenerState,
@@ -93,13 +93,15 @@ function ScreenerPage() {
     staleTime: 60_000,
   });
 
-  const scanMutation = trpc.screener.scan.useMutation({
-    onSuccess: (data) => {
-      setCachedResults(data.results);
-      setCachedScannedAt(data.scannedAt ?? new Date().toISOString());
-    },
-    onError: (err) => toast.error(err.message ?? t("screener.scanFailed")),
-  });
+  const scanMutation = trpc.screener.scan.useMutation(
+    buildMutationCallbacks({
+      errorMessage: (err) => (err instanceof Error ? err.message : null) ?? t("screener.scanFailed"),
+      onSuccess: (data) => {
+        setCachedResults(data.results);
+        setCachedScannedAt(data.scannedAt ?? new Date().toISOString());
+      },
+    }),
+  );
 
   const sourceSymbols = useMemo(() => {
     if (source === "custom") {

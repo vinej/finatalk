@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Check, ChevronDown, ChevronRight, ClipboardCheck, DollarSign, Download, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ClipboardCheck, DollarSign, Download, FileText, LineChart, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Replace, Sparkles, Trash2, X } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
 import { GenerateAnalysisDialog } from "@/components/portfolio/generate-analysis-dialog";
 import { PortfolioChatDrawer } from "@/components/portfolio/portfolio-chat-drawer";
@@ -15,6 +14,7 @@ import {
 import { ConfidenceBadge } from "@/components/confidence-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronIcon } from "@/components/ui/chevron-icon";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,7 @@ import { CRYPTOS } from "@/lib/crypto";
 import { formatCurrency, formatPct, formatQty } from "@/lib/format";
 import { INDICES } from "@/lib/indices";
 import { pickLang } from "@/lib/lang";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
@@ -166,94 +167,88 @@ function PortfolioDetailPage() {
     { enabled: linking != null },
   );
 
-  const linkAnalysis = trpc.portfolio.linkAnalysisToHolding.useMutation({
-    onSuccess: async (_data, vars) => {
-      await Promise.all([
-        utils.portfolio.getPortfolio.invalidate({ id: portfolioId }),
-        utils.portfolio.getValuation.invalidate({ id: portfolioId }),
-      ]);
-      setLinking(null);
-      toast.success(
+  const linkAnalysis = trpc.portfolio.linkAnalysisToHolding.useMutation(
+    buildMutationCallbacks({
+      invalidate: [
+        utils.portfolio.getPortfolio,
+        utils.portfolio.getValuation,
+      ],
+      successMessage: (_data, vars) =>
         vars.analysisId == null ? t("portfolio.analysisUnlinked") : t("portfolio.analysisLinked"),
-      );
-    },
-    onError: (e) => toast.error(e.message),
-  });
+      onSuccess: () => setLinking(null),
+    }),
+  );
 
-  const updatePortfolio = trpc.portfolio.updatePortfolio.useMutation({
-    onSuccess: async () => {
-      await utils.portfolio.getPortfolio.invalidate({ id: portfolioId });
-      await utils.portfolio.listPortfolios.invalidate();
-      setEditingTitle(false);
-      toast.success(t("portfolio.updated"));
-    },
-    onError: (e, variables) => {
-      if (e.data?.code === "CONFLICT" && variables.title) {
-        toast.error(t("portfolio.duplicateTitle"));
-        return;
-      }
-      toast.error(e.message);
-    },
-  });
+  const updatePortfolio = trpc.portfolio.updatePortfolio.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.portfolio.getPortfolio, utils.portfolio.listPortfolios],
+      successMessage: t("portfolio.updated"),
+      onSuccess: () => setEditingTitle(false),
+      errorMessage: (err) => {
+        const e = err as { data?: { code?: string }; message?: string };
+        if (e.data?.code === "CONFLICT") return t("portfolio.duplicateTitle");
+        return e.message ?? String(err);
+      },
+    }),
+  );
 
-  const deletePortfolio = trpc.portfolio.deletePortfolio.useMutation({
-    onSuccess: async () => {
-      clearLastPortfolioId();
-      await utils.portfolio.listPortfolios.invalidate();
-      toast.success(t("portfolio.deleted"));
-      navigate({ to: "/dashboard/portfolios" });
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const deletePortfolio = trpc.portfolio.deletePortfolio.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.portfolio.listPortfolios],
+      successMessage: t("portfolio.deleted"),
+      onSuccess: () => {
+        clearLastPortfolioId();
+        navigate({ to: "/dashboard/portfolios" });
+      },
+    }),
+  );
 
-  const addHolding = trpc.portfolio.addHolding.useMutation({
-    onSuccess: async () => {
-      await utils.portfolio.getPortfolio.invalidate({ id: portfolioId });
-      await utils.portfolio.getValuation.invalidate({ id: portfolioId });
-      setNewSymbol("");
-      setNewQty("");
-      setNewCost("");
-      setNewDate(todayIso());
-      toast.success(t("portfolio.holdingAdded"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const addHolding = trpc.portfolio.addHolding.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.portfolio.getPortfolio, utils.portfolio.getValuation],
+      successMessage: t("portfolio.holdingAdded"),
+      onSuccess: () => {
+        setNewSymbol("");
+        setNewQty("");
+        setNewCost("");
+        setNewDate(todayIso());
+      },
+    }),
+  );
 
-  const updateHolding = trpc.portfolio.updateHolding.useMutation({
-    onSuccess: async () => {
-      await utils.portfolio.getPortfolio.invalidate({ id: portfolioId });
-      await utils.portfolio.getValuation.invalidate({ id: portfolioId });
-      setEditingHoldingId(null);
-      toast.success(t("portfolio.holdingUpdated"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const updateHolding = trpc.portfolio.updateHolding.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.portfolio.getPortfolio, utils.portfolio.getValuation],
+      successMessage: t("portfolio.holdingUpdated"),
+      onSuccess: () => setEditingHoldingId(null),
+    }),
+  );
 
-  const deleteHolding = trpc.portfolio.deleteHolding.useMutation({
-    onSuccess: async () => {
-      await utils.portfolio.getPortfolio.invalidate({ id: portfolioId });
-      await utils.portfolio.getValuation.invalidate({ id: portfolioId });
-      toast.success(t("portfolio.holdingDeleted"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const deleteHolding = trpc.portfolio.deleteHolding.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.portfolio.getPortfolio, utils.portfolio.getValuation],
+      successMessage: t("portfolio.holdingDeleted"),
+    }),
+  );
 
-  const reportMutation = trpc.portfolio.generateReport.useMutation({
-    onSuccess: (data) => {
-      const binary = atob(data.base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const blob = new Blob([bytes], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = data.filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(t("portfolio.reportGenerated"));
-    },
-    onError: (e) => toast.error(e.message ?? t("portfolio.reportFailed")),
-  });
+  const reportMutation = trpc.portfolio.generateReport.useMutation(
+    buildMutationCallbacks({
+      successMessage: t("portfolio.reportGenerated"),
+      errorMessage: (err) => (err instanceof Error ? err.message : null) ?? t("portfolio.reportFailed"),
+      onSuccess: (data) => {
+        const binary = atob(data.base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = data.filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+    }),
+  );
 
   const rows = valuationQuery.data?.rows ?? [];
   const holdings = portfolioQuery.data?.holdings ?? [];
@@ -672,11 +667,7 @@ function PortfolioDetailPage() {
             onClick={() => setBenchmarkCollapsed((v) => !v)}
           >
             <div className="flex items-center gap-2">
-              {benchmarkCollapsed ? (
-                <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-              )}
+              <ChevronIcon open={!benchmarkCollapsed} />
               <CardTitle className="text-sm font-semibold">
                 {t("portfolio.benchmarkTitle")}
               </CardTitle>
@@ -1262,18 +1253,21 @@ function AnalysisInfoDialog({
 
   const analysisQuery = trpc.analysis.getAnalysis.useQuery({ id: analysisId });
 
-  const summarizeMutation = trpc.ai.summarizeChart.useMutation({
-    onError: () => toast.error(t("portfolio.summaryFailed")),
-  });
+  const summarizeMutation = trpc.ai.summarizeChart.useMutation(
+    buildMutationCallbacks({
+      errorMessage: t("portfolio.summaryFailed"),
+    }),
+  );
 
-  const updateMutation = trpc.analysis.updateAnalysis.useMutation({
-    onSuccess: () => {
-      utils.analysis.getAnalysis.invalidate({ id: analysisId });
-      onDescriptionUpdated();
-      toast.success(t("portfolio.summaryUpdated"));
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const updateMutation = trpc.analysis.updateAnalysis.useMutation(
+    buildMutationCallbacks({
+      successMessage: t("portfolio.summaryUpdated"),
+      onSuccess: async () => {
+        await utils.analysis.getAnalysis.invalidate({ id: analysisId });
+        onDescriptionUpdated();
+      },
+    }),
+  );
 
   async function handleSummarize() {
     const data = analysisQuery.data;
@@ -1416,36 +1410,36 @@ function TransactionPanel({
   const utils = trpc.useUtils();
 
   const txQuery = trpc.portfolio.listTransactions.useQuery({ holdingId });
-  const addTx = trpc.portfolio.addTransaction.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.portfolio.listTransactions.invalidate({ holdingId }),
-        utils.portfolio.getPortfolio.invalidate({ id: portfolioId }),
-        utils.portfolio.getValuation.invalidate({ id: portfolioId }),
-        utils.portfolio.getPortfolioTaxSummary.invalidate({ id: portfolioId }),
-      ]);
-      setType("buy");
-      setQty("");
-      setPrice("");
-      setFee("");
-      setDate(todayIso());
-      setNote("");
-      toast.success(t("tx.added"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
-  const deleteTx = trpc.portfolio.deleteTransaction.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.portfolio.listTransactions.invalidate({ holdingId }),
-        utils.portfolio.getPortfolio.invalidate({ id: portfolioId }),
-        utils.portfolio.getValuation.invalidate({ id: portfolioId }),
-        utils.portfolio.getPortfolioTaxSummary.invalidate({ id: portfolioId }),
-      ]);
-      toast.success(t("tx.deleted"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const addTx = trpc.portfolio.addTransaction.useMutation(
+    buildMutationCallbacks({
+      invalidate: [
+        utils.portfolio.listTransactions,
+        utils.portfolio.getPortfolio,
+        utils.portfolio.getValuation,
+        utils.portfolio.getPortfolioTaxSummary,
+      ],
+      successMessage: t("tx.added"),
+      onSuccess: () => {
+        setType("buy");
+        setQty("");
+        setPrice("");
+        setFee("");
+        setDate(todayIso());
+        setNote("");
+      },
+    }),
+  );
+  const deleteTx = trpc.portfolio.deleteTransaction.useMutation(
+    buildMutationCallbacks({
+      invalidate: [
+        utils.portfolio.listTransactions,
+        utils.portfolio.getPortfolio,
+        utils.portfolio.getValuation,
+        utils.portfolio.getPortfolioTaxSummary,
+      ],
+      successMessage: t("tx.deleted"),
+    }),
+  );
 
   const [type, setType] = useState<"buy" | "sell" | "dividend">("buy");
   const [qty, setQty] = useState("");
@@ -1630,7 +1624,7 @@ function TaxSummarySection({
       <Card>
         <CardHeader className="cursor-pointer select-none" onClick={() => setCollapsed(false)}>
           <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
+            <ChevronIcon open={false} />
             <CardTitle className="text-sm font-semibold">{t("tx.taxSummary")}</CardTitle>
           </div>
         </CardHeader>
@@ -1642,11 +1636,7 @@ function TaxSummarySection({
     <Card>
       <CardHeader className="cursor-pointer select-none" onClick={() => setCollapsed((v) => !v)}>
         <div className="flex items-center gap-2">
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-          )}
+          <ChevronIcon open={!collapsed} />
           <CardTitle className="text-sm font-semibold">{t("tx.taxSummary")}</CardTitle>
         </div>
       </CardHeader>
@@ -1757,11 +1747,7 @@ function DividendSection({
     <Card>
       <CardHeader className="cursor-pointer select-none" onClick={toggle}>
         <div className="flex items-center gap-2">
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-          )}
+          <ChevronIcon open={!collapsed} />
           <CardTitle className="text-sm font-semibold">{t("dividend.title")}</CardTitle>
         </div>
       </CardHeader>
@@ -1886,11 +1872,7 @@ function StrategySignalSection({
           className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-[var(--color-accent)]"
           aria-expanded={!collapsed}
         >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
-          )}
+          <ChevronIcon open={!collapsed} />
           <CardTitle className="text-sm font-semibold">
             {t("strategySignal.title")}
           </CardTitle>

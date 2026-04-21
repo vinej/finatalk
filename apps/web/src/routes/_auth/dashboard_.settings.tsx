@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard_/settings")({
@@ -22,13 +22,13 @@ function SettingsPage() {
     if (data?.name) setName(data.name);
   }, [data?.name]);
 
-  const updateProfile = trpc.user.updateProfile.useMutation({
-    onSuccess: async () => {
-      await utils.user.me.invalidate();
-      toast.success(t("settings.saved"));
-    },
-    onError: (err) => toast.error(err.message ?? t("settings.saveFailed")),
-  });
+  const updateProfile = trpc.user.updateProfile.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.user.me],
+      successMessage: t("settings.saved"),
+      errorMessage: (err) => (err instanceof Error ? err.message : null) ?? t("settings.saveFailed"),
+    }),
+  );
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();

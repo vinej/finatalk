@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronIcon } from "@/components/ui/chevron-icon";
 import {
   STRATEGY_GENERAL_LINKS,
   STRATEGY_GROUP_ORDER,
@@ -53,11 +54,7 @@ function StrategiesPage() {
       <Card className="shrink-0">
         <CardHeader className="cursor-pointer select-none" onClick={() => setIntroOpen((o) => !o)}>
           <div className="flex items-center gap-2">
-            {introOpen ? (
-              <ChevronDown className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            ) : (
-              <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-muted-fg)]" aria-hidden />
-            )}
+            <ChevronIcon open={introOpen} className="h-5 w-5 shrink-0" />
             <CardTitle>{t("learnStrategies.title")}</CardTitle>
           </div>
         </CardHeader>

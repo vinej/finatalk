@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, BellOff, ChevronDown, ChevronRight, Plus, Trash2, Wand2 } from "lucide-react";
+import { Bell, BellOff, Plus, Trash2, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
 import { pickLang } from "@/lib/lang";
 import { STRATEGY_GUIDE, STRATEGY_KINDS, type StrategyKind } from "@/lib/strategy-guide";
 import { STRATEGY_ALERT_TEMPLATES, type AlertTemplate } from "@/lib/strategy-alerts";
+import { buildMutationCallbacks } from "@/lib/mutation-callbacks";
 import { SYMBOL_RE } from "@/lib/symbol";
 import { cn } from "@/lib/utils";
 import { ALERT_CONDITIONS, paramShape, thresholdKind, type AlertConditionType, type AlertIndicatorParams } from "@finatalk/trpc/constants/alerts";
@@ -144,14 +145,13 @@ function ManualTab({
     if (initialSymbol) setSymbol(initialSymbol.toUpperCase());
   }, [initialSymbol]);
 
-  const create = trpc.alert.create.useMutation({
-    onSuccess: () => {
-      void utils.alert.list.invalidate();
-      setThreshold("");
-      toast.success(t("alerts.created"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const create = trpc.alert.create.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.alert.list],
+      successMessage: t("alerts.created"),
+      onSuccess: () => setThreshold(""),
+    }),
+  );
 
   const kind = thresholdKind(conditionType);
   const shape = paramShape(conditionType);
@@ -361,13 +361,12 @@ function StrategyTab({
 
   const templates = STRATEGY_ALERT_TEMPLATES[strategyKind];
 
-  const createBulk = trpc.alert.createBulk.useMutation({
-    onSuccess: (data) => {
-      void utils.alert.list.invalidate();
-      toast.success(t("alerts.generated", { count: data.count }));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const createBulk = trpc.alert.createBulk.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.alert.list],
+      successMessage: (data) => t("alerts.generated", { count: data.count }),
+    }),
+  );
 
   function generate() {
     const sym = symbol.trim().toUpperCase();
@@ -542,13 +541,12 @@ function PortfolioTab({
   const effectiveStrategy: StrategyKind | null = (overrideStrategy || portfolioStrategy || null) as StrategyKind | null;
   const templates = effectiveStrategy ? STRATEGY_ALERT_TEMPLATES[effectiveStrategy] : [];
 
-  const createBulk = trpc.alert.createBulk.useMutation({
-    onSuccess: (data) => {
-      void utils.alert.list.invalidate();
-      toast.success(t("alerts.generated", { count: data.count }));
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const createBulk = trpc.alert.createBulk.useMutation(
+    buildMutationCallbacks({
+      invalidate: [utils.alert.list],
+      successMessage: (data) => t("alerts.generated", { count: data.count }),
+    }),
+  );
 
   function generate() {
     if (!effectiveStrategy) return;

@@ -237,4 +237,5 @@ export const SymbolSchema = z
   .trim()
   .min(1)
   .max(20)
-  .regex(/^[A-Za-z0-9.\-=^]+$/, "Invalid symbol");
+  .regex(/^[A-Za-z0-9.\-=^]+$/, "Invalid symbol")
+  .transform((s) => s.toUpperCase());

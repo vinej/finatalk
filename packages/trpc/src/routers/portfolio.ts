@@ -292,7 +292,7 @@ export const portfolioRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await findOwnedPortfolio(ctx, input.portfolioId);
       const id = randomUUID();
-      const symbol = input.holding.symbol.toUpperCase();
+      const symbol = input.holding.symbol;
       const assetType = await resolveAssetType(symbol);
       await ctx.db.insert(holding).values({
         id,
@@ -317,7 +317,7 @@ export const portfolioRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { holding: current, portfolio: p } = await findOwnedHolding(ctx, input.id);
-      const nextSymbol = input.holding.symbol.toUpperCase();
+      const nextSymbol = input.holding.symbol;
       const symbolChanged = current.symbol.toUpperCase() !== nextSymbol;
       const nextAssetType = symbolChanged ? await resolveAssetType(nextSymbol) : undefined;
       await ctx.db
@@ -486,7 +486,7 @@ export const portfolioRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const p = await findOwnedPortfolio(ctx, input.portfolioId);
-      const sym = input.symbol.toUpperCase();
+      const sym = input.symbol;
       const rows = await ctx.db.query.holding.findMany({
         where: and(eq(holding.portfolioId, p.id)),
       });
@@ -640,7 +640,7 @@ export const portfolioRouter = createTRPCRouter({
         });
       }
       return fn({
-        symbol: input.symbol.toUpperCase(),
+        symbol: input.symbol,
         ...(input.language ? { language: input.language } : {}),
       });
     }),

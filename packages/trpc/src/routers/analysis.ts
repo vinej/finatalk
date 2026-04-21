@@ -45,7 +45,7 @@ export const analysisRouter = createTRPCRouter({
     .input(z.object({ symbol: SymbolSchema.optional() }).optional())
     .query(async ({ ctx, input }) => {
       const filter = input?.symbol
-        ? and(eq(analysis.userId, ctx.user.id), eq(analysis.symbol, input.symbol.toUpperCase()))
+        ? and(eq(analysis.userId, ctx.user.id), eq(analysis.symbol, input.symbol))
         : eq(analysis.userId, ctx.user.id);
       const rows = await ctx.db
         .select({
@@ -110,7 +110,7 @@ export const analysisRouter = createTRPCRouter({
       overwrite: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const sym = input.symbol.toUpperCase();
+      const sym = input.symbol;
       const existing = await ctx.db.query.analysis.findFirst({
         where: and(
           eq(analysis.userId, ctx.user.id),
@@ -249,7 +249,7 @@ export const analysisRouter = createTRPCRouter({
         await ctx.db
           .update(savedChart)
           .set({
-            symbol: input.symbol.toUpperCase(),
+            symbol: input.symbol,
             range: input.range,
             interval: input.interval,
             convertTo: input.convertTo ?? null,
@@ -264,7 +264,7 @@ export const analysisRouter = createTRPCRouter({
         id,
         userId: ctx.user.id,
         title: input.title,
-        symbol: input.symbol.toUpperCase(),
+        symbol: input.symbol,
         range: input.range,
         interval: input.interval,
         convertTo: input.convertTo ?? null,
