@@ -6,29 +6,12 @@ import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portf
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Markdown } from "@/components/ai/markdown";
+import { formatCurrency, formatPct } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
 });
-
-function formatCurrency(value: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${currency} ${value.toFixed(2)}`;
-  }
-}
-
-function formatPct(value: number | null | undefined) {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
-}
 
 function DashboardPage() {
   const { t, i18n } = useTranslation();

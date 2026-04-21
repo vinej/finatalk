@@ -1,37 +1,14 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency, formatDate, formatPct as formatPctShared } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 
-function formatPct(value: number | null | undefined, digits = 2) {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const v = Math.abs(value) <= 1 ? value * 100 : value;
-  return `${v.toFixed(digits)}%`;
-}
+const formatPct = (v: number | null | undefined, digits = 2) =>
+  formatPctShared(v, { signed: false, autoScale: true, digits });
 
-function formatCurrency(value: number | null | undefined, currency: string | null) {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const ccy = currency ?? "USD";
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: ccy,
-      notation: value >= 1_000_000 ? "compact" : "standard",
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${ccy} ${value.toLocaleString()}`;
-  }
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString();
-  } catch {
-    return iso;
-  }
-}
+const formatEtfCurrency = (v: number | null | undefined, currency: string | null | undefined) =>
+  formatCurrency(v, currency, { compact: true });
 
 export function EtfSection({
   symbol,
@@ -98,7 +75,7 @@ export function EtfSection({
             )}
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <InfoCell label={t("etf.expenseRatio")} value={formatPct(info.expenseRatio)} />
-              <InfoCell label={t("etf.aum")} value={formatCurrency(info.aum, info.currency)} />
+              <InfoCell label={t("etf.aum")} value={formatEtfCurrency(info.aum, info.currency)} />
               <InfoCell label={t("etf.yield")} value={formatPct(info.yield)} />
               <InfoCell label={t("etf.inception")} value={formatDate(info.inceptionDate)} />
             </div>

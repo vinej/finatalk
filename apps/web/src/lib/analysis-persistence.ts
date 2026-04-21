@@ -1,11 +1,8 @@
 import type { ActiveIndicator } from "@/lib/indicator-defaults";
 import type { StrategyKind } from "@/lib/strategy-guide";
-
-const STORAGE_KEY = "finatalk:analysis-workspace";
-const VERSION = 1;
+import { createVersionedStorage } from "@/lib/versioned-storage";
 
 export type PersistedAnalysisState = {
-  v: typeof VERSION;
   symbolInput: string;
   submittedSymbol: string;
   range: "1d" | "5d" | "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "max";
@@ -28,24 +25,7 @@ export type PersistedAnalysisState = {
   appliedStrategy?: StrategyKind | null;
 };
 
-export function loadAnalysisState(): PersistedAnalysisState | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as PersistedAnalysisState;
-    if (parsed?.v !== VERSION) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
+const store = createVersionedStorage<PersistedAnalysisState>("finatalk:analysis-workspace", 1);
 
-export function saveAnalysisState(state: Omit<PersistedAnalysisState, "v">): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: VERSION, ...state }));
-  } catch {
-    /* quota exceeded or disabled — ignore */
-  }
-}
+export const loadAnalysisState = store.load;
+export const saveAnalysisState = store.save;

@@ -1,50 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  type IChartApi,
   type ISeriesApi,
   LineSeries,
   type Time,
-  createChart,
 } from "lightweight-charts";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OptionsSelect } from "@/components/ui/options-select";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
+import { paletteColor } from "@/lib/chart-theme";
 import { loadComparisonState, saveComparisonState } from "@/lib/comparison-persistence";
+import { formatNum, formatPct } from "@/lib/format";
+import { SYMBOL_RE } from "@/lib/symbol";
 import { trpc } from "@/lib/trpc";
-
-const SYMBOL_RE = /^[A-Z0-9.\-=^]+$/;
+import { useLightweightChart } from "@/lib/use-lightweight-chart";
 
 export const Route = createFileRoute("/_auth/dashboard_/comparison")({
   component: ComparisonPage,
 });
-
-const PALETTE = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-] as const;
 
 const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
 type Range = (typeof RANGES)[number];
 
 const INTERVALS = ["1d", "1wk", "1mo"] as const;
 type Interval = (typeof INTERVALS)[number];
-
-function formatPct(v: number | null) {
-  if (v == null || !Number.isFinite(v)) return "—";
-  const sign = v > 0 ? "+" : "";
-  return `${sign}${v.toFixed(2)}%`;
-}
-
-function formatNum(v: number | null, decimals = 2) {
-  if (v == null || !Number.isFinite(v)) return "—";
-  return v.toFixed(decimals);
-}
 
 function ComparisonPage() {
   const { t } = useTranslation();
@@ -138,18 +120,13 @@ function ComparisonPage() {
               >
                 {t("analysis.range")}
               </label>
-              <select
+              <OptionsSelect
                 id="cmp-range"
+                size="sm"
                 value={range}
-                onChange={(e) => setRange(e.target.value as Range)}
-                className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
-              >
-                {RANGES.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
+                onChange={setRange}
+                options={RANGES}
+              />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -159,18 +136,13 @@ function ComparisonPage() {
               >
                 {t("analysis.interval")}
               </label>
-              <select
+              <OptionsSelect
                 id="cmp-interval"
+                size="sm"
                 value={interval}
-                onChange={(e) => setInterval(e.target.value as Interval)}
-                className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
-              >
-                {INTERVALS.map((i) => (
-                  <option key={i} value={i}>
-                    {i}
-                  </option>
-                ))}
-              </select>
+                onChange={setInterval}
+                options={INTERVALS}
+              />
             </div>
 
             <label className="flex items-center gap-1.5 text-sm">
@@ -194,7 +166,7 @@ function ComparisonPage() {
                   <span
                     aria-hidden
                     className="inline-block h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
+                    style={{ backgroundColor: paletteColor(i) }}
                   />
                   {sym}
                   <button
@@ -256,7 +228,7 @@ function ComparisonPage() {
                       aria-hidden
                       className="inline-block h-2 w-2 rounded-full"
                       style={{
-                        backgroundColor: PALETTE[i % PALETTE.length],
+                        backgroundColor: paletteColor(i),
                       }}
                     />
                     <span className="text-[var(--color-fg)]">{d.symbol}</span>
@@ -295,8 +267,7 @@ type CompareItem = {
 };
 
 function ComparisonChart({ data }: { data: CompareItem[] }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
+  const { containerRef, chartRef } = useLightweightChart();
   const seriesRef = useRef<ISeriesApi<"Line">[]>([]);
 
   const seriesData = useMemo(
@@ -304,38 +275,21 @@ function ComparisonChart({ data }: { data: CompareItem[] }) {
       data.map((d, i) => {
         const candles = d.candles;
         if (candles.length === 0)
-          return { color: PALETTE[i % PALETTE.length]!, points: [] as { time: Time; value: number }[] };
+          return { color: paletteColor(i)!, points: [] as { time: Time; value: number }[] };
         const base = candles[0]!.close;
         if (!Number.isFinite(base) || base === 0)
-          return { color: PALETTE[i % PALETTE.length]!, points: [] as { time: Time; value: number }[] };
+          return { color: paletteColor(i)!, points: [] as { time: Time; value: number }[] };
         const points = candles.map((c) => ({
           time: c.time as Time,
           value: (c.close / base) * 100,
         }));
-        return { color: PALETTE[i % PALETTE.length]!, points };
+        return { color: paletteColor(i)!, points };
       }),
     [data],
   );
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const isDark = document.documentElement.classList.contains("dark");
-    const textColor = isDark ? "#e5e7eb" : "#1f2937";
-    const gridColor = isDark ? "#374151" : "#e5e7eb";
-    const chart = createChart(containerRef.current, {
-      autoSize: true,
-      layout: { background: { color: "transparent" }, textColor },
-      grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
-      },
-      timeScale: { timeVisible: false, secondsVisible: false },
-      rightPriceScale: { borderColor: gridColor },
-    });
-    chartRef.current = chart;
     return () => {
-      chart.remove();
-      chartRef.current = null;
       seriesRef.current = [];
     };
   }, []);
@@ -356,7 +310,7 @@ function ComparisonChart({ data }: { data: CompareItem[] }) {
       seriesRef.current.push(s);
     }
     if (seriesRef.current.length > 0) chart.timeScale().fitContent();
-  }, [seriesData]);
+  }, [seriesData, chartRef]);
 
   return <div ref={containerRef} className="h-96 w-full" />;
 }
@@ -414,7 +368,7 @@ function MetricsTable({ data }: { data: CompareItem[] }) {
                 <span
                   aria-hidden
                   className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
+                  style={{ backgroundColor: paletteColor(i) }}
                 />
                 {d.symbol}
               </span>

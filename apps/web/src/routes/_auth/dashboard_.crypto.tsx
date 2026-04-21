@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatPct, formatPrice } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 import {
   CRYPTOS,
@@ -9,6 +10,8 @@ import {
   type CryptoCategory,
   type CryptoDef,
 } from "@/lib/crypto";
+
+const formatPercent = (value: number | null) => formatPct(value, { signed: true });
 
 export const Route = createFileRoute("/_auth/dashboard_/crypto")({
   component: CryptoPage,
@@ -159,18 +162,6 @@ function changeTone(change: number | null): string {
   if (change > 0) return "text-emerald-600 dark:text-emerald-400";
   if (change < 0) return "text-red-600 dark:text-red-400";
   return "text-[var(--color-muted-fg)]";
-}
-
-function formatPercent(value: number | null): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
-}
-
-function formatPrice(v: number): string {
-  if (v >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  if (v >= 1) return v.toFixed(2);
-  if (v >= 0.01) return v.toFixed(4);
-  return v.toPrecision(4);
 }
 
 function Sparkline({ candles }: { candles: { close: number }[] }) {

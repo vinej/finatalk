@@ -1,5 +1,4 @@
-const STORAGE_KEY = "finatalk:screener-workspace";
-const VERSION = 2;
+import { createVersionedStorage } from "@/lib/versioned-storage";
 
 export type PersistedScreenerRow = {
   symbol: string;
@@ -13,7 +12,6 @@ export type PersistedScreenerRow = {
 };
 
 export type PersistedScreenerState = {
-  v: typeof VERSION;
   source: "portfolio" | "watchlist" | "custom";
   customSymbols: string;
   priceMin: string;
@@ -32,24 +30,7 @@ export type PersistedScreenerState = {
   scannedAt?: string | null;
 };
 
-export function loadScreenerState(): PersistedScreenerState | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as PersistedScreenerState;
-    if (parsed?.v !== VERSION) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
+const store = createVersionedStorage<PersistedScreenerState>("finatalk:screener-workspace", 2);
 
-export function saveScreenerState(state: Omit<PersistedScreenerState, "v">): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: VERSION, ...state }));
-  } catch {
-    /* quota exceeded or disabled — ignore */
-  }
-}
+export const loadScreenerState = store.load;
+export const saveScreenerState = store.save;

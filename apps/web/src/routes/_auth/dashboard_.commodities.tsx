@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatPct } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 import {
   COMMODITIES,
@@ -9,6 +10,8 @@ import {
   type CommodityCategory,
   type CommodityDef,
 } from "@/lib/commodities";
+
+const formatPercent = (value: number | null) => formatPct(value, { signed: true });
 
 export const Route = createFileRoute("/_auth/dashboard_/commodities")({
   component: CommoditiesPage,
@@ -161,11 +164,6 @@ function changeTone(change: number | null): string {
   if (change > 0) return "text-emerald-600 dark:text-emerald-400";
   if (change < 0) return "text-red-600 dark:text-red-400";
   return "text-[var(--color-muted-fg)]";
-}
-
-function formatPercent(value: number | null): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
 function Sparkline({ candles }: { candles: { close: number }[] }) {

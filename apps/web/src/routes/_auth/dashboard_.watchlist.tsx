@@ -6,22 +6,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
+import { formatNum, formatPct } from "@/lib/format";
+import { SYMBOL_RE } from "@/lib/symbol";
 import { trpc } from "@/lib/trpc";
-
-const SYMBOL_RE = /^[A-Z0-9.\-=^]+$/;
 
 export const Route = createFileRoute("/_auth/dashboard_/watchlist")({
   component: WatchlistPage,
 });
 
-function formatCurrency(value: number) {
-  return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function formatPct(value: number) {
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
-}
+const formatCurrency = (value: number) => formatNum(value, 2);
 
 function WatchlistPage() {
   const { t } = useTranslation();

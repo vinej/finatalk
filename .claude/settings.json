@@ -56,7 +56,11 @@
       "Bash(pnpm --filter @finatalk/db exec tsc --noEmit)",
       "Bash(echo \"exit=$?\")",
       "Bash(pnpm --filter @finatalk/trpc exec tsc --noEmit)",
-      "Bash(echo \"trpc exit=$?\")"
+      "Bash(echo \"trpc exit=$?\")",
+      "Bash(pnpm --filter @finatalk/web exec tsc --noEmit)",
+      "Bash(sed -n '106,1424p' src/lib/strategy-guide.ts)",
+      "Bash(sed -n '1426,2744p' src/lib/strategy-guide.ts)",
+      "Bash(pnpm remove *)"
     ]
   }
 }

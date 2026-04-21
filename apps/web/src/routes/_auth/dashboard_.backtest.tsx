@@ -13,9 +13,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionsSelect } from "@/components/ui/options-select";
+import { EquityCurveCard } from "@/components/backtest/equity-curve-card";
+import { MetricsCard } from "@/components/backtest/metrics-card";
+import { TradesCard } from "@/components/backtest/trades-card";
+import { StrategySelect } from "@/components/strategy-select";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
+import {
+  type AdHocLeg,
+  type BacktestMode,
+  loadBacktestState,
+  saveBacktestState,
+} from "@/lib/backtest-persistence";
+import { getChartColors } from "@/lib/chart-theme";
 import { pickLang } from "@/lib/lang";
-import { STRATEGY_GUIDE } from "@/lib/strategy-guide";
+import {
+  clampRangeForInterval as sharedClampRangeForInterval,
+  compatibleRangesForInterval,
+  defaultRangeForInterval as sharedDefaultRangeForInterval,
+  INTERVALS,
+  RANGES,
+  type IntervalValue,
+  type RangeValue,
+} from "@/lib/ranges";
 import { trpc } from "@/lib/trpc";
 import {
   BACKTEST_STRATEGY_INDICATORS,
@@ -41,71 +61,10 @@ import {
 import type { IndicatorSpec } from "@/lib/indicator-defaults";
 import type { Lang } from "@/lib/lang";
 
-const BACKTEST_STATE_KEY = "finatalk:backtest-state";
-
-const RANGES = ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
-const INTERVALS = ["1m", "5m", "15m", "30m", "60m", "90m", "1d", "1wk", "1mo"] as const;
-type RangeValue = (typeof RANGES)[number];
-type IntervalValue = (typeof INTERVALS)[number];
-
-const INTRADAY_INTERVALS: readonly IntervalValue[] = ["1m", "5m", "15m", "30m", "60m", "90m"];
-
-function compatibleRangesForInterval(i: IntervalValue): readonly RangeValue[] {
-  if (i === "1m") return ["1d", "5d"];
-  if (i === "5m" || i === "15m" || i === "30m" || i === "90m") return ["1d", "5d", "1mo"];
-  if (i === "60m") return ["1d", "5d", "1mo", "3mo", "6mo", "1y"];
-  return ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"];
-}
-
-function defaultRangeForInterval(i: IntervalValue): RangeValue {
-  if (i === "1m") return "5d";
-  if ((INTRADAY_INTERVALS as readonly string[]).includes(i)) return i === "60m" ? "1mo" : "5d";
-  return "2y";
-}
-
-function clampRangeForInterval(r: RangeValue, i: IntervalValue): RangeValue {
-  const allowed = compatibleRangesForInterval(i);
-  return allowed.includes(r) ? r : defaultRangeForInterval(i);
-}
-
-type BacktestMode = "single" | "sweep" | "adhocPortfolio" | "userPortfolio";
-
-type AdHocLeg = { symbol: string; weight: number };
-
-type PersistedState = {
-  symbolInput: string;
-  submittedSymbol: string;
-  range: RangeValue;
-  interval: IntervalValue;
-  strategy: BacktestStrategy;
-  config: BacktestConfig;
-  assetTypeFilter?: AssetTypeFilter;
-  exchangeFilter?: string;
-  mode?: BacktestMode;
-  portfolioSymbols?: string[];
-  adhocLegs?: AdHocLeg[];
-  userPortfolioId?: string | null;
-};
-
-function loadState(): PersistedState | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(BACKTEST_STATE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as PersistedState;
-  } catch {
-    return null;
-  }
-}
-
-function saveState(s: PersistedState) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(BACKTEST_STATE_KEY, JSON.stringify(s));
-  } catch {
-    // ignore
-  }
-}
+const defaultRangeForInterval = (i: IntervalValue): RangeValue =>
+  sharedDefaultRangeForInterval(i, "2y");
+const clampRangeForInterval = (r: RangeValue, i: IntervalValue): RangeValue =>
+  sharedClampRangeForInterval(r, i, "2y");
 
 export const Route = createFileRoute("/_auth/dashboard_/backtest")({
   component: BacktestPage,
@@ -114,7 +73,7 @@ export const Route = createFileRoute("/_auth/dashboard_/backtest")({
 function BacktestPage() {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
-  const persisted = useMemo(() => loadState(), []);
+  const persisted = useMemo(() => loadBacktestState(), []);
 
   const [symbolInput, setSymbolInput] = useState(persisted?.symbolInput ?? "AAPL");
   const [submittedSymbol, setSubmittedSymbol] = useState(
@@ -154,7 +113,7 @@ function BacktestPage() {
   const [panelOpen, setPanelOpen] = useState(true);
 
   useEffect(() => {
-    saveState({
+    saveBacktestState({
       symbolInput, submittedSymbol, range, interval, strategy, config,
       assetTypeFilter, exchangeFilter, mode,
       adhocLegs, userPortfolioId,
@@ -180,7 +139,6 @@ function BacktestPage() {
     e.preventDefault();
     const sym = symbolInput.trim().toUpperCase();
     if (sym) setSubmittedSymbol(sym);
-    setPanelOpen(false);
   }
 
   function runAdhoc() {
@@ -194,7 +152,7 @@ function BacktestPage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-4 overflow-auto">
       <Card className="shrink-0">
         <CardHeader className="flex flex-row items-start gap-2">
           <button
@@ -249,49 +207,38 @@ function BacktestPage() {
             )}
             <div className="grid gap-1.5">
               <Label htmlFor="range">{t("backtest.range")}</Label>
-              <select
+              <OptionsSelect
                 id="range"
                 value={range}
-                onChange={(e) => setRange(e.target.value as RangeValue)}
-                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
-              >
-                {compatibleRangesForInterval(interval).map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
+                onChange={setRange}
+                options={compatibleRangesForInterval(interval)}
+              />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="interval">{t("backtest.interval")}</Label>
-              <select
+              <OptionsSelect
                 id="interval"
                 value={interval}
-                onChange={(e) => {
-                  const next = e.target.value as IntervalValue;
+                onChange={(next) => {
                   setIntervalValue(next);
                   setRange((r) => clampRangeForInterval(r, next));
                 }}
-                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
-              >
-                {INTERVALS.map((i) => (
-                  <option key={i} value={i}>{i}</option>
-                ))}
-              </select>
+                options={INTERVALS}
+              />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="strategy">{t("backtest.strategy")}</Label>
-              <select
+              <StrategySelect
                 id="strategy"
+                strategies={BACKTEST_SUPPORTED_STRATEGIES}
+                lang={lang}
                 value={strategy}
-                onChange={(e) => setStrategy(e.target.value as BacktestStrategy)}
+                onChange={(v) => { if (v) setStrategy(v as BacktestStrategy); }}
                 className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
-              >
-                {BACKTEST_SUPPORTED_STRATEGIES.map((s) => (
-                  <option key={s} value={s}>{STRATEGY_GUIDE[lang][s].label}</option>
-                ))}
-              </select>
+              />
             </div>
             {(mode === "single" || mode === "sweep") && (
-              <Button type="submit" className="h-10 border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-fg)] hover:opacity-90">{t("backtest.run")}</Button>
+              <Button type="submit" variant="primary" className="h-10">{t("backtest.run")}</Button>
             )}
           </form>
           <ConfigPanel config={config} onChange={setConfig} />
@@ -323,7 +270,7 @@ function BacktestPage() {
         )}
       </Card>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1">
         {query.isLoading && (
           <Card><CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">{t("backtest.loading")}</CardContent></Card>
         )}
@@ -488,228 +435,6 @@ function NumField({
   );
 }
 
-function MetricsCard({ metrics: m }: { metrics: BacktestMetrics }) {
-  const { t } = useTranslation();
-  const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
-  const fmtUSD = (n: number) =>
-    n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 });
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{t("backtest.metrics")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Metric label={t("backtest.totalReturn")} value={fmtPct(m.totalReturn)} highlight={m.totalReturn >= 0 ? "pos" : "neg"} />
-          <Metric
-            label={t("backtest.benchmarkReturn")}
-            value={fmtPct(m.benchmarkTotalReturn)}
-            highlight={m.benchmarkTotalReturn >= 0 ? "pos" : "neg"}
-          />
-          <Metric label={t("backtest.cagr")} value={fmtPct(m.cagr)} highlight={m.cagr >= 0 ? "pos" : "neg"} />
-          <Metric label={t("backtest.maxDrawdown")} value={`-${m.maxDrawdown.toFixed(2)}%`} highlight="neg" />
-          <Metric label={t("backtest.sharpe")} value={m.sharpe.toFixed(2)} />
-          <Metric label={t("backtest.winRate")} value={`${m.winRate.toFixed(1)}%`} />
-          <Metric label={t("backtest.avgR")} value={`${m.avgRMultiple >= 0 ? "+" : ""}${m.avgRMultiple.toFixed(2)}R`} />
-          <Metric
-            label={t("backtest.tradeCount")}
-            value={`${m.tradeCount} (${m.winningTrades}/${m.losingTrades})`}
-            sub={m.shortTrades > 0 ? t("backtest.longShortBreakdown", { long: m.longTrades, short: m.shortTrades }) : undefined}
-          />
-          <Metric label={t("backtest.finalEquity")} value={fmtUSD(m.finalEquity)} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  highlight,
-  sub,
-}: {
-  label: string;
-  value: string;
-  highlight?: "pos" | "neg";
-  sub?: string;
-}) {
-  const color =
-    highlight === "pos" ? "text-green-600" : highlight === "neg" ? "text-red-600" : "";
-  return (
-    <div className="rounded-md border border-[var(--color-border)] p-2.5">
-      <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted-fg)]">
-        {label}
-      </div>
-      <div className={`mt-0.5 text-lg font-semibold ${color}`}>{value}</div>
-      {sub && <div className="mt-0.5 text-[10px] text-[var(--color-muted-fg)]">{sub}</div>}
-    </div>
-  );
-}
-
-function EquityCurveCard({
-  equity,
-  benchmark,
-}: {
-  equity: EquityPoint[];
-  benchmark: EquityPoint[];
-}) {
-  const { t } = useTranslation();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const equitySeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const benchmarkSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const isDark = document.documentElement.classList.contains("dark");
-    const textColor = isDark ? "#e5e7eb" : "#1f2937";
-    const gridColor = isDark ? "#374151" : "#e5e7eb";
-    const chart = createChart(containerRef.current, {
-      autoSize: true,
-      layout: { background: { color: "transparent" }, textColor },
-      grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
-      timeScale: { timeVisible: false, secondsVisible: false },
-      rightPriceScale: { borderColor: gridColor },
-    });
-    chartRef.current = chart;
-    equitySeriesRef.current = chart.addSeries(LineSeries, {
-      color: "#2563eb",
-      lineWidth: 2,
-      title: "Strategy",
-    });
-    benchmarkSeriesRef.current = chart.addSeries(LineSeries, {
-      color: "#94a3b8",
-      lineWidth: 1,
-      lineStyle: 2,
-      title: "Buy & Hold",
-    });
-    return () => {
-      chart.remove();
-      chartRef.current = null;
-      equitySeriesRef.current = null;
-      benchmarkSeriesRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const eq = equitySeriesRef.current;
-    const bm = benchmarkSeriesRef.current;
-    if (!eq || !bm) return;
-    eq.setData(
-      equity.map((p) => ({
-        time: Math.floor(p.time / 1000) as Time,
-        value: p.equity,
-      })),
-    );
-    bm.setData(
-      benchmark.map((p) => ({
-        time: Math.floor(p.time / 1000) as Time,
-        value: p.equity,
-      })),
-    );
-    chartRef.current?.timeScale().fitContent();
-  }, [equity, benchmark]);
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle className="text-base">{t("backtest.equityCurve")}</CardTitle>
-        <div className="flex items-center gap-3 text-[11px] text-[var(--color-muted-fg)]">
-          <span className="inline-flex items-center gap-1">
-            <span className="inline-block h-0.5 w-4 bg-[#2563eb]" /> {t("backtest.legendStrategy")}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="inline-block h-0.5 w-4 border-t border-dashed border-[#94a3b8]" /> {t("backtest.legendBenchmark")}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div ref={containerRef} className="h-72 w-full" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function TradesCard({ trades }: { trades: Trade[] }) {
-  const { t } = useTranslation();
-  if (trades.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-6 text-sm text-[var(--color-muted-fg)]">
-          {t("backtest.noTrades")}
-        </CardContent>
-      </Card>
-    );
-  }
-  const fmtDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
-  const fmtNum = (n: number) => n.toFixed(2);
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{t("backtest.trades")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--color-border)] text-xs uppercase text-[var(--color-muted-fg)]">
-                <th className="px-2 py-1.5 text-left">#</th>
-                <th className="px-2 py-1.5 text-left">{t("backtest.side")}</th>
-                <th className="px-2 py-1.5 text-left">{t("backtest.entryDate")}</th>
-                <th className="px-2 py-1.5 text-right">{t("backtest.entryPrice")}</th>
-                <th className="px-2 py-1.5 text-left">{t("backtest.exitDate")}</th>
-                <th className="px-2 py-1.5 text-right">{t("backtest.exitPrice")}</th>
-                <th className="px-2 py-1.5 text-right">{t("backtest.qty")}</th>
-                <th className="px-2 py-1.5 text-right">{t("backtest.bars")}</th>
-                <th className="px-2 py-1.5 text-left">{t("backtest.exitReason")}</th>
-                <th className="px-2 py-1.5 text-right">{t("backtest.pnl")}</th>
-                <th className="px-2 py-1.5 text-right">R</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trades.map((tr, i) => {
-                const tipLines = [
-                  `${t("backtest.side")}: ${t(`backtest.sideLabel.${tr.side}`)}`,
-                  `${t("backtest.entryPrice")}: ${fmtNum(tr.entryPrice)}`,
-                  `${t("backtest.stopLevel")}: ${fmtNum(tr.stop)}`,
-                  `${t("backtest.tpLevel")}: ${fmtNum(tr.takeProfit)}`,
-                  `${t("backtest.exitPrice")}: ${fmtNum(tr.exitPrice)}`,
-                  `${t("backtest.bars")}: ${tr.bars}`,
-                  `${t("backtest.exitReason")}: ${t(`backtest.reason.${tr.reason}`)}`,
-                  `R: ${tr.rMultiple >= 0 ? "+" : ""}${tr.rMultiple.toFixed(2)}`,
-                ].join("\n");
-                return (
-                <tr key={i} className="border-b border-[var(--color-border)]/50 last:border-0" title={tipLines}>
-                  <td className="px-2 py-1.5 text-[var(--color-muted-fg)]">{i + 1}</td>
-                  <td className={`px-2 py-1.5 text-xs font-medium ${tr.side === "long" ? "text-green-600" : "text-red-600"}`}>
-                    {t(`backtest.sideLabel.${tr.side}`)}
-                  </td>
-                  <td className="px-2 py-1.5">{fmtDate(tr.entryTime)}</td>
-                  <td className="px-2 py-1.5 text-right">{fmtNum(tr.entryPrice)}</td>
-                  <td className="px-2 py-1.5">{fmtDate(tr.exitTime)}</td>
-                  <td className="px-2 py-1.5 text-right">{fmtNum(tr.exitPrice)}</td>
-                  <td className="px-2 py-1.5 text-right">{tr.qty}</td>
-                  <td className="px-2 py-1.5 text-right">{tr.bars}</td>
-                  <td className="px-2 py-1.5 text-xs" title={tipLines}>
-                    {t(`backtest.reason.${tr.reason}`)}
-                  </td>
-                  <td className={`px-2 py-1.5 text-right font-medium ${tr.pnl >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {tr.pnl >= 0 ? "+" : ""}{fmtNum(tr.pnl)} ({tr.pnlPct >= 0 ? "+" : ""}{tr.pnlPct.toFixed(2)}%)
-                  </td>
-                  <td className={`px-2 py-1.5 text-right ${tr.rMultiple >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {tr.rMultiple >= 0 ? "+" : ""}{tr.rMultiple.toFixed(2)}
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Sweep view
@@ -1137,7 +862,7 @@ function PortfolioSymbolsEditor({
         {t("backtest.portfolio.allocationNote")}
       </p>
       <div className="mt-3">
-        <Button type="button" onClick={onRun} disabled={legs.length === 0} className="h-10 border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-fg)] hover:opacity-90">
+        <Button type="button" onClick={onRun} disabled={legs.length === 0} variant="primary" className="h-10">
           {t("backtest.run")}
         </Button>
       </div>
@@ -1311,7 +1036,7 @@ function UserPortfolioPicker({
             ))}
           </select>
         </div>
-        <Button type="button" onClick={onRun} disabled={!value} className="h-10 border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-fg)] hover:opacity-90">
+        <Button type="button" onClick={onRun} disabled={!value} variant="primary" className="h-10">
           {t("backtest.run")}
         </Button>
       </div>

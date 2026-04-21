@@ -1,13 +1,13 @@
 import {
-  type IChartApi,
   type ISeriesApi,
   LineSeries,
   type Time,
-  createChart,
 } from "lightweight-charts";
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { OptionsSelect } from "@/components/ui/options-select";
 import { trpc } from "@/lib/trpc";
+import { useLightweightChart } from "@/lib/use-lightweight-chart";
 
 export const PERFORMANCE_RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
 export type PerformanceRange = (typeof PERFORMANCE_RANGES)[number];
@@ -54,29 +54,11 @@ export function PortfolioPerformanceChart({
     });
   }, [items, queries]);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
+  const { containerRef, chartRef } = useLightweightChart();
   const seriesRef = useRef<ISeriesApi<"Line">[]>([]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const isDark = document.documentElement.classList.contains("dark");
-    const textColor = isDark ? "#e5e7eb" : "#1f2937";
-    const gridColor = isDark ? "#374151" : "#e5e7eb";
-    const chart = createChart(containerRef.current, {
-      autoSize: true,
-      layout: { background: { color: "transparent" }, textColor },
-      grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
-      },
-      timeScale: { timeVisible: false, secondsVisible: false },
-      rightPriceScale: { borderColor: gridColor },
-    });
-    chartRef.current = chart;
     return () => {
-      chart.remove();
-      chartRef.current = null;
       seriesRef.current = [];
     };
   }, []);
@@ -112,16 +94,13 @@ export function PortfolioPerformanceChart({
           <label htmlFor="perf-range" className="text-xs text-[var(--color-muted-fg)]">
             {t("analysis.range")}
           </label>
-          <select
+          <OptionsSelect
             id="perf-range"
+            size="xs"
             value={range}
-            onChange={(e) => onRangeChange(e.target.value as PerformanceRange)}
-            className="h-7 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-xs"
-          >
-            {PERFORMANCE_RANGES.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
+            onChange={onRangeChange}
+            options={PERFORMANCE_RANGES}
+          />
         </div>
       </div>
       <div ref={containerRef} className="h-64 w-full" />

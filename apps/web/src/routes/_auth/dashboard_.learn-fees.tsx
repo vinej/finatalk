@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LinkChips } from "@/components/learn/link-chips";
+import { TopicMenu } from "@/components/learn/topic-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FEES_GENERAL_LINKS,
   FEES_GUIDE,
   FEE_TOPICS,
-  type FeeLink,
   type FeeTopicKey,
 } from "@/lib/fees-guide";
 import { pickLang, type Lang } from "@/lib/lang";
@@ -21,6 +22,10 @@ function LearnFeesPage() {
   const lang = pickLang(i18n.language);
   const [activeTopic, setActiveTopic] = useState<FeeTopicKey>(FEE_TOPICS[0]);
   const [introOpen, setIntroOpen] = useState(true);
+  const menuItems = useMemo(
+    () => FEE_TOPICS.map((k) => ({ key: k, label: FEES_GUIDE[lang][k].label })),
+    [lang],
+  );
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -52,55 +57,15 @@ function LearnFeesPage() {
       </Card>
 
       <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_1fr]">
-        <FeesMenu
-          activeTopic={activeTopic}
+        <TopicMenu
+          title={t("learnFees.tableOfContents")}
+          items={menuItems}
+          activeKey={activeTopic}
           onSelect={setActiveTopic}
-          lang={lang}
         />
         <FeePanel topic={activeTopic} lang={lang} />
       </div>
     </div>
-  );
-}
-
-function FeesMenu({
-  activeTopic,
-  onSelect,
-  lang,
-}: {
-  activeTopic: FeeTopicKey;
-  onSelect: (t: FeeTopicKey) => void;
-  lang: Lang;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Card className="flex max-h-full flex-col overflow-hidden">
-      <CardHeader className="shrink-0">
-        <CardTitle className="text-base">{t("learnFees.tableOfContents")}</CardTitle>
-      </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-auto">
-        <ul className="flex flex-col gap-1">
-          {FEE_TOPICS.map((topic) => {
-            const active = topic === activeTopic;
-            return (
-              <li key={topic}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(topic)}
-                  className={`w-full rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors ${
-                    active
-                      ? "border-[var(--color-border)] bg-[var(--color-accent)] font-medium"
-                      : "border-transparent hover:bg-[var(--color-accent)]/60"
-                  }`}
-                >
-                  {FEES_GUIDE[lang][topic].label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -136,25 +101,5 @@ function Block({ label, text }: { label: string; text: string }) {
       </div>
       <p className="whitespace-pre-line text-sm leading-relaxed">{text}</p>
     </div>
-  );
-}
-
-function LinkChips({ links }: { links: FeeLink[] }) {
-  return (
-    <ul className="flex flex-wrap gap-2">
-      {links.map((l) => (
-        <li key={l.url}>
-          <a
-            href={l.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] px-2.5 py-1 text-sm hover:bg-[var(--color-accent)]"
-          >
-            <span>{l.title}</span>
-            <ExternalLink className="h-3.5 w-3.5 text-[var(--color-muted-fg)]" aria-hidden />
-          </a>
-        </li>
-      ))}
-    </ul>
   );
 }

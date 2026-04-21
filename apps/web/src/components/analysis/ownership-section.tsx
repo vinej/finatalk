@@ -1,41 +1,19 @@
 import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  formatCurrency as formatCurrencyShared,
+  formatDate,
+  formatPct,
+  formatShares,
+} from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString();
-  } catch {
-    return iso;
-  }
-}
+const formatCurrency = (value: number | null | undefined, currency: string | null = "USD") =>
+  formatCurrencyShared(value, currency, { digits: 0 });
 
-function formatShares(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
-}
-
-function formatCurrency(value: number | null | undefined, currency: string | null = "USD"): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const ccy = currency ?? "USD";
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: ccy,
-      maximumFractionDigits: 0,
-    }).format(value);
-  } catch {
-    return `${ccy} ${value.toLocaleString()}`;
-  }
-}
-
-function formatPercent(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const v = Math.abs(value) > 1 ? value : value * 100;
-  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
-}
+const formatPercent = (value: number | null | undefined) =>
+  formatPct(value, { signed: true, autoScale: true });
 
 function isAcquisition(ad: string | null): boolean | null {
   if (!ad) return null;

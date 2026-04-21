@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Markdown } from "@/components/ai/markdown";
-import { pickLang, type Lang } from "@/lib/lang";
+import { LinkChips } from "@/components/learn/link-chips";
+import { TopicMenu } from "@/components/learn/topic-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BUY_SELL_GUIDE, type BuySellSection } from "@/lib/buy-sell-guide";
+import { pickLang } from "@/lib/lang";
 import type { TaLink } from "@/lib/ta-guide";
 
 export const Route = createFileRoute("/_auth/dashboard_/learn-buy-sell")({
@@ -21,6 +23,10 @@ function LearnBuySellPage() {
 
   const activeSection =
     guide.sections.find((s) => s.id === activeId) ?? guide.sections[0];
+  const menuItems = useMemo(
+    () => guide.sections.map((s) => ({ key: s.id, label: s.title })),
+    [guide.sections],
+  );
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -46,66 +52,24 @@ function LearnBuySellPage() {
       </Card>
 
       <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_1fr]">
-        <BuySellMenu
-          sections={guide.sections}
-          activeId={activeSection?.id ?? ""}
+        <TopicMenu
+          title={t("learnTa.tableOfContents")}
+          items={menuItems}
+          activeKey={activeSection?.id ?? ""}
           onSelect={setActiveId}
         />
-        <BuySellPanel section={activeSection} links={guide.links} lang={lang} />
+        <BuySellPanel section={activeSection} links={guide.links} />
       </div>
     </div>
-  );
-}
-
-function BuySellMenu({
-  sections,
-  activeId,
-  onSelect,
-}: {
-  sections: BuySellSection[];
-  activeId: string;
-  onSelect: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Card className="flex max-h-full flex-col overflow-hidden">
-      <CardHeader className="shrink-0">
-        <CardTitle className="text-base">{t("learnTa.tableOfContents")}</CardTitle>
-      </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-auto">
-        <ul className="flex flex-col gap-1">
-          {sections.map((s) => {
-            const active = s.id === activeId;
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(s.id)}
-                  className={`w-full rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors ${
-                    active
-                      ? "border-[var(--color-border)] bg-[var(--color-accent)] font-medium"
-                      : "border-transparent hover:bg-[var(--color-accent)]/60"
-                  }`}
-                >
-                  {s.title}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </CardContent>
-    </Card>
   );
 }
 
 function BuySellPanel({
   section,
   links,
-  lang: _lang,
 }: {
   section: BuySellSection | undefined;
   links: TaLink[];
-  lang: Lang;
 }) {
   const { t } = useTranslation();
   if (!section) return <Card />;
@@ -124,25 +88,5 @@ function BuySellPanel({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function LinkChips({ links }: { links: TaLink[] }) {
-  return (
-    <ul className="flex flex-wrap gap-2">
-      {links.map((l) => (
-        <li key={l.url}>
-          <a
-            href={l.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] px-2.5 py-1 text-sm hover:bg-[var(--color-accent)]"
-          >
-            <span>{l.title}</span>
-            <ExternalLink className="h-3.5 w-3.5 text-[var(--color-muted-fg)]" aria-hidden />
-          </a>
-        </li>
-      ))}
-    </ul>
   );
 }

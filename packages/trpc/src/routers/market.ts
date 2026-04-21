@@ -38,6 +38,7 @@ import {
   fetchIndexConstituentsFromWikipedia,
   fetchTsxCompositeSymbols,
 } from "../lib/wikipedia-constituents";
+import { normalizeExchange } from "../market/exchanges";
 
 const yf = new YahooFinance();
 
@@ -1315,12 +1316,6 @@ export const marketRouter = createTRPCRouter({
           enableFuzzyQuery: false,
         });
         const quotes = Array.isArray(res?.quotes) ? res.quotes : [];
-        const exchangeMap: Record<string, string> = {
-          NMS: "NASDAQ", NGM: "NASDAQ", NCM: "NASDAQ", NAS: "NASDAQ",
-          NYQ: "NYSE", ASE: "NYSE MKT", PCX: "NYSE ARCA",
-          BATS: "BATS", IEX: "IEX",
-          TOR: "TSX", VAN: "TSXV", CNQ: "CSE", NEO: "NEO",
-        };
         const out: SymbolEntry[] = [];
         for (const q of quotes) {
           const sym = (q as { symbol?: string }).symbol;
@@ -1340,8 +1335,7 @@ export const marketRouter = createTRPCRouter({
             (q as { longname?: string }).longname ??
             (q as { name?: string }).name ??
             sym;
-          const exchRaw = String((q as { exchange?: string }).exchange ?? "").toUpperCase();
-          const exchange = exchangeMap[exchRaw] ?? exchRaw ?? "";
+          const exchange = normalizeExchange((q as { exchange?: string }).exchange);
           out.push({ symbol: sym, name, exchange, assetType });
           if (out.length >= limit) break;
         }

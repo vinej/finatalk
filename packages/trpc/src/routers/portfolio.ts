@@ -14,12 +14,7 @@ import { RangeSchema, SymbolSchema } from "../schemas/indicator";
 import { generatePortfolioReport } from "../lib/pdf-report";
 import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
 import { resolveAssetType } from "../lib/market-provider";
-
-const CHART_PALETTE = [
-  "#3b82f6", "#10b981", "#f59e0b", "#ef4444",
-  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316",
-  "#06b6d4", "#84cc16", "#e11d48", "#7c3aed",
-];
+import { paletteColor } from "../constants/chart";
 
 const TransactionTypeSchema = z.enum(["buy", "sell", "dividend"]);
 
@@ -866,7 +861,7 @@ export const portfolioRouter = createTRPCRouter({
           range: input.range,
           series: uniqueSymbols.map((symbol, i) => ({
             symbol,
-            color: CHART_PALETTE[i % CHART_PALETTE.length]!,
+            color: paletteColor(i),
             points: symbolData.get(symbol)?.points ?? [],
           })),
         },

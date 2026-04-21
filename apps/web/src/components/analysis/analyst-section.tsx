@@ -1,30 +1,8 @@
 import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
-
-function formatCurrency(value: number | null | undefined, currency: string | null) {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const ccy = currency ?? "USD";
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: ccy,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${ccy} ${value.toLocaleString()}`;
-  }
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString();
-  } catch {
-    return iso;
-  }
-}
 
 function ratingTone(rating: string | null): string {
   if (!rating) return "text-[var(--color-muted-fg)]";

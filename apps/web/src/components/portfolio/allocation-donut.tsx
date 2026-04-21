@@ -1,11 +1,7 @@
-const PALETTE = [
-  "#3b82f6", "#10b981", "#f59e0b", "#ef4444",
-  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316",
-] as const;
+import { CHART_PALETTE } from "@/lib/chart-theme";
 
 export function colorFor(symbol: string, index: number): string {
-  const base = PALETTE[index % PALETTE.length]!;
-  if (index < PALETTE.length) return base;
+  if (index < CHART_PALETTE.length) return CHART_PALETTE[index]!;
   let hash = 0;
   for (let i = 0; i < symbol.length; i++) hash = (hash * 31 + symbol.charCodeAt(i)) | 0;
   const hue = Math.abs(hash) % 360;

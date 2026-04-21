@@ -313,7 +313,7 @@ function evalPivotPointReaction(results: AnalyzeResult[], price: number, t: Tr):
 function evalLiqSweepReversal(results: AnalyzeResult[], candles: Candle[], t: Tr): StrategySignal {
   const sweeps = findOne(results, "liqSweep")?.series.events ?? [];
   const lastCandleTime = candles.at(-1)?.time ?? 0;
-  const recent = sweeps.filter((e) => lastCandleTime - e.time < 5 * 86_400_000 * 2); // ~10 days window
+  const recent = sweeps.filter((e) => lastCandleTime - e.time < 10 * 86_400); // ~10-day window (candle time is unix seconds)
   const reasons: string[] = [];
   if (recent.length === 0) {
     reasons.push(t("No recent liquidity sweeps — wait.", "Aucun sweep de liquidité récent — patienter."));

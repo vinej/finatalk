@@ -2,26 +2,10 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDate, formatNum, formatPct, formatShares } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString();
-  } catch {
-    return iso;
-  }
-}
-
-function formatShares(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
-}
-
-function formatDays(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return value.toFixed(2);
-}
+const formatDays = (value: number | null | undefined) => formatNum(value, 2);
 
 function changeTone(change: number | null | undefined): string {
   if (change == null || !Number.isFinite(change)) return "text-[var(--color-muted-fg)]";
@@ -30,11 +14,8 @@ function changeTone(change: number | null | undefined): string {
   return "text-[var(--color-muted-fg)]";
 }
 
-function formatPercent(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const v = Math.abs(value) > 1 ? value : value * 100;
-  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
-}
+const formatPercent = (value: number | null | undefined) =>
+  formatPct(value, { signed: true, autoScale: true });
 
 export function ShortInterestSection({
   symbol,

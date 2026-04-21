@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Markdown } from "@/components/ai/markdown";
+import { LinkChips } from "@/components/learn/link-chips";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BUY_SELL_GUIDE } from "@/lib/buy-sell-guide";
 import { KINDS, kindDescription, kindFullName, kindLabel, type IndicatorKind } from "@/lib/indicator-defaults";
 import { pickLang, type Lang } from "@/lib/lang";
-import { TA_GENERAL_LINKS, TA_GUIDE, type TaLink } from "@/lib/ta-guide";
+import { TA_GENERAL_LINKS, TA_GUIDE } from "@/lib/ta-guide";
 
 export const Route = createFileRoute("/_auth/dashboard_/learn-ta")({
   component: LearnTAPage,
@@ -250,22 +251,3 @@ function Block({ label, text }: { label: string; text: string }) {
   );
 }
 
-function LinkChips({ links }: { links: TaLink[] }) {
-  return (
-    <ul className="flex flex-wrap gap-2">
-      {links.map((l) => (
-        <li key={l.url}>
-          <a
-            href={l.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] px-2.5 py-1 text-sm hover:bg-[var(--color-accent)]"
-          >
-            <span>{l.title}</span>
-            <ExternalLink className="h-3.5 w-3.5 text-[var(--color-muted-fg)]" aria-hidden />
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}

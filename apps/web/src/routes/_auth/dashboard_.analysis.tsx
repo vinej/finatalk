@@ -15,11 +15,13 @@ import { OwnershipSection } from "@/components/analysis/ownership-section";
 import { ShortInterestSection } from "@/components/analysis/short-interest-section";
 import { OpenAnalysisAction, type AnalysisLoadData } from "@/components/analysis/open-analysis-action";
 import { SaveAnalysisAction } from "@/components/analysis/save-analysis-action";
+import { StrategySelect } from "@/components/strategy-select";
 import { ConfidenceBadge } from "@/components/confidence-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionsSelect } from "@/components/ui/options-select";
 import {
   createActive,
   DEFAULT_SEED,
@@ -28,14 +30,25 @@ import {
   type IndicatorColor,
   type IndicatorSpec,
 } from "@/lib/indicator-defaults";
-import { STRATEGY_GROUPS, STRATEGY_GUIDE, STRATEGY_KINDS, type StrategyKind } from "@/lib/strategy-guide";
+import { STRATEGY_GUIDE, STRATEGY_KINDS, type StrategyKind } from "@/lib/strategy-guide";
 import { STRATEGY_CHART_INDICATORS } from "@/lib/strategy-indicators";
 import { evaluateStrategy, type StrategyAction } from "@/lib/strategy-signals";
 import { pickLang, type Lang } from "@/lib/lang";
 import { loadAnalysisState, saveAnalysisState } from "@/lib/analysis-persistence";
 import { COMMODITIES, COMMODITY_EXCHANGE_BY_CATEGORY } from "@/lib/commodities";
+import { formatCompactNumber } from "@/lib/format";
+import {
+  clampRangeForInterval,
+  compatibleRangesForInterval,
+  INTERVALS,
+  isIntradayInterval,
+  RANGES,
+  type IntervalValue,
+  type RangeValue,
+} from "@/lib/ranges";
 import { CRYPTOS } from "@/lib/crypto";
 import { INDICES } from "@/lib/indices";
+import { SYMBOL_RE, sanitizeSymbol } from "@/lib/symbol";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
@@ -53,42 +66,6 @@ export const Route = createFileRoute("/_auth/dashboard_/analysis")({
 });
 
 type AnalyzeResult = RouterOutputs["market"]["analyze"]["results"][number];
-
-const RANGES = ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
-const INTERVALS = ["1m", "5m", "15m", "30m", "60m", "90m", "1d", "1wk", "1mo"] as const;
-
-type RangeValue = (typeof RANGES)[number];
-type IntervalValue = (typeof INTERVALS)[number];
-
-const INTRADAY_INTERVALS: readonly IntervalValue[] = ["1m", "5m", "15m", "30m", "60m", "90m"];
-
-function isIntradayInterval(i: IntervalValue): boolean {
-  return (INTRADAY_INTERVALS as readonly string[]).includes(i);
-}
-
-function compatibleRangesForInterval(i: IntervalValue): readonly RangeValue[] {
-  if (i === "1m") return ["1d", "5d"];
-  if (i === "5m" || i === "15m" || i === "30m" || i === "90m") return ["1d", "5d", "1mo"];
-  if (i === "60m") return ["1d", "5d", "1mo", "3mo", "6mo", "1y"];
-  return ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"];
-}
-
-function defaultRangeForInterval(i: IntervalValue): RangeValue {
-  if (i === "1m") return "5d";
-  if (isIntradayInterval(i)) return i === "60m" ? "1mo" : "5d";
-  return "6mo";
-}
-
-function clampRangeForInterval(r: RangeValue, i: IntervalValue): RangeValue {
-  const allowed = compatibleRangesForInterval(i);
-  return allowed.includes(r) ? r : defaultRangeForInterval(i);
-}
-const SYMBOL_RE = /^[A-Z0-9.\-=^]+$/;
-function sanitizeSymbol(s: string | null | undefined): string {
-  if (!s) return "";
-  const u = s.trim().toUpperCase();
-  return SYMBOL_RE.test(u) ? u : "";
-}
 
 function AnalysisPage() {
   const { t, i18n } = useTranslation();
@@ -628,33 +605,24 @@ function AnalysisPage() {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="range">{t("analysis.range")}</Label>
-              <select
+              <OptionsSelect
                 id="range"
                 value={range}
-                onChange={(e) => setRange(e.target.value as RangeValue)}
-                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
-              >
-                {compatibleRangesForInterval(interval).map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
+                onChange={setRange}
+                options={compatibleRangesForInterval(interval)}
+              />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="interval">{t("analysis.interval")}</Label>
-              <select
+              <OptionsSelect
                 id="interval"
                 value={interval}
-                onChange={(e) => {
-                  const next = e.target.value as IntervalValue;
+                onChange={(next) => {
                   setInterval(next);
                   setRange((r) => clampRangeForInterval(r, next));
                 }}
-                className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
-              >
-                {INTERVALS.map((i) => (
-                  <option key={i} value={i}>{i}</option>
-                ))}
-              </select>
+                options={INTERVALS}
+              />
             </div>
             <label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-[var(--color-border)] px-3 text-sm">
               <input
@@ -759,27 +727,15 @@ function AnalysisPage() {
                   : t("analysis.indicators")}
               </CardTitle>
             </button>
-            <select
+            <StrategySelect
               aria-label={t("analysis.applyStrategy")}
+              strategies={STRATEGY_KINDS.filter((k) => STRATEGY_CHART_INDICATORS[k])}
+              lang={pickLang(i18n.language)}
               value=""
-              onChange={(e) => {
-                const v = e.target.value as StrategyKind | "";
-                if (v) applyStrategy(v);
-                e.target.value = "";
-              }}
+              onChange={(v) => { if (v) applyStrategy(v); }}
+              placeholder={t("analysis.applyStrategy")}
               className="h-9 max-w-[240px] rounded-md border border-[var(--color-border)] bg-transparent px-2 text-xs"
-            >
-              <option value="">{t("analysis.applyStrategy")}</option>
-              {STRATEGY_KINDS.filter((k) => {
-                if (!STRATEGY_CHART_INDICATORS[k]) return false;
-                const isIntradayStrat = (STRATEGY_GROUPS.intraday as readonly StrategyKind[]).includes(k);
-                return isIntradayInterval(interval) ? isIntradayStrat : !isIntradayStrat;
-              }).map((k) => (
-                <option key={k} value={k}>
-                  {STRATEGY_GUIDE[pickLang(i18n.language)][k].label}
-                </option>
-              ))}
-            </select>
+            />
           </CardHeader>
           {!indicatorsCollapsed && (
             <CardContent className="flex flex-col gap-3">
@@ -1004,13 +960,7 @@ function formatPrice(v: number): string {
   return v.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
 
-function formatVolume(v: number): string {
-  if (!Number.isFinite(v) || v <= 0) return "—";
-  if (v >= 1e9) return (v / 1e9).toFixed(2) + "B";
-  if (v >= 1e6) return (v / 1e6).toFixed(2) + "M";
-  if (v >= 1e3) return (v / 1e3).toFixed(2) + "K";
-  return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
-}
+const formatVolume = (v: number): string => formatCompactNumber(v);
 
 function LatestCandleCells({ candle, prev }: { candle: CandleLike | null; prev: CandleLike | null }) {
   const { t } = useTranslation();

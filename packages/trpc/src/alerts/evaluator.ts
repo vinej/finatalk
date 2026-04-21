@@ -1,10 +1,18 @@
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
-import { ADX, BollingerBands, EMA, MACD, RSI, SMA } from "trading-signals";
 import { db, alert, notification } from "@finatalk/db";
 import { fetchCandlesWithCurrency } from "../routers/market";
 import type { Candle } from "../lib/market-provider";
 import type { AlertConditionType, AlertIndicatorParams } from "../constants/alerts";
+import {
+  adxSeries,
+  bollingerSeries,
+  lastValue,
+  macdCrossEvents,
+  macdSeries,
+  maCrossEvents,
+  rsiSeries,
+} from "../indicators/primitives";
 
 const COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const TICK_INTERVAL_MS = 5 * 60 * 1000;
@@ -12,23 +20,11 @@ const TICK_INTERVAL_MS = 5 * 60 * 1000;
 type AlertRow = typeof alert.$inferSelect;
 
 function latestRsi(candles: Candle[], period: number): number | null {
-  const rsi = new RSI(period);
-  let last: number | null = null;
-  for (const c of candles) {
-    const v = rsi.update(c.close, false);
-    if (v != null) last = Number(v);
-  }
-  return last;
+  return lastValue(rsiSeries(candles, period), "value");
 }
 
 function latestAdx(candles: Candle[], period: number): number | null {
-  const adx = new ADX(period);
-  let last: number | null = null;
-  for (const c of candles) {
-    const v = adx.update({ high: c.high, low: c.low, close: c.close }, false);
-    if (v != null) last = Number(v);
-  }
-  return last;
+  return lastValue(adxSeries(candles, period), "adx");
 }
 
 function latestBollinger(
@@ -36,28 +32,9 @@ function latestBollinger(
   period: number,
   stdDev: number,
 ): { upper: number; lower: number; middle: number } | null {
-  const bb = new BollingerBands(period, stdDev);
-  let last: { upper: number; lower: number; middle: number } | null = null;
-  for (const c of candles) {
-    const v = bb.update(c.close, false);
-    if (v != null) last = { upper: v.upper, lower: v.lower, middle: v.middle };
-  }
-  return last;
-}
-
-function macdSeries(
-  candles: Candle[],
-  fast: number,
-  slow: number,
-  signal: number,
-): { histogram: number }[] {
-  const macd = new MACD(new EMA(fast), new EMA(slow), new EMA(signal));
-  const out: { histogram: number }[] = [];
-  for (const c of candles) {
-    const v = macd.update(c.close, false);
-    if (v != null) out.push({ histogram: v.histogram });
-  }
-  return out;
+  const series = bollingerSeries(candles, period, stdDev);
+  const last = series[series.length - 1];
+  return last ? { upper: last.upper, lower: last.lower, middle: last.middle } : null;
 }
 
 function crossedRecently(
@@ -67,26 +44,9 @@ function crossedRecently(
   direction: "bull" | "bear",
   lookbackBars: number,
 ): boolean {
-  const fastMa = new SMA(fast);
-  const slowMa = new SMA(slow);
-  let prevDiff: number | null = null;
-  const events: { idx: number; dir: "bull" | "bear" }[] = [];
-  let idx = 0;
-  for (const c of candles) {
-    const f = fastMa.update(c.close, false);
-    const s = slowMa.update(c.close, false);
-    if (f != null && s != null) {
-      const diff = Number(f) - Number(s);
-      if (prevDiff != null && prevDiff !== 0 && diff !== 0) {
-        if (prevDiff < 0 && diff > 0) events.push({ idx, dir: "bull" });
-        else if (prevDiff > 0 && diff < 0) events.push({ idx, dir: "bear" });
-      }
-      prevDiff = diff;
-    }
-    idx++;
-  }
+  const events = maCrossEvents(candles, fast, slow, "sma");
   const total = candles.length;
-  return events.some((e) => e.dir === direction && total - e.idx <= lookbackBars);
+  return events.some((e) => e.direction === direction && total - e.idx <= lookbackBars);
 }
 
 function macdCrossedRecently(
@@ -98,15 +58,8 @@ function macdCrossedRecently(
   lookbackBars: number,
 ): boolean {
   const series = macdSeries(candles, fast, slow, signal);
-  if (series.length < 2) return false;
-  const start = Math.max(1, series.length - lookbackBars);
-  for (let i = start; i < series.length; i++) {
-    const prev = series[i - 1]!.histogram;
-    const cur = series[i]!.histogram;
-    if (direction === "bull" && prev < 0 && cur > 0) return true;
-    if (direction === "bear" && prev > 0 && cur < 0) return true;
-  }
-  return false;
+  const events = macdCrossEvents(series);
+  return events.some((e) => e.direction === direction && series.length - e.idx <= lookbackBars);
 }
 
 function nDayHigh(candles: Candle[], lookback: number): number | null {

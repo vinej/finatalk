@@ -18,7 +18,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StrategySelect } from "@/components/strategy-select";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
+import { SortTh } from "@/components/ui/sort-th";
+import { createBooleanFlag } from "@/lib/boolean-flag";
 import {
   clearLastPortfolioId,
   saveLastPortfolioId,
@@ -32,6 +35,7 @@ import {
 } from "@/lib/strategy-signals";
 import { createActive, type IndicatorKind } from "@/lib/indicator-defaults";
 import { CRYPTOS } from "@/lib/crypto";
+import { formatCurrency, formatPct, formatQty } from "@/lib/format";
 import { INDICES } from "@/lib/indices";
 import { pickLang } from "@/lib/lang";
 import { trpc } from "@/lib/trpc";
@@ -46,28 +50,6 @@ type SortKey = "symbol" | "quantity" | "costBasis" | "purchaseDate" | "lastClose
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
-}
-
-function formatCurrency(value: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${currency} ${value.toFixed(2)}`;
-  }
-}
-
-function formatPct(value: number | null | undefined) {
-  if (value == null || !Number.isFinite(value)) return "—";
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
-}
-
-function formatQty(q: number) {
-  return q.toLocaleString(undefined, { maximumFractionDigits: 8 });
 }
 
 function PortfolioDetailPage() {
@@ -780,27 +762,27 @@ function PortfolioDetailPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-muted-fg)]">
-                  <Th onClick={() => toggleSort("symbol")} active={sortKey === "symbol"} dir={sortDir}>
+                  <SortTh onClick={() => toggleSort("symbol")} active={sortKey === "symbol"} dir={sortDir}>
                     {t("portfolio.symbol")}
-                  </Th>
-                  <Th onClick={() => toggleSort("quantity")} active={sortKey === "quantity"} dir={sortDir} align="right">
+                  </SortTh>
+                  <SortTh onClick={() => toggleSort("quantity")} active={sortKey === "quantity"} dir={sortDir} align="right">
                     {t("portfolio.quantity")}
-                  </Th>
-                  <Th onClick={() => toggleSort("costBasis")} active={sortKey === "costBasis"} dir={sortDir} align="right">
+                  </SortTh>
+                  <SortTh onClick={() => toggleSort("costBasis")} active={sortKey === "costBasis"} dir={sortDir} align="right">
                     {t("portfolio.avgCost")}
-                  </Th>
-                  <Th onClick={() => toggleSort("purchaseDate")} active={sortKey === "purchaseDate"} dir={sortDir}>
+                  </SortTh>
+                  <SortTh onClick={() => toggleSort("purchaseDate")} active={sortKey === "purchaseDate"} dir={sortDir}>
                     {t("portfolio.purchaseDate")}
-                  </Th>
-                  <Th onClick={() => toggleSort("lastClose")} active={sortKey === "lastClose"} dir={sortDir} align="right">
+                  </SortTh>
+                  <SortTh onClick={() => toggleSort("lastClose")} active={sortKey === "lastClose"} dir={sortDir} align="right">
                     {t("portfolio.lastPrice")}
-                  </Th>
-                  <Th onClick={() => toggleSort("marketValue")} active={sortKey === "marketValue"} dir={sortDir} align="right">
+                  </SortTh>
+                  <SortTh onClick={() => toggleSort("marketValue")} active={sortKey === "marketValue"} dir={sortDir} align="right">
                     {t("portfolio.marketValue")}
-                  </Th>
-                  <Th onClick={() => toggleSort("unrealizedAbs")} active={sortKey === "unrealizedAbs"} dir={sortDir} align="right">
+                  </SortTh>
+                  <SortTh onClick={() => toggleSort("unrealizedAbs")} active={sortKey === "unrealizedAbs"} dir={sortDir} align="right">
                     {t("portfolio.unrealizedPl")}
-                  </Th>
+                  </SortTh>
                   <th className="px-2 py-2 text-xs font-medium uppercase text-[var(--color-muted-fg)]">
                     {t("portfolio.analysis")}
                   </th>
@@ -1414,68 +1396,8 @@ function TotalTile({
   );
 }
 
-function Th({
-  children,
-  onClick,
-  active,
-  dir,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  active: boolean;
-  dir: "asc" | "desc";
-  align?: "left" | "right";
-}) {
-  return (
-    <th className={`px-2 py-2 ${align === "right" ? "text-right" : "text-left"}`}>
-      <button
-        type="button"
-        onClick={onClick}
-        className={
-          "flex items-center gap-1 text-xs font-medium uppercase " +
-          (active ? "text-[var(--color-fg)]" : "text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]") +
-          (align === "right" ? " ml-auto" : "")
-        }
-      >
-        {children}
-        {active && <span className="text-[10px]">{dir === "asc" ? "▲" : "▼"}</span>}
-      </button>
-    </th>
-  );
-}
-
-const DIVIDEND_COLLAPSED_KEY = "finatalk:dividend-collapsed";
-
-function loadDividendCollapsed(): boolean {
-  try {
-    return window.localStorage.getItem(DIVIDEND_COLLAPSED_KEY) !== "false";
-  } catch {
-    return true;
-  }
-}
-
-function saveDividendCollapsed(collapsed: boolean): void {
-  try {
-    window.localStorage.setItem(DIVIDEND_COLLAPSED_KEY, String(collapsed));
-  } catch { /* ignore */ }
-}
-
-const STRATEGY_SIGNAL_COLLAPSED_KEY = "finatalk:strategy-signal-collapsed";
-
-function loadStrategySignalCollapsed(): boolean {
-  try {
-    return window.localStorage.getItem(STRATEGY_SIGNAL_COLLAPSED_KEY) !== "false";
-  } catch {
-    return true;
-  }
-}
-
-function saveStrategySignalCollapsed(collapsed: boolean): void {
-  try {
-    window.localStorage.setItem(STRATEGY_SIGNAL_COLLAPSED_KEY, String(collapsed));
-  } catch { /* ignore */ }
-}
+const dividendCollapsedFlag = createBooleanFlag("finatalk:dividend-collapsed", true);
+const strategySignalCollapsedFlag = createBooleanFlag("finatalk:strategy-signal-collapsed", true);
 
 function TransactionPanel({
   holdingId,
@@ -1800,11 +1722,11 @@ function DividendSection({
   currency: string;
 }) {
   const { t } = useTranslation();
-  const [collapsed, setCollapsed] = useState(loadDividendCollapsed);
+  const [collapsed, setCollapsed] = useState(dividendCollapsedFlag.load);
 
   function toggle() {
     setCollapsed((v) => {
-      saveDividendCollapsed(!v);
+      dividendCollapsedFlag.save(!v);
       return !v;
     });
   }
@@ -1931,11 +1853,11 @@ function StrategySignalSection({
 }) {
   const { t, i18n } = useTranslation();
   const lang = pickLang(i18n.language);
-  const [collapsed, setCollapsed] = useState(loadStrategySignalCollapsed);
+  const [collapsed, setCollapsed] = useState(strategySignalCollapsedFlag.load);
 
   function toggle() {
     setCollapsed((v) => {
-      saveStrategySignalCollapsed(!v);
+      strategySignalCollapsedFlag.save(!v);
       return !v;
     });
   }
@@ -1974,20 +1896,16 @@ function StrategySignalSection({
           </CardTitle>
         </button>
         <div className="flex items-center gap-2">
-          <select
-            className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs"
+          <StrategySelect
+            strategies={EVALUABLE_STRATEGIES}
+            lang={lang}
             value={strategyKind ?? ""}
-            onChange={(e) => onChangeStrategy((e.target.value || null) as StrategyKind | null)}
+            onChange={(v) => onChangeStrategy((v || null) as StrategyKind | null)}
+            placeholder={t("strategySignal.none")}
+            className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs"
             disabled={saving}
             title={t("strategySignal.linkHint")}
-          >
-            <option value="">{t("strategySignal.none")}</option>
-            {EVALUABLE_STRATEGIES.map((k) => (
-              <option key={k} value={k}>
-                {STRATEGY_GUIDE[lang][k].label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </CardHeader>
       {!collapsed && (

@@ -17,6 +17,12 @@ export const BACKTEST_SUPPORTED_STRATEGIES = [
   "vwapStrategy",
   "donchianTurtleBreakout",
   "trendStructureVolatility",
+  "supportResistancePullback",
+  "openingRangeBreakout",
+  "volumeProfileRotation",
+  "orderBlockRetest",
+  "pivotPointReaction",
+  "liqSweepReversal",
 ] as const satisfies readonly StrategyKind[];
 export type BacktestStrategy = (typeof BACKTEST_SUPPORTED_STRATEGIES)[number];
 
@@ -62,6 +68,29 @@ export const BACKTEST_STRATEGY_INDICATORS: Record<BacktestStrategy, IndicatorSpe
     { kind: "atr", period: 14 },
     { kind: "keltner", period: 20, atrPeriod: 20, multiplier: 2 },
     { kind: "vwap" },
+  ],
+  supportResistancePullback: [
+    { kind: "srLevels", lookback: 500, strength: 3, tolerancePct: 0.5, maxLevels: 8 },
+    { kind: "atr", period: 14 },
+  ],
+  openingRangeBreakout: [
+    { kind: "atr", period: 14 },
+  ],
+  volumeProfileRotation: [
+    { kind: "volProfile", lookback: 200, bins: 40, valueAreaPct: 0.7, showHistogram: false },
+    { kind: "atr", period: 14 },
+  ],
+  orderBlockRetest: [
+    { kind: "orderBlock", lookback: 200, impulsePct: 1.5, showMitigated: false },
+    { kind: "atr", period: 14 },
+  ],
+  pivotPointReaction: [
+    { kind: "pivots", method: "classic", timeframe: "weekly" },
+    { kind: "atr", period: 14 },
+  ],
+  liqSweepReversal: [
+    { kind: "liqSweep", lookback: 10 },
+    { kind: "atr", period: 14 },
   ],
 };
 
@@ -375,7 +404,7 @@ export function runBacktest(
   if (candles.length > 1) {
     const first = candles[0]!;
     const last = candles[candles.length - 1]!;
-    totalDays = Math.max(1, (last.time - first.time) / 86_400_000);
+    totalDays = Math.max(1, (last.time - first.time) / 86_400);
     const years = totalDays / 365.25;
     if (years > 0 && finalEquity > 0) {
       cagr = (Math.pow(finalEquity / initialEquity, 1 / years) - 1) * 100;
@@ -652,7 +681,7 @@ export function runPortfolio(
   let totalDays = 0;
   let cagr = 0;
   if (sortedTimes.length > 1) {
-    totalDays = Math.max(1, (sortedTimes.at(-1)! - sortedTimes[0]!) / 86_400_000);
+    totalDays = Math.max(1, (sortedTimes.at(-1)! - sortedTimes[0]!) / 86_400);
     const years = totalDays / 365.25;
     if (years > 0 && finalEquity > 0) {
       cagr = (Math.pow(finalEquity / initialEquity, 1 / years) - 1) * 100;

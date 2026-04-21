@@ -13,12 +13,32 @@ function defaults(p: string) {
   return DEFAULTS[p] ?? DEFAULTS.anthropic!;
 }
 
+// Injects `think: false` into every Ollama request so reasoning/thinking
+// models (medgemma, qwen3, deepseek-r1, magistral…) return only the final
+// answer. Ollama's OpenAI-compat endpoint accepts this extension field.
+const injectThinkFalse: typeof fetch = async (input, init) => {
+  let nextInit = init;
+  if (init && typeof init.body === "string") {
+    try {
+      const body: unknown = JSON.parse(init.body);
+      if (body && typeof body === "object") {
+        (body as Record<string, unknown>).think = false;
+        nextInit = { ...init, body: JSON.stringify(body) };
+      }
+    } catch {
+      /* non-JSON body — leave as-is */
+    }
+  }
+  return fetch(input, nextInit);
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createProviderModel(p: string, modelId: string): any {
   if (p === "ollama") {
     const ollama = createOpenAI({
       baseURL: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434/v1",
       apiKey: "ollama",
+      fetch: injectThinkFalse,
     });
     return ollama(modelId);
   }

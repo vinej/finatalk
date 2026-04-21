@@ -1,6 +1,5 @@
 import {
   CandlestickSeries,
-  type IChartApi,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   HistogramSeries,
@@ -8,12 +7,12 @@ import {
   type SeriesMarker,
   type SeriesType,
   type Time,
-  createChart,
   createSeriesMarkers,
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import type { RouterOutputs } from "@finatalk/trpc";
 import { CANDLE_DOWN, CANDLE_UP, type IndicatorColor } from "@/lib/indicator-legend";
+import { useLightweightChart } from "@/lib/use-lightweight-chart";
 
 type Analyze = RouterOutputs["market"]["analyze"];
 export type Candle = Analyze["candles"][number];
@@ -28,33 +27,12 @@ export function MarketChart({
   results: IndicatorResult[];
   colors: IndicatorColor[];
 }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
+  const { containerRef, chartRef } = useLightweightChart({ timeVisible: true });
   const seriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
   const markersRef = useRef<ISeriesMarkersPluginApi<Time>[]>([]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const isDark = document.documentElement.classList.contains("dark");
-    const textColor = isDark ? "#e5e7eb" : "#1f2937";
-    const gridColor = isDark ? "#374151" : "#e5e7eb";
-    const chart = createChart(containerRef.current, {
-      autoSize: true,
-      layout: {
-        background: { color: "transparent" },
-        textColor,
-      },
-      grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
-      },
-      timeScale: { timeVisible: true, secondsVisible: false },
-      rightPriceScale: { borderColor: gridColor },
-    });
-    chartRef.current = chart;
     return () => {
-      chart.remove();
-      chartRef.current = null;
       seriesRef.current = [];
       markersRef.current = [];
     };

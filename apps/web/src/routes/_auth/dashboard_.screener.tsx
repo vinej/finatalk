@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
+import { SortTh } from "@/components/ui/sort-th";
+import { formatNum, formatPct } from "@/lib/format";
 import {
   loadScreenerState,
   saveScreenerState,
@@ -20,17 +22,6 @@ export const Route = createFileRoute("/_auth/dashboard_/screener")({
 });
 
 type SortKey = "symbol" | "lastClose" | "rsi" | "sma50" | "sma200" | "change1d";
-
-function formatNum(v: number | null, decimals = 2) {
-  if (v == null || !Number.isFinite(v)) return "—";
-  return v.toFixed(decimals);
-}
-
-function formatPct(v: number | null) {
-  if (v == null || !Number.isFinite(v)) return "—";
-  const sign = v > 0 ? "+" : "";
-  return `${sign}${v.toFixed(2)}%`;
-}
 
 function ScreenerPage() {
   const { t } = useTranslation();
@@ -539,39 +530,3 @@ function RsiBadge({ value }: { value: number | null }) {
   return <span className={color}>{value.toFixed(1)}</span>;
 }
 
-function SortTh({
-  children,
-  onClick,
-  active,
-  dir,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  active: boolean;
-  dir: "asc" | "desc";
-  align?: "left" | "right";
-}) {
-  return (
-    <th
-      className={`px-2 py-2 ${align === "right" ? "text-right" : "text-left"}`}
-    >
-      <button
-        type="button"
-        onClick={onClick}
-        className={
-          "flex items-center gap-1 text-xs font-medium uppercase " +
-          (active
-            ? "text-[var(--color-fg)]"
-            : "text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]") +
-          (align === "right" ? " ml-auto" : "")
-        }
-      >
-        {children}
-        {active && (
-          <span className="text-[10px]">{dir === "asc" ? "▲" : "▼"}</span>
-        )}
-      </button>
-    </th>
-  );
-}
