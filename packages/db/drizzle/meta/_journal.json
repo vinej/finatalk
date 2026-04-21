@@ -78,6 +78,20 @@
       "when": 1776709484005,
       "tag": "0010_happy_whirlwind",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776776599272,
+      "tag": "0011_daily_bloodscream",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776780020005,
+      "tag": "0012_young_overlord",
+      "breakpoints": true
     }
   ]
 }

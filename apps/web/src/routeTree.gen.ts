@@ -34,11 +34,13 @@ import { Route as AuthDashboardLearnInvestmentRouteImport } from './routes/_auth
 import { Route as AuthDashboardLearnFeesRouteImport } from './routes/_auth/dashboard_.learn-fees'
 import { Route as AuthDashboardLearnBuySellRouteImport } from './routes/_auth/dashboard_.learn-buy-sell'
 import { Route as AuthDashboardIndicesRouteImport } from './routes/_auth/dashboard_.indices'
+import { Route as AuthDashboardCryptoRouteImport } from './routes/_auth/dashboard_.crypto'
 import { Route as AuthDashboardComparisonRouteImport } from './routes/_auth/dashboard_.comparison'
 import { Route as AuthDashboardCommoditiesRouteImport } from './routes/_auth/dashboard_.commodities'
 import { Route as AuthDashboardCalendarRouteImport } from './routes/_auth/dashboard_.calendar'
 import { Route as AuthDashboardBacktestRouteImport } from './routes/_auth/dashboard_.backtest'
 import { Route as AuthDashboardAnalysisRouteImport } from './routes/_auth/dashboard_.analysis'
+import { Route as AuthDashboardAlertsRouteImport } from './routes/_auth/dashboard_.alerts'
 import { Route as AuthDashboardAdvisorRouteImport } from './routes/_auth/dashboard_.advisor'
 import { Route as AuthDashboardPortfoliosPortfolioIdRouteImport } from './routes/_auth/dashboard_.portfolios_.$portfolioId'
 
@@ -168,6 +170,11 @@ const AuthDashboardIndicesRoute = AuthDashboardIndicesRouteImport.update({
   path: '/dashboard/indices',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardCryptoRoute = AuthDashboardCryptoRouteImport.update({
+  id: '/dashboard_/crypto',
+  path: '/dashboard/crypto',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardComparisonRoute = AuthDashboardComparisonRouteImport.update({
   id: '/dashboard_/comparison',
   path: '/dashboard/comparison',
@@ -194,6 +201,11 @@ const AuthDashboardAnalysisRoute = AuthDashboardAnalysisRouteImport.update({
   path: '/dashboard/analysis',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardAlertsRoute = AuthDashboardAlertsRouteImport.update({
+  id: '/dashboard_/alerts',
+  path: '/dashboard/alerts',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardAdvisorRoute = AuthDashboardAdvisorRouteImport.update({
   id: '/dashboard_/advisor',
   path: '/dashboard/advisor',
@@ -215,11 +227,13 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/advisor': typeof AuthDashboardAdvisorRoute
+  '/dashboard/alerts': typeof AuthDashboardAlertsRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/backtest': typeof AuthDashboardBacktestRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
+  '/dashboard/crypto': typeof AuthDashboardCryptoRoute
   '/dashboard/indices': typeof AuthDashboardIndicesRoute
   '/dashboard/learn-buy-sell': typeof AuthDashboardLearnBuySellRoute
   '/dashboard/learn-fees': typeof AuthDashboardLearnFeesRoute
@@ -248,11 +262,13 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof AuthDashboardRoute
   '/dashboard/advisor': typeof AuthDashboardAdvisorRoute
+  '/dashboard/alerts': typeof AuthDashboardAlertsRoute
   '/dashboard/analysis': typeof AuthDashboardAnalysisRoute
   '/dashboard/backtest': typeof AuthDashboardBacktestRoute
   '/dashboard/calendar': typeof AuthDashboardCalendarRoute
   '/dashboard/commodities': typeof AuthDashboardCommoditiesRoute
   '/dashboard/comparison': typeof AuthDashboardComparisonRoute
+  '/dashboard/crypto': typeof AuthDashboardCryptoRoute
   '/dashboard/indices': typeof AuthDashboardIndicesRoute
   '/dashboard/learn-buy-sell': typeof AuthDashboardLearnBuySellRoute
   '/dashboard/learn-fees': typeof AuthDashboardLearnFeesRoute
@@ -283,11 +299,13 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dashboard_/advisor': typeof AuthDashboardAdvisorRoute
+  '/_auth/dashboard_/alerts': typeof AuthDashboardAlertsRoute
   '/_auth/dashboard_/analysis': typeof AuthDashboardAnalysisRoute
   '/_auth/dashboard_/backtest': typeof AuthDashboardBacktestRoute
   '/_auth/dashboard_/calendar': typeof AuthDashboardCalendarRoute
   '/_auth/dashboard_/commodities': typeof AuthDashboardCommoditiesRoute
   '/_auth/dashboard_/comparison': typeof AuthDashboardComparisonRoute
+  '/_auth/dashboard_/crypto': typeof AuthDashboardCryptoRoute
   '/_auth/dashboard_/indices': typeof AuthDashboardIndicesRoute
   '/_auth/dashboard_/learn-buy-sell': typeof AuthDashboardLearnBuySellRoute
   '/_auth/dashboard_/learn-fees': typeof AuthDashboardLearnFeesRoute
@@ -318,11 +336,13 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/dashboard/advisor'
+    | '/dashboard/alerts'
     | '/dashboard/analysis'
     | '/dashboard/backtest'
     | '/dashboard/calendar'
     | '/dashboard/commodities'
     | '/dashboard/comparison'
+    | '/dashboard/crypto'
     | '/dashboard/indices'
     | '/dashboard/learn-buy-sell'
     | '/dashboard/learn-fees'
@@ -351,11 +371,13 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/dashboard/advisor'
+    | '/dashboard/alerts'
     | '/dashboard/analysis'
     | '/dashboard/backtest'
     | '/dashboard/calendar'
     | '/dashboard/commodities'
     | '/dashboard/comparison'
+    | '/dashboard/crypto'
     | '/dashboard/indices'
     | '/dashboard/learn-buy-sell'
     | '/dashboard/learn-fees'
@@ -385,11 +407,13 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_auth/dashboard'
     | '/_auth/dashboard_/advisor'
+    | '/_auth/dashboard_/alerts'
     | '/_auth/dashboard_/analysis'
     | '/_auth/dashboard_/backtest'
     | '/_auth/dashboard_/calendar'
     | '/_auth/dashboard_/commodities'
     | '/_auth/dashboard_/comparison'
+    | '/_auth/dashboard_/crypto'
     | '/_auth/dashboard_/indices'
     | '/_auth/dashboard_/learn-buy-sell'
     | '/_auth/dashboard_/learn-fees'
@@ -597,6 +621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardIndicesRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/crypto': {
+      id: '/_auth/dashboard_/crypto'
+      path: '/dashboard/crypto'
+      fullPath: '/dashboard/crypto'
+      preLoaderRoute: typeof AuthDashboardCryptoRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/comparison': {
       id: '/_auth/dashboard_/comparison'
       path: '/dashboard/comparison'
@@ -632,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardAnalysisRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard_/alerts': {
+      id: '/_auth/dashboard_/alerts'
+      path: '/dashboard/alerts'
+      fullPath: '/dashboard/alerts'
+      preLoaderRoute: typeof AuthDashboardAlertsRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard_/advisor': {
       id: '/_auth/dashboard_/advisor'
       path: '/dashboard/advisor'
@@ -652,11 +690,13 @@ declare module '@tanstack/react-router' {
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDashboardAdvisorRoute: typeof AuthDashboardAdvisorRoute
+  AuthDashboardAlertsRoute: typeof AuthDashboardAlertsRoute
   AuthDashboardAnalysisRoute: typeof AuthDashboardAnalysisRoute
   AuthDashboardBacktestRoute: typeof AuthDashboardBacktestRoute
   AuthDashboardCalendarRoute: typeof AuthDashboardCalendarRoute
   AuthDashboardCommoditiesRoute: typeof AuthDashboardCommoditiesRoute
   AuthDashboardComparisonRoute: typeof AuthDashboardComparisonRoute
+  AuthDashboardCryptoRoute: typeof AuthDashboardCryptoRoute
   AuthDashboardIndicesRoute: typeof AuthDashboardIndicesRoute
   AuthDashboardLearnBuySellRoute: typeof AuthDashboardLearnBuySellRoute
   AuthDashboardLearnFeesRoute: typeof AuthDashboardLearnFeesRoute
@@ -680,11 +720,13 @@ interface AuthRouteChildren {
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDashboardAdvisorRoute: AuthDashboardAdvisorRoute,
+  AuthDashboardAlertsRoute: AuthDashboardAlertsRoute,
   AuthDashboardAnalysisRoute: AuthDashboardAnalysisRoute,
   AuthDashboardBacktestRoute: AuthDashboardBacktestRoute,
   AuthDashboardCalendarRoute: AuthDashboardCalendarRoute,
   AuthDashboardCommoditiesRoute: AuthDashboardCommoditiesRoute,
   AuthDashboardComparisonRoute: AuthDashboardComparisonRoute,
+  AuthDashboardCryptoRoute: AuthDashboardCryptoRoute,
   AuthDashboardIndicesRoute: AuthDashboardIndicesRoute,
   AuthDashboardLearnBuySellRoute: AuthDashboardLearnBuySellRoute,
   AuthDashboardLearnFeesRoute: AuthDashboardLearnFeesRoute,

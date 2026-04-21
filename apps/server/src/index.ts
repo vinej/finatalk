@@ -10,6 +10,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createTRPCContext } from "@finatalk/trpc";
+import { startAlertEvaluator } from "@finatalk/trpc/alerts";
 import { auth, checkAccountLockout, recordFailedLogin, clearFailedLogins } from "@finatalk/trpc/auth";
 import { toNodeHandler } from "better-auth/node";
 import { logger } from "./logger";
@@ -209,8 +210,13 @@ const server = app.listen(PORT, () => {
   logger.info(`Finatalk server running on http://localhost:${PORT}`);
 });
 
+const stopAlertEvaluator = startAlertEvaluator((err) => {
+  logger.error({ err }, "alert evaluator failed");
+});
+
 function shutdown(signal: string) {
   logger.info(`${signal} received, shutting down`);
+  stopAlertEvaluator();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref();
 }

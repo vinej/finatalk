@@ -1,5 +1,6 @@
-import { index, numeric, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { index, jsonb, numeric, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createTable, user } from "./auth";
+import { portfolio } from "./portfolio";
 
 export const watchlist = createTable(
   "watchlist",
@@ -42,6 +43,11 @@ export const alert = createTable(
     symbol: text("symbol").notNull(),
     conditionType: text("condition_type").notNull(),
     threshold: numeric("threshold", { precision: 24, scale: 8 }).notNull(),
+    indicatorParams: jsonb("indicator_params"),
+    source: text("source").notNull().default("manual"),
+    assetType: text("asset_type"),
+    strategyKind: text("strategy_kind"),
+    portfolioId: text("portfolio_id").references(() => portfolio.id, { onDelete: "cascade" }),
     enabled: boolean("enabled").notNull().default(true),
     triggeredAt: timestamp("triggered_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -49,6 +55,8 @@ export const alert = createTable(
   (t) => ({
     userIdx: index("finatalk_alert_user_idx").on(t.userId),
     symbolIdx: index("finatalk_alert_symbol_idx").on(t.symbol),
+    portfolioIdx: index("finatalk_alert_portfolio_idx").on(t.portfolioId),
+    sourceIdx: index("finatalk_alert_source_idx").on(t.source),
   }),
 );
 

@@ -4,26 +4,12 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { INDICES, type IndexKey } from "@/lib/indices";
 import { trpc } from "@/lib/trpc";
 
 export const Route = createFileRoute("/_auth/dashboard_/indices")({
   component: IndicesPage,
 });
-
-type IndexKey = "sp500" | "nasdaq" | "dowjones" | "tsx" | "tsx60";
-
-const INDICES: {
-  key: IndexKey;
-  labelKey: string;
-  description: string;
-  yahooSymbol: string;
-}[] = [
-  { key: "sp500", labelKey: "indices.sp500", description: "S&P 500", yahooSymbol: "^GSPC" },
-  { key: "nasdaq", labelKey: "indices.nasdaq", description: "Nasdaq 100", yahooSymbol: "^NDX" },
-  { key: "dowjones", labelKey: "indices.dowjones", description: "Dow Jones 30", yahooSymbol: "^DJI" },
-  { key: "tsx", labelKey: "indices.tsx", description: "S&P/TSX Composite", yahooSymbol: "^GSPTSE" },
-  { key: "tsx60", labelKey: "indices.tsx60", description: "S&P/TSX 60", yahooSymbol: "XIU.TO" },
-];
 
 function IndicesPage() {
   const { t } = useTranslation();

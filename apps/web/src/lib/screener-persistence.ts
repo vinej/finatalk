@@ -26,7 +26,7 @@ export type PersistedScreenerState = {
   maType: "sma" | "ema";
   sortKey: "symbol" | "lastClose" | "rsi" | "sma50" | "sma200" | "change1d";
   sortDir: "asc" | "desc";
-  assetTypeFilter?: "all" | "stock" | "etf" | "commodity" | "mutualfund";
+  assetTypeFilter?: "all" | "stock" | "etf" | "commodity" | "mutualfund" | "crypto" | "index";
   exchangeFilter?: string;
   results?: PersistedScreenerRow[];
   scannedAt?: string | null;

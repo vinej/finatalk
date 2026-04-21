@@ -3,16 +3,18 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { COMMODITIES, COMMODITY_EXCHANGE_BY_CATEGORY } from "@/lib/commodities";
+import { CRYPTOS } from "@/lib/crypto";
+import { INDICES } from "@/lib/indices";
 import { trpc } from "@/lib/trpc";
 
 export type SymbolPickerEntry = {
   symbol: string;
   name: string;
   exchange: string;
-  assetType: "stock" | "etf" | "commodity" | "mutualfund";
+  assetType: "stock" | "etf" | "commodity" | "mutualfund" | "crypto" | "index";
 };
 
-export type AssetTypeFilter = "all" | "stock" | "etf" | "commodity" | "mutualfund";
+export type AssetTypeFilter = "all" | "stock" | "etf" | "commodity" | "mutualfund" | "crypto" | "index";
 
 type Props = {
   inputId: string;
@@ -65,10 +67,32 @@ export function SymbolPicker({
     [t],
   );
 
+  const cryptoEntries = useMemo<SymbolPickerEntry[]>(
+    () =>
+      CRYPTOS.map((c) => ({
+        symbol: c.symbol,
+        name: t(c.nameKey),
+        exchange: "CCC",
+        assetType: "crypto" as const,
+      })),
+    [t],
+  );
+
+  const indexEntries = useMemo<SymbolPickerEntry[]>(
+    () =>
+      INDICES.map((i) => ({
+        symbol: i.yahooSymbol,
+        name: t(i.labelKey),
+        exchange: "Index",
+        assetType: "index" as const,
+      })),
+    [t],
+  );
+
   const mergedSymbols = useMemo<SymbolPickerEntry[]>(() => {
     const raw = symbolsQuery.data?.symbols ?? [];
-    return [...raw, ...commodityEntries];
-  }, [symbolsQuery.data, commodityEntries]);
+    return [...raw, ...commodityEntries, ...cryptoEntries, ...indexEntries];
+  }, [symbolsQuery.data, commodityEntries, cryptoEntries, indexEntries]);
 
   const availableExchanges = useMemo(() => {
     const set = new Set<string>();
@@ -136,6 +160,8 @@ export function SymbolPicker({
           <option value="etf">{t("analysis.assetEtf")}</option>
           <option value="mutualfund">{t("analysis.assetMutualFund")}</option>
           <option value="commodity">{t("analysis.assetCommodity")}</option>
+          <option value="crypto">{t("analysis.assetCrypto")}</option>
+          <option value="index">{t("analysis.assetIndex")}</option>
         </select>
       </div>
       <div className="flex flex-col gap-1">
@@ -177,6 +203,10 @@ export function SymbolPicker({
                 ? " · Futures"
                 : s.assetType === "mutualfund"
                 ? " · Fund"
+                : s.assetType === "crypto"
+                ? " · Crypto"
+                : s.assetType === "index"
+                ? " · Index"
                 : ""}
             </option>
           ))}

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -34,6 +34,8 @@ import { evaluateStrategy, type StrategyAction } from "@/lib/strategy-signals";
 import { pickLang, type Lang } from "@/lib/lang";
 import { loadAnalysisState, saveAnalysisState } from "@/lib/analysis-persistence";
 import { COMMODITIES, COMMODITY_EXCHANGE_BY_CATEGORY } from "@/lib/commodities";
+import { CRYPTOS } from "@/lib/crypto";
+import { INDICES } from "@/lib/indices";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
@@ -109,7 +111,7 @@ function AnalysisPage() {
   const [analystCollapsed, setAnalystCollapsed] = useState<boolean>(persisted?.analystCollapsed ?? false);
   const [ownershipCollapsed, setOwnershipCollapsed] = useState<boolean>(persisted?.ownershipCollapsed ?? false);
   const [shortInterestCollapsed, setShortInterestCollapsed] = useState<boolean>(persisted?.shortInterestCollapsed ?? false);
-  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf" | "commodity" | "mutualfund">(persisted?.assetTypeFilter ?? "all");
+  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf" | "commodity" | "mutualfund" | "crypto" | "index">(persisted?.assetTypeFilter ?? "all");
   const [exchangeFilter, setExchangeFilter] = useState<string>(persisted?.exchangeFilter ?? "all");
   const [confidence, setConfidence] = useState<"high" | "medium" | "low" | null>(null);
   const [appliedStrategy, setAppliedStrategy] = useState<StrategyKind | null>(persisted?.appliedStrategy ?? null);
@@ -332,10 +334,32 @@ function AnalysisPage() {
     [t],
   );
 
+  const cryptoEntries = useMemo(
+    () =>
+      CRYPTOS.map((c) => ({
+        symbol: c.symbol,
+        name: t(c.nameKey),
+        exchange: "CCC",
+        assetType: "crypto" as const,
+      })),
+    [t],
+  );
+
+  const indexEntries = useMemo(
+    () =>
+      INDICES.map((i) => ({
+        symbol: i.yahooSymbol,
+        name: t(i.labelKey),
+        exchange: "Index",
+        assetType: "index" as const,
+      })),
+    [t],
+  );
+
   const mergedSymbols = useMemo(() => {
     const raw = symbolsQuery.data?.symbols ?? [];
-    return [...raw, ...commodityEntries];
-  }, [symbolsQuery.data, commodityEntries]);
+    return [...raw, ...commodityEntries, ...cryptoEntries, ...indexEntries];
+  }, [symbolsQuery.data, commodityEntries, cryptoEntries, indexEntries]);
 
   const submittedSymbolMeta = useMemo(() => {
     const local = mergedSymbols.find((s) => s.symbol === submittedSymbol);
@@ -509,6 +533,14 @@ function AnalysisPage() {
             <Button type="button" size="sm" variant="outline" onClick={newAnalysis}>
               {t("analysis.newAnalysis")}
             </Button>
+            {submittedSymbol && (
+              <Button asChild size="sm" variant="outline" title={t("alerts.addFromAnalysis")}>
+                <Link to="/dashboard/alerts" search={{ symbol: submittedSymbol }}>
+                  <Bell className="mr-1 h-3.5 w-3.5" />
+                  {t("alerts.addFromAnalysis")}
+                </Link>
+              </Button>
+            )}
             <SaveAnalysisAction
               symbol={submittedSymbol}
               range={range}
@@ -544,7 +576,7 @@ function AnalysisPage() {
               <select
                 id="assetType"
                 value={assetTypeFilter}
-                onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf" | "commodity" | "mutualfund")}
+                onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf" | "commodity" | "mutualfund" | "crypto" | "index")}
                 className="h-10 rounded-md border border-[var(--color-border)] bg-transparent px-3 text-sm"
               >
                 <option value="all">{t("analysis.assetAll")}</option>
@@ -552,6 +584,8 @@ function AnalysisPage() {
                 <option value="etf">{t("analysis.assetEtf")}</option>
                 <option value="mutualfund">{t("analysis.assetMutualFund")}</option>
                 <option value="commodity">{t("analysis.assetCommodity")}</option>
+                <option value="crypto">{t("analysis.assetCrypto")}</option>
+                <option value="index">{t("analysis.assetIndex")}</option>
               </select>
             </div>
             <div className="grid gap-1.5">
@@ -582,7 +616,7 @@ function AnalysisPage() {
               <datalist id="symbol-suggestions">
                 {suggestions.map((s) => (
                   <option key={s.symbol} value={s.symbol}>
-                    {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : s.assetType === "commodity" ? " · Futures" : s.assetType === "mutualfund" ? " · Fund" : ""}
+                    {s.name} ({s.exchange}){s.assetType === "etf" ? " · ETF" : s.assetType === "commodity" ? " · Futures" : s.assetType === "mutualfund" ? " · Fund" : s.assetType === "crypto" ? " · Crypto" : s.assetType === "index" ? " · Index" : ""}
                   </option>
                 ))}
               </datalist>
@@ -811,6 +845,7 @@ function AnalysisPage() {
                 />
               )}
               <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 md:grid-cols-4">
+                <LatestCandleCells candle={query.data.candles.at(-1) ?? null} prev={query.data.candles.at(-2) ?? null} />
                 {query.data.results.map((r, i) => (
                   <LatestCell key={i} result={r} lastClose={query.data.candles.at(-1)?.close ?? null} />
                 ))}
@@ -953,6 +988,63 @@ function ProposedActionBanner({
         </ul>
       )}
     </div>
+  );
+}
+
+type CandleLike = {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+function formatPrice(v: number): string {
+  return v.toLocaleString(undefined, { maximumFractionDigits: 4 });
+}
+
+function formatVolume(v: number): string {
+  if (!Number.isFinite(v) || v <= 0) return "—";
+  if (v >= 1e9) return (v / 1e9).toFixed(2) + "B";
+  if (v >= 1e6) return (v / 1e6).toFixed(2) + "M";
+  if (v >= 1e3) return (v / 1e3).toFixed(2) + "K";
+  return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
+function LatestCandleCells({ candle, prev }: { candle: CandleLike | null; prev: CandleLike | null }) {
+  const { t } = useTranslation();
+  if (!candle) return null;
+  const asOf = new Date(candle.time * 1000).toLocaleDateString();
+  const changePct =
+    prev && Number.isFinite(prev.close) && prev.close > 0
+      ? ((candle.close - prev.close) / prev.close) * 100
+      : null;
+  const changeTone =
+    changePct == null ? TONE_MUTED : changePct > 0 ? TONE_POS : changePct < 0 ? TONE_NEG : TONE_MUTED;
+  const changeText =
+    changePct == null ? null : `${changePct > 0 ? "+" : ""}${changePct.toFixed(2)}%`;
+  const cells: Array<{ label: string; value: string; hint?: string | null; tone?: string }> = [
+    { label: t("analysis.candle.open"), value: formatPrice(candle.open) },
+    { label: t("analysis.candle.high"), value: formatPrice(candle.high) },
+    { label: t("analysis.candle.low"), value: formatPrice(candle.low) },
+    { label: t("analysis.candle.close"), value: formatPrice(candle.close), hint: changeText, tone: changeTone },
+    { label: t("analysis.candle.volume"), value: formatVolume(candle.volume) },
+  ];
+  return (
+    <>
+      {cells.map((c, i) => (
+        <div key={`candle-${i}`} className="rounded-md border border-[var(--color-border)] p-3">
+          <div className="text-xs text-[var(--color-muted-fg)]">{c.label}</div>
+          <div className="mt-1 font-mono">{c.value}</div>
+          {c.hint ? (
+            <div className={"mt-1 text-xs " + (c.tone ?? TONE_MUTED)}>{c.hint}</div>
+          ) : i === 0 ? (
+            <div className="mt-1 text-xs text-[var(--color-muted-fg)]">{asOf}</div>
+          ) : null}
+        </div>
+      ))}
+    </>
   );
 }
 

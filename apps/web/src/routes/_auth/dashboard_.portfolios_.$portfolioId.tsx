@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
 import {
   clearLastPortfolioId,
   saveLastPortfolioId,
@@ -30,6 +31,8 @@ import {
   type StrategySignal,
 } from "@/lib/strategy-signals";
 import { createActive, type IndicatorKind } from "@/lib/indicator-defaults";
+import { CRYPTOS } from "@/lib/crypto";
+import { INDICES } from "@/lib/indices";
 import { pickLang } from "@/lib/lang";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
@@ -109,7 +112,8 @@ function PortfolioDetailPage() {
   const [newQty, setNewQty] = useState("");
   const [newCost, setNewCost] = useState("");
   const [newDate, setNewDate] = useState(todayIso());
-  const [assetTypeFilter, setAssetTypeFilter] = useState<"all" | "stock" | "etf">("all");
+  const [assetTypeFilter, setAssetTypeFilter] = useState<AssetTypeFilter>("all");
+  const [exchangeFilter, setExchangeFilter] = useState<string>("all");
   const [linking, setLinking] = useState<{
     holdingId: string;
     symbol: string;
@@ -306,7 +310,20 @@ function PortfolioDetailPage() {
     editingHoldingId != null ? holdingDraft.symbol : newSymbol;
   const symbolSuggestions = useMemo(() => {
     const raw = symbolsQuery.data?.symbols ?? [];
-    const all = assetTypeFilter === "all" ? raw : raw.filter((s) => s.assetType === assetTypeFilter);
+    const cryptoRaw = CRYPTOS.map((c) => ({
+      symbol: c.symbol,
+      name: t(c.nameKey),
+      exchange: "CCC",
+      assetType: "crypto" as const,
+    }));
+    const indexRaw = INDICES.map((i) => ({
+      symbol: i.yahooSymbol,
+      name: t(i.labelKey),
+      exchange: "Index",
+      assetType: "index" as const,
+    }));
+    const merged = [...raw, ...cryptoRaw, ...indexRaw];
+    const all = assetTypeFilter === "all" ? merged : merged.filter((s) => s.assetType === assetTypeFilter);
     const q = symbolQuery.trim().toUpperCase();
     if (!q) return all.slice(0, 200);
     const starts: typeof all = [];
@@ -317,14 +334,17 @@ function PortfolioDetailPage() {
       if (starts.length >= 200) break;
     }
     return [...starts, ...contains].slice(0, 200);
-  }, [symbolsQuery.data, symbolQuery, assetTypeFilter]);
+  }, [symbolsQuery.data, symbolQuery, assetTypeFilter, t]);
 
   const newSymbolResolved = useMemo(() => {
     const q = newSymbol.trim().toUpperCase();
     if (!q) return null;
     const all = symbolsQuery.data?.symbols;
     if (!all) return null;
-    return all.some((s) => s.symbol === q) ? q : null;
+    if (all.some((s) => s.symbol === q)) return q;
+    if (CRYPTOS.some((c) => c.symbol === q)) return q;
+    if (INDICES.some((i) => i.yahooSymbol === q)) return q;
+    return null;
   }, [newSymbol, symbolsQuery.data]);
 
   const newSymbolPriceQuery = trpc.market.candles.useQuery(
@@ -1020,41 +1040,20 @@ function PortfolioDetailPage() {
                 <tr className="bg-[var(--color-accent)]/40">
                   <td colSpan={10} className="px-2 py-2">
                     <form onSubmit={submitAdd} className="flex flex-wrap items-end gap-2">
-                      <div className="flex flex-col gap-1">
-                        <Label htmlFor="new-asset-type" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
-                          {t("analysis.assetType")}
-                        </Label>
-                        <select
-                          id="new-asset-type"
-                          value={assetTypeFilter}
-                          onChange={(e) => setAssetTypeFilter(e.target.value as "all" | "stock" | "etf")}
-                          className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
-                        >
-                          <option value="all">{t("analysis.assetAll")}</option>
-                          <option value="stock">{t("analysis.assetStock")}</option>
-                          <option value="etf">{t("analysis.assetEtf")}</option>
-                        </select>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <Label htmlFor="new-symbol" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
-                          {t("portfolio.symbol")}
-                        </Label>
-                        <Input
-                          id="new-symbol"
-                          value={newSymbol}
-                          onChange={(e) => setNewSymbol(e.target.value)}
-                          list="portfolio-symbol-suggestions"
-                          autoComplete="off"
-                          className="h-8 w-28 uppercase"
-                          placeholder={
-                            symbolsQuery.isPending
-                              ? t("analysis.loadingSymbols")
-                              : "AAPL"
-                          }
-                          maxLength={20}
-                          required
-                        />
-                      </div>
+                      <SymbolPicker
+                        inputId="new-symbol"
+                        listId="new-symbol-suggestions"
+                        value={newSymbol}
+                        onChange={(v) => setNewSymbol(v.toUpperCase())}
+                        placeholder={symbolsQuery.isPending ? t("analysis.loadingSymbols") : "AAPL"}
+                        maxLength={20}
+                        className="contents"
+                        inputClassName="h-8 w-28 uppercase"
+                        assetTypeFilter={assetTypeFilter}
+                        onAssetTypeChange={setAssetTypeFilter}
+                        exchangeFilter={exchangeFilter}
+                        onExchangeChange={setExchangeFilter}
+                      />
                       <div className="flex flex-col gap-1">
                         <Label htmlFor="new-qty" className="text-[10px] uppercase text-[var(--color-muted-fg)]">
                           {t("portfolio.quantity")}

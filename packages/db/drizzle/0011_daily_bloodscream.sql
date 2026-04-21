@@ -1,0 +1,1 @@
+ALTER TABLE "finatalk_alert" ADD COLUMN "indicator_params" jsonb;

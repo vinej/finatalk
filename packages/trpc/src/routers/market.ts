@@ -1190,7 +1190,7 @@ function compute(spec: IndicatorSpecT, candles: Candle[]): IndicatorResult {
   }
 }
 
-export type AssetType = "stock" | "etf" | "commodity" | "mutualfund";
+export type AssetType = "stock" | "etf" | "commodity" | "mutualfund" | "crypto" | "index";
 export type SymbolEntry = { symbol: string; name: string; exchange: string; assetType: AssetType };
 
 let cachedSymbols: { data: SymbolEntry[]; fetchedAt: number } | null = null;
@@ -1303,7 +1303,7 @@ export const marketRouter = createTRPCRouter({
   searchSymbols: protectedProcedure
     .input(z.object({
       query: z.string().min(1).max(64),
-      assetType: z.enum(["all", "stock", "etf", "commodity", "mutualfund"]).optional(),
+      assetType: z.enum(["all", "stock", "etf", "commodity", "mutualfund", "crypto", "index"]).optional(),
       limit: z.number().int().min(1).max(25).optional(),
     }))
     .query(async ({ input }) => {
@@ -1330,6 +1330,8 @@ export const marketRouter = createTRPCRouter({
           if (qt === "ETF") assetType = "etf";
           else if (qt === "MUTUALFUND") assetType = "mutualfund";
           else if (qt === "FUTURE" || qt === "COMMODITY") assetType = "commodity";
+          else if (qt === "CRYPTOCURRENCY") assetType = "crypto";
+          else if (qt === "INDEX") assetType = "index";
           else if (qt === "EQUITY") assetType = "stock";
           else continue;
           if (input.assetType && input.assetType !== "all" && input.assetType !== assetType) continue;

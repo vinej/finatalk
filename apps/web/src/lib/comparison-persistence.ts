@@ -7,7 +7,7 @@ export type PersistedComparisonState = {
   range: "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "max";
   interval: "1d" | "1wk" | "1mo";
   convertToCad: boolean;
-  assetTypeFilter?: "all" | "stock" | "etf" | "commodity" | "mutualfund";
+  assetTypeFilter?: "all" | "stock" | "etf" | "commodity" | "mutualfund" | "crypto" | "index";
   exchangeFilter?: string;
 };
 

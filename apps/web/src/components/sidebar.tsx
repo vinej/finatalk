@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpDown, BookOpen, Briefcase, ChevronDown, ChevronRight, Coins, Eye, FlaskConical, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, NotebookPen, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
+import { ArrowUpDown, Bell, Bitcoin, BookOpen, Briefcase, ChevronDown, ChevronRight, Coins, Eye, FlaskConical, GitCompareArrows, GraduationCap, Home, Landmark, Lightbulb, LineChart, Microscope, Newspaper, NotebookPen, Percent, PercentCircle, Receipt, ScanSearch, Settings, Sparkles, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -58,6 +58,7 @@ export function Sidebar() {
     { key: "analysis", to: "/dashboard/analysis", label: t("nav.analysis"), icon: LineChart },
     { key: "backtest", to: "/dashboard/backtest", label: t("nav.backtest"), icon: FlaskConical },
     { key: "portfolios", label: t("nav.portfolios"), icon: Briefcase, link: portfolioLink, matchPrefix: "/dashboard/portfolios" },
+    { key: "alerts", to: "/dashboard/alerts", label: t("nav.alerts"), icon: Bell },
     { key: "advisor", to: "/dashboard/advisor", label: t("nav.advisor"), icon: Sparkles },
     ...(showTax
       ? [{ key: "tax", to: "/dashboard/tax", label: t("nav.tax"), icon: Receipt } as const]
@@ -67,6 +68,7 @@ export function Sidebar() {
   const marketItems = [
     { key: "indices", to: "/dashboard/indices", label: t("nav.indices"), icon: Landmark },
     { key: "commodities", to: "/dashboard/commodities", label: t("nav.commodities"), icon: Wheat },
+    { key: "crypto", to: "/dashboard/crypto", label: t("nav.crypto"), icon: Bitcoin },
     { key: "rates", to: "/dashboard/rates", label: t("nav.rates"), icon: Percent },
     { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
   ] as const;

@@ -1,12 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, BellOff, Loader2, Plus, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Bell, Loader2, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
 import { trpc } from "@/lib/trpc";
 
@@ -30,7 +28,6 @@ function WatchlistPage() {
   const utils = trpc.useUtils();
 
   const watchlistQuery = trpc.watchlist.get.useQuery();
-  const alertsQuery = trpc.watchlist.listAlerts.useQuery();
   const items = watchlistQuery.data?.items ?? [];
   const symbols = useMemo(() => items.map((i) => i.symbol), [items]);
 
@@ -57,6 +54,7 @@ function WatchlistPage() {
 
   const [assetTypeFilter, setAssetTypeFilter] = useState<AssetTypeFilter>("all");
   const [exchangeFilter, setExchangeFilter] = useState<string>("all");
+  const [newSymbol, setNewSymbol] = useState("");
 
   const addItem = trpc.watchlist.addItem.useMutation({
     onSuccess: () => {
@@ -77,29 +75,6 @@ function WatchlistPage() {
     onError: (e) => toast.error(e.message),
   });
 
-  const createAlert = trpc.watchlist.createAlert.useMutation({
-    onSuccess: () => {
-      void utils.watchlist.listAlerts.invalidate();
-      setAlertForm(null);
-      toast.success(t("watchlist.alertCreated"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
-  const deleteAlert = trpc.watchlist.deleteAlert.useMutation({
-    onSuccess: () => {
-      void utils.watchlist.listAlerts.invalidate();
-      toast.success(t("watchlist.alertDeleted"));
-    },
-    onError: (e) => toast.error(e.message),
-  });
-  const toggleAlert = trpc.watchlist.toggleAlert.useMutation({
-    onSuccess: () => void utils.watchlist.listAlerts.invalidate(),
-    onError: (e) => toast.error(e.message),
-  });
-
-  const [newSymbol, setNewSymbol] = useState("");
-  const [alertForm, setAlertForm] = useState<{ symbol: string; conditionType: "price_above" | "price_below"; threshold: string } | null>(null);
-
   function submitAdd(e: React.FormEvent) {
     e.preventDefault();
     const sym = newSymbol.trim().toUpperCase();
@@ -110,20 +85,6 @@ function WatchlistPage() {
     }
     addItem.mutate({ symbol: sym });
   }
-
-  function submitAlert(e: React.FormEvent) {
-    e.preventDefault();
-    if (!alertForm) return;
-    const threshold = Number(alertForm.threshold);
-    if (!Number.isFinite(threshold) || threshold <= 0) return;
-    createAlert.mutate({
-      symbol: alertForm.symbol,
-      conditionType: alertForm.conditionType,
-      threshold,
-    });
-  }
-
-  const alerts = alertsQuery.data ?? [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -211,13 +172,10 @@ function WatchlistPage() {
                         </td>
                         <td className="px-2 py-2 text-right">
                           <div className="flex justify-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title={t("watchlist.createAlert")}
-                              onClick={() => setAlertForm({ symbol: item.symbol, conditionType: "price_above", threshold: lastClose?.toFixed(2) ?? "" })}
-                            >
-                              <Bell className="h-3.5 w-3.5" />
+                            <Button asChild size="sm" variant="ghost" title={t("watchlist.createAlert")}>
+                              <Link to="/dashboard/alerts" search={{ symbol: item.symbol }}>
+                                <Bell className="h-3.5 w-3.5" />
+                              </Link>
                             </Button>
                             <Button
                               size="sm"
@@ -238,95 +196,6 @@ function WatchlistPage() {
           )}
         </CardContent>
       </Card>
-
-      {alertForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">
-              {t("watchlist.newAlert")} — {alertForm.symbol}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={submitAlert} className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1">
-                <Label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("watchlist.condition")}</Label>
-                <select
-                  value={alertForm.conditionType}
-                  onChange={(e) => setAlertForm((f) => f ? { ...f, conditionType: e.target.value as "price_above" | "price_below" } : f)}
-                  className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
-                >
-                  <option value="price_above">{t("watchlist.priceAbove")}</option>
-                  <option value="price_below">{t("watchlist.priceBelow")}</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("watchlist.threshold")}</Label>
-                <Input
-                  type="number"
-                  step="any"
-                  min="0"
-                  value={alertForm.threshold}
-                  onChange={(e) => setAlertForm((f) => f ? { ...f, threshold: e.target.value } : f)}
-                  className="h-8 w-28"
-                  required
-                />
-              </div>
-              <Button type="submit" size="sm" disabled={createAlert.isPending}>
-                {t("watchlist.saveAlert")}
-              </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => setAlertForm(null)}>
-                <X className="mr-1 h-3.5 w-3.5" />
-                {t("watchlist.cancelAlert")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {alerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">{t("watchlist.alerts")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {alerts.map((a) => (
-                <div key={a.id} className="flex items-center justify-between rounded border border-[var(--color-border)] px-3 py-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{a.symbol}</span>
-                    <span className="text-xs text-[var(--color-muted-fg)]">
-                      {a.conditionType === "price_above" ? t("watchlist.priceAbove") : t("watchlist.priceBelow")} {formatCurrency(a.threshold)}
-                    </span>
-                    {a.triggeredAt && (
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                        {t("watchlist.triggered")}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      title={a.enabled ? t("watchlist.disableAlert") : t("watchlist.enableAlert")}
-                      onClick={() => toggleAlert.mutate({ id: a.id, enabled: !a.enabled })}
-                    >
-                      {a.enabled ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5 text-[var(--color-muted-fg)]" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      title={t("watchlist.deleteAlert")}
-                      onClick={() => deleteAlert.mutate({ id: a.id })}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

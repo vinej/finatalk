@@ -7,6 +7,8 @@
     ".": "./src/index.ts",
     "./auth": "./src/auth.ts",
     "./crypto": "./src/crypto.ts",
+    "./alerts": "./src/alerts/evaluator.ts",
+    "./constants/alerts": "./src/constants/alerts.ts",
     "./routers/market": "./src/routers/market.ts",
     "./schemas/indicator": "./src/schemas/indicator.ts"
   },
