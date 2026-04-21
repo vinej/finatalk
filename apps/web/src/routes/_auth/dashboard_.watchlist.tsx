@@ -101,7 +101,6 @@ function WatchlistPage() {
               listId="wl-symbol-suggestions"
               value={newSymbol}
               onChange={setNewSymbol}
-              placeholder="AAPL"
               maxLength={20}
               inputClassName="h-8 w-40 uppercase"
               assetTypeFilter={assetTypeFilter}

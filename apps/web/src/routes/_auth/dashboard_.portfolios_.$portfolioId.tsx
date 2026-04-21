@@ -1045,7 +1045,7 @@ function PortfolioDetailPage() {
                         listId="new-symbol-suggestions"
                         value={newSymbol}
                         onChange={(v) => setNewSymbol(v.toUpperCase())}
-                        placeholder={symbolsQuery.isPending ? t("analysis.loadingSymbols") : "AAPL"}
+                        placeholder={symbolsQuery.isPending ? t("analysis.loadingSymbols") : ""}
                         maxLength={20}
                         className="contents"
                         inputClassName="h-8 w-28 uppercase"

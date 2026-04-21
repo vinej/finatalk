@@ -4,7 +4,7 @@ import { ADX, BollingerBands, EMA, MACD, RSI, SMA } from "trading-signals";
 import { db, alert, notification } from "@finatalk/db";
 import { fetchCandlesWithCurrency } from "../routers/market";
 import type { Candle } from "../lib/market-provider";
-import type { AlertIndicatorParams } from "../constants/alerts";
+import type { AlertConditionType, AlertIndicatorParams } from "../constants/alerts";
 
 const COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const TICK_INTERVAL_MS = 5 * 60 * 1000;
@@ -144,6 +144,52 @@ function volumeRatio(candles: Candle[], period: number): number | null {
   if (avg <= 0) return null;
   const lastVol = candles[candles.length - 1]!.volume;
   return lastVol / avg;
+}
+
+export function currentThresholdValue(
+  conditionType: AlertConditionType,
+  candles: Candle[],
+  params: AlertIndicatorParams | null,
+): number | null {
+  if (candles.length === 0) return null;
+  const last = candles[candles.length - 1]!;
+  const prev = candles.length > 1 ? candles[candles.length - 2]! : null;
+  switch (conditionType) {
+    case "price_above":
+    case "price_below":
+      return last.close;
+    case "pct_change_24h_up":
+    case "pct_change_24h_down": {
+      if (!prev || prev.close <= 0) return null;
+      return Math.abs(((last.close - prev.close) / prev.close) * 100);
+    }
+    case "ma_cross_up":
+    case "ma_cross_down":
+    case "macd_cross_up":
+    case "macd_cross_down":
+      return last.close;
+    case "rsi_above":
+    case "rsi_below":
+      return latestRsi(candles, params?.period ?? 14);
+    case "adx_above":
+      return latestAdx(candles, params?.period ?? 14);
+    case "bb_upper_break":
+      return latestBollinger(candles, params?.period ?? 20, params?.stdDev ?? 2)?.upper ?? null;
+    case "bb_lower_break":
+      return latestBollinger(candles, params?.period ?? 20, params?.stdDev ?? 2)?.lower ?? null;
+    case "breakout_high":
+      return nDayHigh(candles, params?.lookback ?? 20);
+    case "breakout_low":
+      return nDayLow(candles, params?.lookback ?? 20);
+    case "drawdown_from_high": {
+      const dd = drawdownFromHigh(candles, params?.lookback ?? 252);
+      return dd == null ? null : Math.max(0, dd);
+    }
+    case "volume_spike":
+      return volumeRatio(candles, params?.period ?? 20);
+    default:
+      return null;
+  }
 }
 
 function evaluateCondition(

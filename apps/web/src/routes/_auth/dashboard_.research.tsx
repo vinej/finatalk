@@ -27,7 +27,6 @@ function ResearchPage() {
             listId="research-symbol-suggestions"
             value={symbol}
             onChange={(v) => setSymbol(v.toUpperCase())}
-            placeholder="AAPL"
             assetTypeFilter={assetTypeFilter}
             onAssetTypeChange={setAssetTypeFilter}
             exchangeFilter={exchangeFilter}

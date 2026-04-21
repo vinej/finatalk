@@ -239,7 +239,6 @@ function BacktestPage() {
                 listId="bt-symbol-suggestions"
                 value={symbolInput}
                 onChange={setSymbolInput}
-                placeholder="AAPL"
                 maxLength={20}
                 inputClassName="h-10 w-48 uppercase"
                 assetTypeFilter={assetTypeFilter}
@@ -1061,7 +1060,6 @@ function PortfolioSymbolsEditor({
           listId="bt-port-symbol-suggestions"
           value={draft}
           onChange={setDraft}
-          placeholder="AAPL"
           maxLength={20}
           inputClassName="h-10 w-48 uppercase"
           assetTypeFilter={assetTypeFilter}

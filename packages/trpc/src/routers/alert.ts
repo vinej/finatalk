@@ -6,6 +6,8 @@ import { alert } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import { SymbolSchema } from "../schemas/indicator";
 import { ALERT_CONDITIONS, type AlertIndicatorParams } from "../constants/alerts";
+import { currentThresholdValue } from "../alerts/evaluator";
+import { fetchCandlesWithCurrency } from "./market";
 
 export { ALERT_CONDITIONS } from "../constants/alerts";
 
@@ -202,6 +204,31 @@ export const alertRouter = createTRPCRouter({
         .set({ enabled: input.enabled, ...(input.enabled ? { triggeredAt: null } : {}) })
         .where(and(inArray(alert.id, input.ids), eq(alert.userId, ctx.user.id)));
       return { count: input.ids.length };
+    }),
+
+  currentValue: protectedProcedure
+    .input(z.object({
+      symbol: SymbolSchema,
+      conditionType: ConditionSchema,
+      indicatorParams: IndicatorParamsSchema,
+    }))
+    .query(async ({ input }) => {
+      try {
+        const { candles } = await fetchCandlesWithCurrency(
+          input.symbol.toUpperCase(),
+          "1y",
+          "1d",
+          null,
+        );
+        const value = currentThresholdValue(
+          input.conditionType,
+          candles,
+          (input.indicatorParams ?? null) as AlertIndicatorParams | null,
+        );
+        return { value };
+      } catch {
+        return { value: null as number | null };
+      }
     }),
 
   deleteMany: protectedProcedure

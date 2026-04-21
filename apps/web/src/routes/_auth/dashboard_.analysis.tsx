@@ -611,7 +611,7 @@ function AnalysisPage() {
                 value={symbolInput}
                 onChange={(e) => onSymbolChange(e.target.value)}
                 className="w-48"
-                placeholder={symbolsQuery.isPending ? t("analysis.loadingSymbols") : "AAPL"}
+                placeholder={symbolsQuery.isPending ? t("analysis.loadingSymbols") : ""}
               />
               <datalist id="symbol-suggestions">
                 {suggestions.map((s) => (

@@ -160,6 +160,44 @@ function ManualTab({
     onError: (e) => toast.error(e.message),
   });
 
+  const kind = thresholdKind(conditionType);
+  const shape = paramShape(conditionType);
+
+  const queryParams = useMemo<AlertIndicatorParams | null>(() => {
+    const p: AlertIndicatorParams = {};
+    if (shape.fast) p.fast = Number(fast);
+    if (shape.slow) p.slow = Number(slow);
+    if (shape.signal) p.signal = Number(signal);
+    if (shape.period) p.period = Number(period);
+    if (shape.stdDev) p.stdDev = Number(stdDev);
+    if (shape.lookback) p.lookback = Number(lookback);
+    return Object.keys(p).length > 0 ? p : null;
+  }, [shape, fast, slow, signal, period, stdDev, lookback]);
+
+  const trimmedSymbol = symbol.trim().toUpperCase();
+  const symbolValid = trimmedSymbol.length > 0 && SYMBOL_RE.test(trimmedSymbol);
+
+  const currentValueQuery = trpc.alert.currentValue.useQuery(
+    {
+      symbol: trimmedSymbol,
+      conditionType,
+      indicatorParams: queryParams,
+    },
+    {
+      enabled: symbolValid && kind !== "none",
+      staleTime: 60_000,
+      retry: false,
+    },
+  );
+
+  useEffect(() => {
+    if (kind === "none") return;
+    const v = currentValueQuery.data?.value;
+    if (v == null || !Number.isFinite(v)) return;
+    const decimals = kind === "price" ? 4 : 2;
+    setThreshold(v.toFixed(decimals).replace(/\.?0+$/, ""));
+  }, [currentValueQuery.data?.value, kind]);
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const sym = symbol.trim().toUpperCase();
@@ -199,9 +237,6 @@ function ManualTab({
     });
   }
 
-  const kind = thresholdKind(conditionType);
-  const shape = paramShape(conditionType);
-
   return (
     <Card>
       <CardHeader>
@@ -214,7 +249,6 @@ function ManualTab({
             listId="alert-symbol-suggestions"
             value={symbol}
             onChange={setSymbol}
-            placeholder="AAPL"
             maxLength={20}
             inputClassName="h-8 w-36 uppercase"
             assetTypeFilter={assetTypeFilter}
@@ -237,7 +271,7 @@ function ManualTab({
             </select>
           </div>
           {kind !== "none" && (
-            <div className="flex flex-col gap-1">
+            <div className="relative flex flex-col gap-1">
               <Label className="text-[10px] uppercase text-[var(--color-muted-fg)]">{t("alerts.threshold")}</Label>
               <Input
                 type="number"
@@ -248,7 +282,9 @@ function ManualTab({
                 className="h-8 w-28"
                 required
               />
-              <span className="text-[10px] text-[var(--color-muted-fg)]">{t(`alerts.thresholdHint.${kind}`)}</span>
+              <span className="pointer-events-none absolute top-full left-0 mt-0.5 text-[10px] text-[var(--color-muted-fg)] whitespace-nowrap">
+                {t(`alerts.thresholdHint.${kind}`)}
+              </span>
             </div>
           )}
           {shape.fast && (
@@ -287,7 +323,12 @@ function ManualTab({
               <Input type="number" min="2" max="1000" value={lookback} onChange={(e) => setLookback(e.target.value)} className="h-8 w-20" />
             </div>
           )}
-          <Button type="submit" size="sm" disabled={create.isPending || !symbol.trim()}>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={create.isPending || !symbol.trim()}
+            className="border-transparent bg-[var(--color-primary)] text-white hover:opacity-90"
+          >
             <Plus className="mr-1 h-3.5 w-3.5" />
             {t("alerts.save")}
           </Button>
@@ -391,7 +432,6 @@ function StrategyTab({
             listId="strategy-alert-symbol-suggestions"
             value={symbol}
             onChange={setSymbol}
-            placeholder="AAPL"
             maxLength={20}
             inputClassName="h-8 w-36 uppercase"
             assetTypeFilter={assetTypeFilter}
@@ -413,6 +453,7 @@ function StrategyTab({
             size="sm"
             onClick={generate}
             disabled={createBulk.isPending || templates.length === 0 || !symbol.trim()}
+            className="border-transparent bg-[var(--color-primary)] text-white hover:opacity-90"
           >
             <Wand2 className="mr-1 h-3.5 w-3.5" />
             {t("alerts.fromStrategy.generate", { count: templates.length })}
@@ -638,6 +679,7 @@ function PortfolioTab({
               !detail ||
               detail.holdings.length === 0
             }
+            className="border-transparent bg-[var(--color-primary)] text-white hover:opacity-90"
           >
             <Wand2 className="mr-1 h-3.5 w-3.5" />
             {t("alerts.fromPortfolio.generate", { count: totalAlerts })}
