@@ -126,14 +126,18 @@ export class OpenBBClient {
       interval: opts.interval,
       provider: opts.provider ?? "yfinance",
     });
-    return raw.map((r) => ({
-      date: String(r.date ?? ""),
-      open: Number(r.open ?? 0),
-      high: Number(r.high ?? 0),
-      low: Number(r.low ?? 0),
-      close: Number(r.close ?? 0),
-      volume: Number(r.volume ?? 0),
-    }));
+    return raw.map((r) => {
+      const adj = r.adj_close ?? r.adjusted_close ?? r.adjclose;
+      return {
+        date: String(r.date ?? ""),
+        open: Number(r.open ?? 0),
+        high: Number(r.high ?? 0),
+        low: Number(r.low ?? 0),
+        close: Number(r.close ?? 0),
+        volume: Number(r.volume ?? 0),
+        adjClose: adj != null ? Number(adj) : null,
+      };
+    });
   }
 
   async getQuote(symbol: string, provider?: string): Promise<Quote> {
@@ -363,14 +367,18 @@ export class OpenBBClient {
       interval: opts.interval,
       provider: opts.provider ?? "yfinance",
     });
-    return raw.map((r) => ({
-      date: String(r.date ?? ""),
-      open: Number(r.open ?? 0),
-      high: Number(r.high ?? 0),
-      low: Number(r.low ?? 0),
-      close: Number(r.close ?? 0),
-      volume: Number(r.volume ?? 0),
-    }));
+    return raw.map((r) => {
+      const adj = r.adj_close ?? r.adjusted_close ?? r.adjclose;
+      return {
+        date: String(r.date ?? ""),
+        open: Number(r.open ?? 0),
+        high: Number(r.high ?? 0),
+        low: Number(r.low ?? 0),
+        close: Number(r.close ?? 0),
+        volume: Number(r.volume ?? 0),
+        adjClose: adj != null ? Number(adj) : null,
+      };
+    });
   }
 
   // ── Index ─────────────────────────────────────────────────────────────
@@ -782,14 +790,18 @@ export class OpenBBClient {
       interval: opts.interval,
       provider: opts.provider ?? "yfinance",
     });
-    return raw.map((r) => ({
-      date: String(r.date ?? ""),
-      open: Number(r.open ?? 0),
-      high: Number(r.high ?? 0),
-      low: Number(r.low ?? 0),
-      close: Number(r.close ?? 0),
-      volume: Number(r.volume ?? 0),
-    }));
+    return raw.map((r) => {
+      const adj = r.adj_close ?? r.adjusted_close ?? r.adjclose;
+      return {
+        date: String(r.date ?? ""),
+        open: Number(r.open ?? 0),
+        high: Number(r.high ?? 0),
+        low: Number(r.low ?? 0),
+        close: Number(r.close ?? 0),
+        volume: Number(r.volume ?? 0),
+        adjClose: adj != null ? Number(adj) : null,
+      };
+    });
   }
 
   // ── Health ────────────────────────────────────────────────────────────

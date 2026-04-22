@@ -622,11 +622,17 @@ function PortfolioDetailPage() {
                 label={t("portfolio.unrealizedAbs")}
                 value={totals ? formatCurrency(totals.unrealizedAbs, currency) : "—"}
                 tone={totals ? (totals.unrealizedAbs >= 0 ? "pos" : "neg") : "neutral"}
+                secondaryLabel={t("portfolio.trLabel")}
+                secondaryValue={totals ? formatCurrency(totals.unrealizedAbsTr, currency) : undefined}
+                secondaryTone={totals ? (totals.unrealizedAbsTr >= 0 ? "pos" : "neg") : "neutral"}
               />
               <TotalTile
                 label={t("portfolio.unrealizedPct")}
                 value={totals ? formatPct(totals.unrealizedPct) : "—"}
                 tone={totals && totals.unrealizedPct != null ? (totals.unrealizedPct >= 0 ? "pos" : "neg") : "neutral"}
+                secondaryLabel={t("portfolio.trLabel")}
+                secondaryValue={totals ? formatPct(totals.unrealizedPctTr) : undefined}
+                secondaryTone={totals && totals.unrealizedPctTr != null ? (totals.unrealizedPctTr >= 0 ? "pos" : "neg") : "neutral"}
               />
             </div>
             {valuationQuery.data && (
@@ -895,19 +901,39 @@ function PortfolioDetailPage() {
                         <td className="px-2 py-2 text-right tabular-nums">
                           {r.marketValue != null ? formatCurrency(r.marketValue, currency) : "—"}
                         </td>
-                        <td
-                          className={
-                            "px-2 py-2 text-right tabular-nums " +
-                            (r.unrealizedAbs == null
-                              ? ""
-                              : r.unrealizedAbs >= 0
-                                ? "text-[#10b981]"
-                                : "text-[#ef4444]")
-                          }
-                        >
-                          {r.unrealizedAbs != null
-                            ? `${formatCurrency(r.unrealizedAbs, currency)} (${formatPct(r.unrealizedPct)})`
-                            : "—"}
+                        <td className="px-2 py-2 text-right tabular-nums">
+                          {r.unrealizedAbs != null ? (
+                            <>
+                              <div
+                                className={
+                                  r.unrealizedAbs >= 0
+                                    ? "text-[#10b981]"
+                                    : "text-[#ef4444]"
+                                }
+                              >
+                                <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--color-muted-fg)]">
+                                  {t("portfolio.prLabel")}
+                                </span>
+                                {`${formatCurrency(r.unrealizedAbs, currency)} (${formatPct(r.unrealizedPct)})`}
+                              </div>
+                              {r.unrealizedAbsTr != null && (
+                                <div
+                                  className={
+                                    (r.unrealizedAbsTr >= 0
+                                      ? "text-[#10b981]"
+                                      : "text-[#ef4444]") + " text-xs opacity-80"
+                                  }
+                                >
+                                  <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--color-muted-fg)]">
+                                    {t("portfolio.trLabel")}
+                                  </span>
+                                  {`${formatCurrency(r.unrealizedAbsTr, currency)} (${formatPct(r.unrealizedPctTr)})`}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            "—"
+                          )}
                         </td>
                         <td className="px-2 py-2">
                           <AnalysisCell
@@ -1375,17 +1401,31 @@ function TotalTile({
   label,
   value,
   tone = "neutral",
+  secondaryLabel,
+  secondaryValue,
+  secondaryTone = "neutral",
 }: {
   label: string;
   value: string;
   tone?: "pos" | "neg" | "neutral";
+  secondaryLabel?: string;
+  secondaryValue?: string;
+  secondaryTone?: "pos" | "neg" | "neutral";
 }) {
-  const color =
-    tone === "pos" ? "text-[#10b981]" : tone === "neg" ? "text-[#ef4444]" : "text-[var(--color-fg)]";
+  const toneColor = (t: "pos" | "neg" | "neutral") =>
+    t === "pos" ? "text-[#10b981]" : t === "neg" ? "text-[#ef4444]" : "text-[var(--color-fg)]";
   return (
     <div>
       <p className="text-xs text-[var(--color-muted-fg)]">{label}</p>
-      <p className={`mt-1 text-lg font-semibold tabular-nums ${color}`}>{value}</p>
+      <p className={`mt-1 text-lg font-semibold tabular-nums ${toneColor(tone)}`}>{value}</p>
+      {secondaryValue != null && (
+        <p className={`font-mono text-xs tabular-nums ${toneColor(secondaryTone)} opacity-80`}>
+          <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--color-muted-fg)]">
+            {secondaryLabel}
+          </span>
+          {secondaryValue}
+        </p>
+      )}
     </div>
   );
 }

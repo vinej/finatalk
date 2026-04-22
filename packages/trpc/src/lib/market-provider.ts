@@ -13,6 +13,10 @@ export type Candle = {
   low: number;
   close: number;
   volume: number;
+  // Dividend- and split-adjusted close. Falls back to `close` when the upstream
+  // provider does not expose one. Consumers computing total returns should use
+  // this; chart rendering should stay on raw `close`.
+  adjClose?: number | null;
 };
 
 type ProviderResult<T> = { data: T; provider: "openbb" | "yahoo" };
@@ -45,6 +49,7 @@ function openbbBarToCandle(bar: OHLCVBar): Candle {
     low: bar.low,
     close: bar.close,
     volume: bar.volume,
+    adjClose: bar.adjClose ?? null,
   };
 }
 
@@ -85,6 +90,7 @@ export async function fetchChartWithFallback(
   const candles: Candle[] = [];
   for (const q of result.quotes) {
     if (q.open == null || q.high == null || q.low == null || q.close == null) continue;
+    const adj = (q as { adjclose?: number | null }).adjclose;
     candles.push({
       time: Math.floor(q.date.getTime() / 1000),
       open: q.open,
@@ -92,6 +98,7 @@ export async function fetchChartWithFallback(
       low: q.low,
       close: q.close,
       volume: q.volume ?? 0,
+      adjClose: typeof adj === "number" ? adj : null,
     });
   }
   return { data: { candles, currency }, provider: "yahoo" };

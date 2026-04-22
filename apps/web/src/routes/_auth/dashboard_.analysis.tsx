@@ -490,7 +490,13 @@ function AnalysisPage() {
           >
             <ChevronIcon open={!controlsCollapsed} />
             <CardTitle>
-              {t("analysis.title")}
+              {submittedSymbol && query.data?.displayCurrency
+                ? t("analysis.titleFor", {
+                    symbol: submittedSymbol,
+                    name: submittedSymbolMeta?.name ?? submittedSymbol,
+                    currency: query.data.displayCurrency,
+                  })
+                : t("analysis.title")}
               {loadedAnalysisTitle && (
                 <span className="ml-2 text-sm font-normal text-[var(--color-muted-fg)]">— {loadedAnalysisTitle}</span>
               )}

@@ -64,6 +64,7 @@ function applyFx(candles: Candle[], rates: Map<number, number>): Candle[] {
       low: c.low * lastRate,
       close: c.close * lastRate,
       volume: c.volume,
+      adjClose: c.adjClose != null ? c.adjClose * lastRate : null,
     });
   }
   return out;
@@ -1591,11 +1592,57 @@ export const marketRouter = createTRPCRouter({
   getHistoricalReturns: protectedProcedure
     .input(z.object({ symbol: SymbolSchema }))
     .query(async ({ input }) => {
-      const { candles } = await fetchCandlesWithCurrency(input.symbol, "max", "1d", null);
-      const empty = { "6m": null, "1y": null, "2y": null, "5y": null, "10y": null } as const;
-      if (candles.length < 2) return { ...empty };
+      // Bypass OpenBB here. OpenBB's yfinance provider returns pre-adjusted
+      // close in the `close` field with no separate `adj_close`, so TR and PR
+      // would collapse to the same number. yahoo-finance2.chart reliably
+      // returns both `close` (raw) and `adjclose` (dividend/split-adjusted).
+      type ReturnPair = { tr: number | null; pr: number | null };
+      const emptyPair: ReturnPair = { tr: null, pr: null };
+      const emptyTrailing = {
+        "6m": { ...emptyPair },
+        "1y": { ...emptyPair },
+        "2y": { ...emptyPair },
+        "5y": { ...emptyPair },
+        "10y": { ...emptyPair },
+      };
+      type YearlyEntry = { year: number; tr: number | null; pr: number | null; ytd: boolean };
+
+      // 11y window covers the 10y trailing return plus slack for the pick.
+      const result = await yf
+        .chart(input.symbol, {
+          period1: new Date(Date.now() - 11 * 365.25 * 24 * 60 * 60 * 1000),
+          interval: "1d",
+          return: "array",
+        })
+        .catch(() => null);
+      type RawQuote = { date: Date; close: number | null; adjclose?: number | null };
+      const rawQuotes = (result?.quotes ?? []) as RawQuote[];
+      type C = { time: number; close: number; adjClose: number | null };
+      const candles: C[] = [];
+      for (const q of rawQuotes) {
+        if (q.close == null || !Number.isFinite(q.close)) continue;
+        candles.push({
+          time: Math.floor(q.date.getTime() / 1000),
+          close: q.close,
+          adjClose: typeof q.adjclose === "number" ? q.adjclose : null,
+        });
+      }
+      if (candles.length < 2) {
+        return { ...emptyTrailing, yearly: [] as YearlyEntry[] };
+      }
+
+      // TR (total return) uses dividend/split-adjusted close when the provider
+      // exposes it; falls back to raw close when unavailable, matching PR.
+      // PR (price return) always uses the raw close.
+      const trPrice = (c: C): number =>
+        c.adjClose != null && c.adjClose > 0 ? c.adjClose : c.close;
+      const prPrice = (c: C): number => c.close;
+      const pctChange = (from: number, to: number): number | null =>
+        from > 0 ? ((to - from) / from) * 100 : null;
 
       const last = candles[candles.length - 1]!;
+      const lastTr = trPrice(last);
+      const lastPr = prPrice(last);
       const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
       const periods = [
         { key: "6m" as const, years: 0.5 },
@@ -1605,20 +1652,53 @@ export const marketRouter = createTRPCRouter({
         { key: "10y" as const, years: 10 },
       ];
 
-      const result: Record<"6m" | "1y" | "2y" | "5y" | "10y", number | null> = { ...empty };
+      const trailing: Record<"6m" | "1y" | "2y" | "5y" | "10y", ReturnPair> = {
+        "6m": { ...emptyPair },
+        "1y": { ...emptyPair },
+        "2y": { ...emptyPair },
+        "5y": { ...emptyPair },
+        "10y": { ...emptyPair },
+      };
       for (const p of periods) {
         const targetTime = last.time - p.years * SECONDS_PER_YEAR;
-        // First candle at or after target — ensures we don't overshoot when
-        // the oldest available candle is younger than the requested window.
         const ref = candles.find((c) => c.time >= targetTime);
-        if (!ref || ref.time >= last.time || ref.close === 0) continue;
-        // Require at least 80% of the requested window; otherwise the "10y"
-        // return for a 3y-old ETF would be misleadingly shown as 3y.
+        if (!ref || ref.time >= last.time) continue;
         const coverage = (last.time - ref.time) / (p.years * SECONDS_PER_YEAR);
         if (coverage < 0.8) continue;
-        result[p.key] = ((last.close - ref.close) / ref.close) * 100;
+        trailing[p.key] = {
+          tr: pctChange(trPrice(ref), lastTr),
+          pr: pctChange(prPrice(ref), lastPr),
+        };
       }
-      return result;
+
+      // Calendar-year returns: current year YTD + last 4 complete years.
+      const currentYear = new Date(last.time * 1000).getUTCFullYear();
+      const yearly: YearlyEntry[] = [];
+      for (let i = 0; i <= 4; i++) {
+        const year = currentYear - i;
+        const isYtd = i === 0;
+        const yearEndSec = Math.floor(Date.UTC(year + 1, 0, 1) / 1000);
+        const priorYearEndSec = Math.floor(Date.UTC(year, 0, 1) / 1000);
+        let endCandle: typeof last | undefined;
+        let priorEndCandle: typeof last | undefined;
+        for (const c of candles) {
+          if (c.time < priorYearEndSec) priorEndCandle = c;
+          else if (c.time < yearEndSec) endCandle = c;
+          else break;
+        }
+        if (!endCandle || !priorEndCandle) {
+          yearly.push({ year, tr: null, pr: null, ytd: isYtd });
+          continue;
+        }
+        yearly.push({
+          year,
+          ytd: isYtd,
+          tr: pctChange(trPrice(priorEndCandle), trPrice(endCandle)),
+          pr: pctChange(prPrice(priorEndCandle), prPrice(endCandle)),
+        });
+      }
+
+      return { ...trailing, yearly };
     }),
 
   getFinancialStatements: protectedProcedure

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
+import YahooFinance from "yahoo-finance2";
 import { z } from "zod";
 import { analysis, holding, portfolio, transaction, type Holding, type Transaction } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
@@ -17,7 +18,65 @@ import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
 import { resolveAssetType } from "../lib/market-provider";
 import { paletteColor } from "../constants/chart";
 
+const yf = new YahooFinance();
+
 const TransactionTypeSchema = z.enum(["buy", "sell", "dividend"]);
+
+// TR (total return) multiplier vs PR (price return), per holding.
+// Computed from yahoo-finance2's raw `close` and `adjclose` at the holding's
+// purchase date. The ratio (close_purchase / adjClose_purchase) is FX-
+// invariant, so we can compute it in native currency and apply it to the
+// already-FX-converted PR market value. Returns 1 when we can't determine a
+// reliable factor (no data, zero prices, etc.) so TR falls back to PR.
+async function fetchTrDividendFactors(
+  holdings: Holding[],
+): Promise<Map<string, number>> {
+  const earliestBySymbol = new Map<string, Date>();
+  for (const h of holdings) {
+    const sym = h.symbol.toUpperCase();
+    const d = new Date(h.purchaseDate);
+    const existing = earliestBySymbol.get(sym);
+    if (!existing || d < existing) earliestBySymbol.set(sym, d);
+  }
+
+  type HistPoint = { time: number; close: number; adjClose: number | null };
+  type ChartQuote = { date: Date; close: number | null; adjclose?: number | null };
+  const histBySymbol = new Map<string, HistPoint[]>();
+  await Promise.all(
+    Array.from(earliestBySymbol.entries()).map(async ([symbol, startDate]) => {
+      try {
+        // Back up a few days so a purchase-date holiday still finds a candle.
+        const period1 = new Date(startDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const res = await yf.chart(symbol, { period1, interval: "1d", return: "array" });
+        const points: HistPoint[] = [];
+        for (const q of res.quotes as ChartQuote[]) {
+          if (q.close == null || !Number.isFinite(q.close)) continue;
+          points.push({
+            time: Math.floor(q.date.getTime() / 1000),
+            close: q.close,
+            adjClose: typeof q.adjclose === "number" ? q.adjclose : null,
+          });
+        }
+        histBySymbol.set(symbol, points);
+      } catch {
+        histBySymbol.set(symbol, []);
+      }
+    }),
+  );
+
+  const factors = new Map<string, number>(); // keyed by holding.id
+  for (const h of holdings) {
+    const hist = histBySymbol.get(h.symbol.toUpperCase()) ?? [];
+    const purchaseSec = Math.floor(new Date(h.purchaseDate).getTime() / 1000);
+    const point = hist.find((p) => p.time >= purchaseSec) ?? hist[0];
+    if (!point || point.adjClose == null || point.adjClose <= 0 || point.close <= 0) {
+      factors.set(h.id, 1);
+      continue;
+    }
+    factors.set(h.id, point.close / point.adjClose);
+  }
+  return factors;
+}
 
 const TransactionInputSchema = z.object({
   type: TransactionTypeSchema,
@@ -371,43 +430,50 @@ export const portfolioRouter = createTRPCRouter({
         error: string | null;
       };
 
-      const priceEntries = await Promise.all(
-        uniqueSymbols.map(async (symbol): Promise<[string, PriceInfo]> => {
-          try {
-            const { candles, nativeCurrency, displayCurrency } =
-              await fetchCandlesWithCurrency(symbol, "1mo", "1d", currency);
-            const last = candles[candles.length - 1];
-            if (!last) {
-              return [symbol, { lastClose: null, nativeCurrency, displayCurrency, error: "no data" }];
+      const [priceEntries, trFactors] = await Promise.all([
+        Promise.all(
+          uniqueSymbols.map(async (symbol): Promise<[string, PriceInfo]> => {
+            try {
+              const { candles, nativeCurrency, displayCurrency } =
+                await fetchCandlesWithCurrency(symbol, "1mo", "1d", currency);
+              const last = candles[candles.length - 1];
+              if (!last) {
+                return [symbol, { lastClose: null, nativeCurrency, displayCurrency, error: "no data" }];
+              }
+              return [symbol, { lastClose: last.close, nativeCurrency, displayCurrency, error: null }];
+            } catch (err) {
+              return [
+                symbol,
+                {
+                  lastClose: null,
+                  nativeCurrency: null,
+                  displayCurrency: null,
+                  error: err instanceof Error ? err.message : String(err),
+                },
+              ];
             }
-            return [symbol, { lastClose: last.close, nativeCurrency, displayCurrency, error: null }];
-          } catch (err) {
-            return [
-              symbol,
-              {
-                lastClose: null,
-                nativeCurrency: null,
-                displayCurrency: null,
-                error: err instanceof Error ? err.message : String(err),
-              },
-            ];
-          }
-        }),
-      );
+          }),
+        ),
+        fetchTrDividendFactors(holdings),
+      ]);
       const pricesBySymbol = new Map<string, PriceInfo>(priceEntries);
 
       const rows = holdings.map((h) => {
         const info = pricesBySymbol.get(h.symbol.toUpperCase())!;
         const hNum = serializeHolding(h);
         const costTotal = hNum.quantity * hNum.costBasis;
+        const trFactor = trFactors.get(h.id) ?? 1;
         if (info.lastClose == null) {
           return {
             holding: hNum,
             lastClose: null,
             marketValue: null,
+            marketValueTr: null,
             costTotal,
             unrealizedAbs: null,
             unrealizedPct: null,
+            unrealizedAbsTr: null,
+            unrealizedPctTr: null,
             nativeCurrency: info.nativeCurrency,
             error: info.error ?? "no price",
           };
@@ -415,13 +481,19 @@ export const portfolioRouter = createTRPCRouter({
         const marketValue = hNum.quantity * info.lastClose;
         const unrealizedAbs = marketValue - costTotal;
         const unrealizedPct = costTotal > 0 ? (unrealizedAbs / costTotal) * 100 : null;
+        const marketValueTr = marketValue * trFactor;
+        const unrealizedAbsTr = marketValueTr - costTotal;
+        const unrealizedPctTr = costTotal > 0 ? (unrealizedAbsTr / costTotal) * 100 : null;
         return {
           holding: hNum,
           lastClose: info.lastClose,
           marketValue,
+          marketValueTr,
           costTotal,
           unrealizedAbs,
           unrealizedPct,
+          unrealizedAbsTr,
+          unrealizedPctTr,
           nativeCurrency: info.nativeCurrency,
           error: null as string | null,
         };
@@ -429,9 +501,12 @@ export const portfolioRouter = createTRPCRouter({
 
       const valued = rows.filter((r) => r.marketValue != null);
       const totalMV = valued.reduce((s, r) => s + (r.marketValue ?? 0), 0);
+      const totalMvTr = valued.reduce((s, r) => s + (r.marketValueTr ?? 0), 0);
       const totalCost = valued.reduce((s, r) => s + r.costTotal, 0);
       const totalAbs = totalMV - totalCost;
       const totalPct = totalCost > 0 ? (totalAbs / totalCost) * 100 : null;
+      const totalAbsTr = totalMvTr - totalCost;
+      const totalPctTr = totalCost > 0 ? (totalAbsTr / totalCost) * 100 : null;
 
       return {
         id: p.id,
@@ -441,9 +516,12 @@ export const portfolioRouter = createTRPCRouter({
         rows,
         totals: {
           marketValue: totalMV,
+          marketValueTr: totalMvTr,
           costTotal: totalCost,
           unrealizedAbs: totalAbs,
           unrealizedPct: totalPct,
+          unrealizedAbsTr: totalAbsTr,
+          unrealizedPctTr: totalPctTr,
         },
       };
     }),

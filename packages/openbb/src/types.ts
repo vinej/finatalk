@@ -5,6 +5,10 @@ export type OHLCVBar = {
   low: number;
   close: number;
   volume: number;
+  // Dividend- and split-adjusted close. Populated when the provider exposes it
+  // (yfinance, FMP historical with adjustments). Null when only raw close is
+  // available — callers can fall back to `close`.
+  adjClose?: number | null;
 };
 
 export type Quote = {

@@ -52,13 +52,17 @@ export function EtfSection({
   const holdings = holdingsQuery.data ?? [];
   const sectors = sectorsQuery.data ?? [];
   const returns = returnsQuery.data;
-  const hasReturns =
+  const hasPair = (p: { tr: number | null; pr: number | null } | undefined): boolean =>
+    !!p && (p.tr != null || p.pr != null);
+  const hasTrailingReturns =
     !!returns &&
-    (returns["6m"] != null ||
-      returns["1y"] != null ||
-      returns["2y"] != null ||
-      returns["5y"] != null ||
-      returns["10y"] != null);
+    (hasPair(returns["6m"]) ||
+      hasPair(returns["1y"]) ||
+      hasPair(returns["2y"]) ||
+      hasPair(returns["5y"]) ||
+      hasPair(returns["10y"]));
+  const hasYearlyReturns = !!returns && returns.yearly.some((y) => y.tr != null || y.pr != null);
+  const hasReturns = hasTrailingReturns || hasYearlyReturns;
 
   const hasAny = !!info || holdings.length > 0 || sectors.length > 0 || hasReturns;
   const allLoading =
@@ -112,15 +116,29 @@ export function EtfSection({
         )}
 
         {hasReturns && returns && (
-          <div>
+          <div className="space-y-3">
             <h3 className="text-sm font-semibold">{t("etf.pastPerformance")}</h3>
-            <div className="mt-2 grid grid-cols-3 gap-3 text-sm sm:grid-cols-5">
-              <ReturnCell label={t("etf.return6m")} value={returns["6m"]} />
-              <ReturnCell label={t("etf.return1y")} value={returns["1y"]} />
-              <ReturnCell label={t("etf.return2y")} value={returns["2y"]} />
-              <ReturnCell label={t("etf.return5y")} value={returns["5y"]} />
-              <ReturnCell label={t("etf.return10y")} value={returns["10y"]} />
-            </div>
+            <p className="text-xs text-[var(--color-muted-fg)]">{t("etf.prTrExplainer")}</p>
+            {hasTrailingReturns && (
+              <div className="grid grid-cols-3 gap-3 text-sm sm:grid-cols-5">
+                <ReturnCell label={t("etf.return6m")} pair={returns["6m"]} />
+                <ReturnCell label={t("etf.return1y")} pair={returns["1y"]} />
+                <ReturnCell label={t("etf.return2y")} pair={returns["2y"]} />
+                <ReturnCell label={t("etf.return5y")} pair={returns["5y"]} />
+                <ReturnCell label={t("etf.return10y")} pair={returns["10y"]} />
+              </div>
+            )}
+            {hasYearlyReturns && (
+              <div className="grid grid-cols-3 gap-3 text-sm sm:grid-cols-5">
+                {returns.yearly.map((y) => (
+                  <ReturnCell
+                    key={y.year}
+                    label={y.ytd ? `${y.year} ${t("etf.ytd")}` : String(y.year)}
+                    pair={{ tr: y.tr, pr: y.pr }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -170,18 +188,30 @@ function InfoCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ReturnCell({ label, value }: { label: string; value: number | null }) {
-  const tone =
-    value == null
+function ReturnCell({
+  label,
+  pair,
+}: {
+  label: string;
+  pair: { tr: number | null; pr: number | null };
+}) {
+  const fmt = (v: number | null) => formatPctShared(v, { signed: true, autoScale: false, digits: 2 });
+  const toneOf = (v: number | null) =>
+    v == null
       ? "text-[var(--color-muted-fg)]"
-      : value >= 0
+      : v >= 0
         ? "text-emerald-600 dark:text-emerald-400"
         : "text-red-600 dark:text-red-400";
   return (
     <div>
       <p className="text-xs text-[var(--color-muted-fg)]">{label}</p>
-      <p className={`mt-0.5 font-mono text-sm tabular-nums ${tone}`}>
-        {formatPctShared(value, { signed: true, autoScale: false, digits: 2 })}
+      <p className={`mt-0.5 font-mono text-sm tabular-nums ${toneOf(pair.tr)}`}>
+        <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--color-muted-fg)]">TR</span>
+        {fmt(pair.tr)}
+      </p>
+      <p className={`font-mono text-xs tabular-nums ${toneOf(pair.pr)} opacity-80`}>
+        <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--color-muted-fg)]">PR</span>
+        {fmt(pair.pr)}
       </p>
     </div>
   );
