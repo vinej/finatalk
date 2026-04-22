@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./analysis";
+export * from "./login-attempt";
 export * from "./portfolio";
 export * from "./research";
 export * from "./notification";

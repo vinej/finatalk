@@ -1,4 +1,4 @@
-import { boolean, date, index, jsonb, numeric, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, date, index, jsonb, numeric, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { analysis } from "./analysis";
 import { createTable, user } from "./auth";
 
@@ -19,6 +19,7 @@ export const portfolio = createTable(
   },
   (t) => ({
     userIdx: index("finatalk_portfolio_user_idx").on(t.userId, t.createdAt),
+    userTitleUniq: uniqueIndex("finatalk_portfolio_user_title_uniq").on(t.userId, t.title),
   }),
 );
 

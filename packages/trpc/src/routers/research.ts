@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
+import { SymbolSchema } from "../schemas/indicator";
 
 const ChatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -14,8 +15,8 @@ export const researchRouter = createTRPCRouter({
         messages: z.array(ChatMessageSchema).min(1).max(40),
         context: z
           .object({
-            symbol: z.string().trim().min(1).max(20).optional(),
-            comparisonSymbols: z.array(z.string().trim().min(1).max(20)).max(5).optional(),
+            symbol: SymbolSchema.optional(),
+            comparisonSymbols: z.array(SymbolSchema).max(5).optional(),
           })
           .default({}),
         language: z.string().min(2).max(10).optional(),
@@ -42,7 +43,7 @@ export const researchRouter = createTRPCRouter({
   getConfidence: protectedProcedure
     .input(
       z.object({
-        symbol: z.string().trim().min(1).max(20),
+        symbol: SymbolSchema,
         language: z.string().min(2).max(10).optional(),
       }),
     )

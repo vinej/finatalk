@@ -7,6 +7,7 @@ import {
   formatPct,
   formatShares,
 } from "@/lib/format";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { trpc } from "@/lib/trpc";
 
 const formatCurrency = (value: number | null | undefined, currency: string | null = "USD") =>
@@ -168,17 +169,21 @@ export function OwnershipSection({
                         {formatCurrency(row.transactionValue, "USD")}
                       </td>
                       <td className="py-1.5">
-                        {row.filingUrl && (
-                          <a
-                            href={row.filingUrl}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="inline-flex items-center text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]"
-                            aria-label={t("ownership.openFiling")}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        )}
+                        {(() => {
+                          const safeUrl = safeExternalUrl(row.filingUrl);
+                          if (!safeUrl) return null;
+                          return (
+                            <a
+                              href={safeUrl}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="inline-flex items-center text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]"
+                              aria-label={t("ownership.openFiling")}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}

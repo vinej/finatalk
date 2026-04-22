@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { alert } from "@finatalk/db";
+import { alert, portfolio } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import { SymbolSchema } from "../schemas/indicator";
 import { IdInput, IdWithEnabledInput, IdsInput, IdsWithEnabledInput } from "../schemas/common";
@@ -85,6 +85,21 @@ const CreateInputSchema = z.object({
   indicatorParams: IndicatorParamsSchema,
 }).merge(GroupingSchema);
 
+async function assertOwnedPortfolioIds(
+  ctx: { db: typeof import("@finatalk/db").db; user: { id: string } },
+  ids: ReadonlyArray<string | null | undefined>,
+): Promise<void> {
+  const unique = Array.from(new Set(ids.filter((id): id is string => !!id)));
+  if (unique.length === 0) return;
+  const rows = await ctx.db
+    .select({ id: portfolio.id })
+    .from(portfolio)
+    .where(and(inArray(portfolio.id, unique), eq(portfolio.userId, ctx.user.id)));
+  if (rows.length !== unique.length) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Portfolio not found." });
+  }
+}
+
 export const alertRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
@@ -111,6 +126,7 @@ export const alertRouter = createTRPCRouter({
   create: protectedProcedure
     .input(CreateInputSchema)
     .mutation(async ({ ctx, input }) => {
+      await assertOwnedPortfolioIds(ctx, [input.portfolioId]);
       const id = randomUUID();
       const params = normalizeParams(input.conditionType, input.indicatorParams);
       await ctx.db.insert(alert).values({
@@ -131,6 +147,7 @@ export const alertRouter = createTRPCRouter({
   createBulk: protectedProcedure
     .input(z.object({ alerts: z.array(CreateInputSchema).min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
+      await assertOwnedPortfolioIds(ctx, input.alerts.map((a) => a.portfolioId));
       const rows = input.alerts.map((a) => ({
         id: randomUUID(),
         userId: ctx.user.id,

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { trpc } from "@/lib/trpc";
 import type { RouterOutputs } from "@finatalk/trpc";
 
@@ -178,12 +179,15 @@ function TabButton({
 }
 
 function ArticleCard({ article }: { article: NewsArticle }) {
+  const safeUrl = safeExternalUrl(article.url);
+  const safeImageUrl = safeExternalUrl(article.imageUrl);
+  if (!safeUrl) return null;
   return (
     <Card>
       <CardContent className="flex gap-3 p-3">
-        {article.imageUrl && (
+        {safeImageUrl && (
           <img
-            src={article.imageUrl}
+            src={safeImageUrl}
             alt=""
             className="h-20 w-20 shrink-0 rounded object-cover"
             onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
@@ -191,7 +195,7 @@ function ArticleCard({ article }: { article: NewsArticle }) {
         )}
         <div className="min-w-0 flex-1">
           <a
-            href={article.url}
+            href={safeUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-flex items-start gap-1 text-sm font-medium text-[var(--color-fg)] hover:text-[var(--color-primary)]"

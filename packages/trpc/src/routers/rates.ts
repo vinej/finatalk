@@ -53,7 +53,7 @@ export const ratesRouter = createTRPCRouter({
       if (lastError) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Yield curve unavailable: ${(lastError as Error)?.message ?? "unknown"}`,
+          message: "Yield curve unavailable",
         });
       }
       return [];
@@ -80,7 +80,7 @@ export const ratesRouter = createTRPCRouter({
         console.error(`[rates.getCentralBankRate] rate=${input.rate} failed:`, err);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Rate ${input.rate} unavailable: ${(err as Error)?.message ?? "unknown"}`,
+          message: `Rate ${input.rate} unavailable`,
         });
       }
     }),
@@ -107,7 +107,7 @@ export const ratesRouter = createTRPCRouter({
         console.error(`[rates.getTreasurySpread] maturity=${input.maturity} failed:`, err);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Treasury spread unavailable: ${(err as Error)?.message ?? "unknown"}`,
+          message: "Treasury spread unavailable",
         });
       }
     }),
@@ -139,7 +139,7 @@ export const ratesRouter = createTRPCRouter({
         );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `OECD rate unavailable: ${(err as Error)?.message ?? "unknown"}`,
+          message: "OECD rate unavailable",
         });
       }
     }),

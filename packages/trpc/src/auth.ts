@@ -1,7 +1,8 @@
 import { betterAuth } from "better-auth";
 import { twoFactor } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db, user, session, account, verification, twoFactor as twoFactorTable } from "@finatalk/db";
+import { and, eq, lt, sql } from "drizzle-orm";
+import { db, loginAttempt, user, session, account, verification, twoFactor as twoFactorTable } from "@finatalk/db";
 import { encrypt, decrypt } from "./crypto";
 
 const authLog = {
@@ -130,38 +131,69 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
   if (error) authLog.error(`Failed to send email: ${(error as { message?: string }).message ?? String(error)}`);
 }
 
-// Per-account login lockout
+// Per-account login lockout — persisted in Postgres so it survives restarts
+// and is shared across server instances.
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
-const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
+// Stale-row sweep (runs at interval; guarded so concurrent workers don't race).
 setInterval(() => {
-  const now = Date.now();
-  for (const [email, entry] of loginAttempts) {
-    if (now > entry.lockedUntil + LOGIN_LOCKOUT_MS) loginAttempts.delete(email);
-  }
-}, 10 * 60 * 1000);
+  const cutoff = new Date(Date.now() - LOGIN_LOCKOUT_MS);
+  db.delete(loginAttempt)
+    .where(and(lt(loginAttempt.updatedAt, cutoff), eq(loginAttempt.count, 0)))
+    .catch((err) => authLog.error(`loginAttempt sweep failed: ${String(err)}`));
+}, 10 * 60 * 1000).unref();
 
-export function checkAccountLockout(email: string): void {
-  const entry = loginAttempts.get(email);
-  if (!entry) return;
-  if (entry.lockedUntil > Date.now()) {
+// Returns true iff the account is currently locked. Fails open on DB errors:
+// if the lockout table is unreachable (e.g. migration not yet applied) we log
+// and allow login — better-auth still enforces credential verification, and
+// blocking legit logins on an infra issue is worse than losing defense-in-depth.
+export async function isAccountLocked(email: string): Promise<boolean> {
+  try {
+    const row = await db.query.loginAttempt.findFirst({
+      where: eq(loginAttempt.email, email),
+    });
+    if (!row) return false;
+    return row.lockedUntil != null && row.lockedUntil.getTime() > Date.now();
+  } catch (err) {
+    authLog.error(`isAccountLocked query failed (fail-open): ${String(err)}`);
+    return false;
+  }
+}
+
+// Back-compat: throws when locked, swallows unrelated DB errors.
+export async function checkAccountLockout(email: string): Promise<void> {
+  if (await isAccountLocked(email)) {
     throw new Error("Account temporarily locked due to too many failed login attempts. Please try again later.");
   }
-  if (entry.count >= LOGIN_MAX_ATTEMPTS) loginAttempts.delete(email);
 }
 
-export function recordFailedLogin(email: string): void {
-  const entry = loginAttempts.get(email) ?? { count: 0, lockedUntil: 0 };
-  entry.count += 1;
-  if (entry.count >= LOGIN_MAX_ATTEMPTS) {
-    entry.lockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
+export async function recordFailedLogin(email: string): Promise<void> {
+  const now = new Date();
+  try {
+    // Upsert: increment count, re-arm lockout when threshold reached.
+    await db
+      .insert(loginAttempt)
+      .values({ email, count: 1, lockedUntil: null, updatedAt: now })
+      .onConflictDoUpdate({
+        target: loginAttempt.email,
+        set: {
+          count: sql`${loginAttempt.count} + 1`,
+          lockedUntil: sql`CASE WHEN ${loginAttempt.count} + 1 >= ${LOGIN_MAX_ATTEMPTS} THEN ${new Date(Date.now() + LOGIN_LOCKOUT_MS)} ELSE ${loginAttempt.lockedUntil} END`,
+          updatedAt: now,
+        },
+      });
+  } catch (err) {
+    authLog.error(`recordFailedLogin failed: ${String(err)}`);
   }
-  loginAttempts.set(email, entry);
 }
 
-export function clearFailedLogins(email: string): void {
-  loginAttempts.delete(email);
+export async function clearFailedLogins(email: string): Promise<void> {
+  try {
+    await db.delete(loginAttempt).where(eq(loginAttempt.email, email));
+  } catch (err) {
+    authLog.error(`clearFailedLogins failed: ${String(err)}`);
+  }
 }
 
 function escapeHtml(s: string): string {

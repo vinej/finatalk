@@ -6,6 +6,7 @@ import { AiDisclaimer } from "@/components/ai/disclaimer";
 import { Markdown } from "@/components/ai/markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 
@@ -180,18 +181,22 @@ function MessageFooter({ meta }: { meta: AssistantMeta }) {
       {meta.citations.length > 0 && (
         <>
           <span className="text-xs text-[var(--color-muted-fg)]">{t("research.citations")}:</span>
-          {meta.citations.map((c) => (
-            <a
-              key={c.url}
-              href={c.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-0.5 text-xs hover:bg-[var(--color-accent)]"
-            >
-              <span className="max-w-[200px] truncate">{c.label}</span>
-              <ExternalLink className="h-3 w-3 text-[var(--color-muted-fg)]" aria-hidden />
-            </a>
-          ))}
+          {meta.citations.map((c) => {
+            const safeUrl = safeExternalUrl(c.url);
+            if (!safeUrl) return null;
+            return (
+              <a
+                key={safeUrl}
+                href={safeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-0.5 text-xs hover:bg-[var(--color-accent)]"
+              >
+                <span className="max-w-[200px] truncate">{c.label}</span>
+                <ExternalLink className="h-3 w-3 text-[var(--color-muted-fg)]" aria-hidden />
+              </a>
+            );
+          })}
         </>
       )}
     </div>

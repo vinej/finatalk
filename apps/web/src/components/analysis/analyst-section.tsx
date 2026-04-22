@@ -2,6 +2,7 @@ import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { trpc } from "@/lib/trpc";
 
 function ratingTone(rating: string | null): string {
@@ -164,17 +165,21 @@ export function AnalystSection({
                         )}
                       </td>
                       <td className="py-1.5">
-                        {tgt.url && (
-                          <a
-                            href={tgt.url}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="inline-flex items-center text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]"
-                            aria-label={t("analyst.openLink")}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        )}
+                        {(() => {
+                          const safeUrl = safeExternalUrl(tgt.url);
+                          if (!safeUrl) return null;
+                          return (
+                            <a
+                              href={safeUrl}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="inline-flex items-center text-[var(--color-muted-fg)] hover:text-[var(--color-fg)]"
+                              aria-label={t("analyst.openLink")}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}

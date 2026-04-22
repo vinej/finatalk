@@ -481,7 +481,7 @@ export const portfolioRouter = createTRPCRouter({
   updateHoldingConfidence: protectedProcedure
     .input(z.object({
       portfolioId: z.string(),
-      symbol: z.string().trim().min(1).max(20),
+      symbol: SymbolSchema,
       confidence: z.enum(["high", "medium", "low"]),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -548,49 +548,61 @@ export const portfolioRouter = createTRPCRouter({
       transaction: TransactionInputSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      const { holding: h, portfolio: p } = await findOwnedHolding(ctx, input.holdingId);
-
-      if (input.transaction.type === "sell") {
-        const existing = await ctx.db.query.transaction.findMany({
-          where: eq(transaction.holdingId, h.id),
-        });
-        const acb = computeAcb(existing);
-        if (input.transaction.quantity > acb.totalShares + 0.00000001) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Cannot sell ${input.transaction.quantity} shares — only ${acb.totalShares.toFixed(4)} held.`,
-          });
-        }
-      }
-
+      const { portfolio: p } = await findOwnedHolding(ctx, input.holdingId);
       const id = randomUUID();
-      await ctx.db.insert(transaction).values({
-        id,
-        holdingId: input.holdingId,
-        type: input.transaction.type,
-        quantity: String(input.transaction.quantity),
-        price: String(input.transaction.price),
-        fee: String(input.transaction.fee),
-        date: input.transaction.date,
-        note: input.transaction.note ?? null,
-      });
 
-      const allTx = await ctx.db.query.transaction.findMany({
-        where: eq(transaction.holdingId, h.id),
+      await ctx.db.transaction(async (tx) => {
+        // Row-lock the holding for the duration of the transaction so that
+        // concurrent add/delete transaction mutations serialize — prevents
+        // TOCTOU oversell and stale quantity/costBasis writes.
+        const locked = await tx
+          .select({ id: holding.id })
+          .from(holding)
+          .where(eq(holding.id, input.holdingId))
+          .for("update");
+        if (locked.length === 0) throw new TRPCError({ code: "NOT_FOUND" });
+
+        if (input.transaction.type === "sell") {
+          const existing = await tx.query.transaction.findMany({
+            where: eq(transaction.holdingId, input.holdingId),
+          });
+          const acb = computeAcb(existing);
+          if (input.transaction.quantity > acb.totalShares + 0.00000001) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Cannot sell ${input.transaction.quantity} shares — only ${acb.totalShares.toFixed(4)} held.`,
+            });
+          }
+        }
+
+        await tx.insert(transaction).values({
+          id,
+          holdingId: input.holdingId,
+          type: input.transaction.type,
+          quantity: String(input.transaction.quantity),
+          price: String(input.transaction.price),
+          fee: String(input.transaction.fee),
+          date: input.transaction.date,
+          note: input.transaction.note ?? null,
+        });
+
+        const allTx = await tx.query.transaction.findMany({
+          where: eq(transaction.holdingId, input.holdingId),
+        });
+        const acb = computeAcb(allTx);
+        await tx
+          .update(holding)
+          .set({
+            quantity: String(acb.totalShares),
+            costBasis: String(acb.acbPerShare),
+            updatedAt: new Date(),
+          })
+          .where(eq(holding.id, input.holdingId));
+        await tx
+          .update(portfolio)
+          .set({ updatedAt: new Date() })
+          .where(eq(portfolio.id, p.id));
       });
-      const acb = computeAcb(allTx);
-      await ctx.db
-        .update(holding)
-        .set({
-          quantity: String(acb.totalShares),
-          costBasis: String(acb.acbPerShare),
-          updatedAt: new Date(),
-        })
-        .where(eq(holding.id, h.id));
-      await ctx.db
-        .update(portfolio)
-        .set({ updatedAt: new Date() })
-        .where(eq(portfolio.id, p.id));
 
       return { id };
     }),
@@ -598,30 +610,39 @@ export const portfolioRouter = createTRPCRouter({
   deleteTransaction: protectedProcedure
     .input(IdInput)
     .mutation(async ({ ctx, input }) => {
-      const tx = await ctx.db.query.transaction.findFirst({
+      const txRow = await ctx.db.query.transaction.findFirst({
         where: eq(transaction.id, input.id),
       });
-      if (!tx) throw new TRPCError({ code: "NOT_FOUND" });
-      const { holding: h, portfolio: p } = await findOwnedHolding(ctx, tx.holdingId);
+      if (!txRow) throw new TRPCError({ code: "NOT_FOUND" });
+      const { portfolio: p } = await findOwnedHolding(ctx, txRow.holdingId);
 
-      await ctx.db.delete(transaction).where(eq(transaction.id, input.id));
+      await ctx.db.transaction(async (tx) => {
+        const locked = await tx
+          .select({ id: holding.id })
+          .from(holding)
+          .where(eq(holding.id, txRow.holdingId))
+          .for("update");
+        if (locked.length === 0) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const remaining = await ctx.db.query.transaction.findMany({
-        where: eq(transaction.holdingId, h.id),
+        await tx.delete(transaction).where(eq(transaction.id, input.id));
+
+        const remaining = await tx.query.transaction.findMany({
+          where: eq(transaction.holdingId, txRow.holdingId),
+        });
+        const acb = computeAcb(remaining);
+        await tx
+          .update(holding)
+          .set({
+            quantity: String(acb.totalShares),
+            costBasis: String(acb.acbPerShare),
+            updatedAt: new Date(),
+          })
+          .where(eq(holding.id, txRow.holdingId));
+        await tx
+          .update(portfolio)
+          .set({ updatedAt: new Date() })
+          .where(eq(portfolio.id, p.id));
       });
-      const acb = computeAcb(remaining);
-      await ctx.db
-        .update(holding)
-        .set({
-          quantity: String(acb.totalShares),
-          costBasis: String(acb.acbPerShare),
-          updatedAt: new Date(),
-        })
-        .where(eq(holding.id, h.id));
-      await ctx.db
-        .update(portfolio)
-        .set({ updatedAt: new Date() })
-        .where(eq(portfolio.id, p.id));
 
       return { id: input.id };
     }),

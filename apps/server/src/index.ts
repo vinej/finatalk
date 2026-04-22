@@ -37,7 +37,11 @@ const isProduction = process.env.NODE_ENV === "production";
 const PORT = Number(process.env.PORT ?? 3010);
 
 const app = express();
-app.set("trust proxy", "loopback");
+// TRUST_PROXY controls how Express derives req.ip behind reverse proxies.
+// Set to the number of proxy hops (e.g. "1" for a single ALB), a subnet, or
+// "loopback" in dev. Over-trusting lets attackers spoof X-Forwarded-For and
+// bypass rate limits; under-trusting collapses all users to the proxy IP.
+app.set("trust proxy", process.env.TRUST_PROXY ?? "loopback");
 
 if (isProduction) {
   app.use((req, res, next) => {
@@ -117,12 +121,13 @@ app.use("/api/auth/two-factor/verify-otp", otpLimiter);
 app.use("/api/auth/two-factor/verify-totp", otpLimiter);
 app.use("/api/auth/email-verification", otpLimiter);
 
-// Per-account lockout on sign-in
-app.use("/api/auth/sign-in/email", express.json(), (req, res, next) => {
+// Per-account lockout on sign-in (DB-backed; survives restarts, shared across instances)
+app.use("/api/auth/sign-in/email", express.json(), async (req, res, next) => {
   const email = (req.body as { email?: string } | undefined)?.email?.toLowerCase();
   if (email) {
-    try { checkAccountLockout(email); }
-    catch {
+    try {
+      await checkAccountLockout(email);
+    } catch {
       res.status(429).json({ error: { message: "Account temporarily locked. Please try again later." } });
       return;
     }
@@ -130,8 +135,11 @@ app.use("/api/auth/sign-in/email", express.json(), (req, res, next) => {
   const origEnd = res.end.bind(res);
   res.end = function (...args: Parameters<typeof origEnd>) {
     if (email) {
-      if (res.statusCode >= 400) recordFailedLogin(email);
-      else clearFailedLogins(email);
+      if (res.statusCode >= 400) {
+        recordFailedLogin(email).catch((err) => logger.error({ err }, "recordFailedLogin failed"));
+      } else {
+        clearFailedLogins(email).catch((err) => logger.error({ err }, "clearFailedLogins failed"));
+      }
     }
     return origEnd(...args);
   } as typeof res.end;
@@ -197,7 +205,23 @@ app.use(
   }),
 );
 
-app.get("/health", async (_req, res) => {
+// Liveness: public, no dependencies — for load-balancer probes.
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Readiness: reports dependency status — gated so it can only be reached from
+// internal networks. Operators expose /health/ready at the ingress level or
+// via a private health-check route, never publicly.
+app.get("/health/ready", async (req, res) => {
+  const ip = req.ip ?? "";
+  const isInternal =
+    ip === "127.0.0.1" || ip === "::1" || ip.startsWith("10.") ||
+    ip.startsWith("192.168.") || /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+  if (!isInternal) {
+    res.status(404).end();
+    return;
+  }
   let openbb: boolean | null = null;
   if (process.env.OPENBB_ENABLED === "true" && process.env.OPENBB_BASE_URL) {
     const { getOpenBBClient } = await import("@finatalk/openbb");

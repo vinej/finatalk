@@ -1,4 +1,4 @@
-import { index, jsonb, numeric, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { index, jsonb, numeric, text, timestamp, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { createTable, user } from "./auth";
 import { portfolio } from "./portfolio";
 
@@ -14,6 +14,7 @@ export const watchlist = createTable(
   },
   (t) => ({
     userIdx: index("finatalk_watchlist_user_idx").on(t.userId),
+    userUniq: uniqueIndex("finatalk_watchlist_user_uniq").on(t.userId),
   }),
 );
 
@@ -30,6 +31,7 @@ export const watchlistItem = createTable(
   },
   (t) => ({
     watchlistIdx: index("finatalk_watchlist_item_watchlist_idx").on(t.watchlistId),
+    watchlistSymbolUniq: uniqueIndex("finatalk_watchlist_item_watchlist_symbol_uniq").on(t.watchlistId, t.symbol),
   }),
 );
 

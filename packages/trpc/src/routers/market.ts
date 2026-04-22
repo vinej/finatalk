@@ -1291,10 +1291,11 @@ export const marketRouter = createTRPCRouter({
           const data = await fetchSymbolUniverse();
           cachedSymbols = { data, fetchedAt: Date.now() };
         } catch (err) {
+          console.error("[market.symbols] fetchSymbolUniverse failed:", err);
           if (!cachedSymbols) {
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message: err instanceof Error ? err.message : "Failed to fetch symbols",
+              message: "Failed to fetch symbols",
             });
           }
         }
@@ -1635,7 +1636,7 @@ export const marketRouter = createTRPCRouter({
 
   getFredSeries: protectedProcedure
     .input(z.object({
-      seriesId: z.string().min(1).max(50),
+      seriesId: z.string().trim().min(1).max(50).regex(/^[A-Za-z0-9_]+$/, "Invalid FRED series ID"),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
     }))

@@ -1,4 +1,4 @@
-import { index, jsonb, text, timestamp } from "drizzle-orm/pg-core";
+import { index, jsonb, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createTable, user } from "./auth";
 
 export const analysis = createTable(
@@ -21,6 +21,11 @@ export const analysis = createTable(
   (t) => ({
     userIdx: index("finatalk_analysis_user_idx").on(t.userId, t.createdAt),
     userSymbolIdx: index("finatalk_analysis_user_symbol_idx").on(t.userId, t.symbol),
+    userSymbolTitleUniq: uniqueIndex("finatalk_analysis_user_symbol_title_uniq").on(
+      t.userId,
+      t.symbol,
+      t.title,
+    ),
   }),
 );
 
@@ -42,6 +47,7 @@ export const savedChart = createTable(
   },
   (t) => ({
     userIdx: index("finatalk_saved_chart_user_idx").on(t.userId, t.createdAt),
+    userTitleUniq: uniqueIndex("finatalk_saved_chart_user_title_uniq").on(t.userId, t.title),
   }),
 );
 
