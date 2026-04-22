@@ -12,14 +12,24 @@ const formatEtfCurrency = (v: number | null | undefined, currency: string | null
 
 export function EtfSection({
   symbol,
+  assetType,
   collapsed = false,
   onToggleCollapsed,
 }: {
   symbol: string;
+  assetType?: string | null;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
 }) {
   const { t } = useTranslation();
+
+  const typeKey = (assetType ?? "").toLowerCase();
+  // i18n.exists would be cleaner but keeps the surface small.
+  const knownTypes = new Set(["stock", "equity", "etf", "mutualfund", "index", "crypto", "commodity", "currency", "future", "option"]);
+  const typeLabel = knownTypes.has(typeKey)
+    ? t(`etf.assetType.${typeKey}` as const)
+    : t("etf.assetType.generic");
+  const title = t("etf.performanceDetails", { type: typeLabel });
 
   const infoQuery = trpc.market.getEtfInfo.useQuery(
     { symbol },
@@ -33,13 +43,29 @@ export function EtfSection({
     { symbol },
     { retry: false, staleTime: 5 * 60_000, enabled: symbol.length > 0 },
   );
+  const returnsQuery = trpc.market.getHistoricalReturns.useQuery(
+    { symbol },
+    { retry: false, staleTime: 5 * 60_000, enabled: symbol.length > 0 },
+  );
 
   const info = infoQuery.data;
   const holdings = holdingsQuery.data ?? [];
   const sectors = sectorsQuery.data ?? [];
+  const returns = returnsQuery.data;
+  const hasReturns =
+    !!returns &&
+    (returns["6m"] != null ||
+      returns["1y"] != null ||
+      returns["2y"] != null ||
+      returns["5y"] != null ||
+      returns["10y"] != null);
 
-  const hasAny = !!info || holdings.length > 0 || sectors.length > 0;
-  const allLoading = infoQuery.isPending && holdingsQuery.isPending && sectorsQuery.isPending;
+  const hasAny = !!info || holdings.length > 0 || sectors.length > 0 || hasReturns;
+  const allLoading =
+    infoQuery.isPending &&
+    holdingsQuery.isPending &&
+    sectorsQuery.isPending &&
+    returnsQuery.isPending;
 
   if (allLoading) return null;
   if (!hasAny) return null;
@@ -59,7 +85,7 @@ export function EtfSection({
           ) : (
             <ChevronDown className="h-4 w-4 text-[var(--color-muted-fg)]" aria-hidden />
           )}
-          <CardTitle className="text-base">{t("etf.title")}</CardTitle>
+          <CardTitle className="text-base">{title}</CardTitle>
         </button>
       </CardHeader>
       {!collapsed && (
@@ -82,6 +108,19 @@ export function EtfSection({
             {info.description && (
               <p className="mt-3 text-xs text-[var(--color-muted-fg)]">{info.description}</p>
             )}
+          </div>
+        )}
+
+        {hasReturns && returns && (
+          <div>
+            <h3 className="text-sm font-semibold">{t("etf.pastPerformance")}</h3>
+            <div className="mt-2 grid grid-cols-3 gap-3 text-sm sm:grid-cols-5">
+              <ReturnCell label={t("etf.return6m")} value={returns["6m"]} />
+              <ReturnCell label={t("etf.return1y")} value={returns["1y"]} />
+              <ReturnCell label={t("etf.return2y")} value={returns["2y"]} />
+              <ReturnCell label={t("etf.return5y")} value={returns["5y"]} />
+              <ReturnCell label={t("etf.return10y")} value={returns["10y"]} />
+            </div>
           </div>
         )}
 
@@ -127,6 +166,23 @@ function InfoCell({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs text-[var(--color-muted-fg)]">{label}</p>
       <p className="mt-0.5 font-mono text-sm tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function ReturnCell({ label, value }: { label: string; value: number | null }) {
+  const tone =
+    value == null
+      ? "text-[var(--color-muted-fg)]"
+      : value >= 0
+        ? "text-emerald-600 dark:text-emerald-400"
+        : "text-red-600 dark:text-red-400";
+  return (
+    <div>
+      <p className="text-xs text-[var(--color-muted-fg)]">{label}</p>
+      <p className={`mt-0.5 font-mono text-sm tabular-nums ${tone}`}>
+        {formatPctShared(value, { signed: true, autoScale: false, digits: 2 })}
+      </p>
     </div>
   );
 }

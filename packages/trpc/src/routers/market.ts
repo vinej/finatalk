@@ -1588,6 +1588,39 @@ export const marketRouter = createTRPCRouter({
       return client.getCompanyProfile(input.symbol);
     }),
 
+  getHistoricalReturns: protectedProcedure
+    .input(z.object({ symbol: SymbolSchema }))
+    .query(async ({ input }) => {
+      const { candles } = await fetchCandlesWithCurrency(input.symbol, "max", "1d", null);
+      const empty = { "6m": null, "1y": null, "2y": null, "5y": null, "10y": null } as const;
+      if (candles.length < 2) return { ...empty };
+
+      const last = candles[candles.length - 1]!;
+      const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
+      const periods = [
+        { key: "6m" as const, years: 0.5 },
+        { key: "1y" as const, years: 1 },
+        { key: "2y" as const, years: 2 },
+        { key: "5y" as const, years: 5 },
+        { key: "10y" as const, years: 10 },
+      ];
+
+      const result: Record<"6m" | "1y" | "2y" | "5y" | "10y", number | null> = { ...empty };
+      for (const p of periods) {
+        const targetTime = last.time - p.years * SECONDS_PER_YEAR;
+        // First candle at or after target — ensures we don't overshoot when
+        // the oldest available candle is younger than the requested window.
+        const ref = candles.find((c) => c.time >= targetTime);
+        if (!ref || ref.time >= last.time || ref.close === 0) continue;
+        // Require at least 80% of the requested window; otherwise the "10y"
+        // return for a 3y-old ETF would be misleadingly shown as 3y.
+        const coverage = (last.time - ref.time) / (p.years * SECONDS_PER_YEAR);
+        if (coverage < 0.8) continue;
+        result[p.key] = ((last.close - ref.close) / ref.close) * 100;
+      }
+      return result;
+    }),
+
   getFinancialStatements: protectedProcedure
     .input(z.object({
       symbol: SymbolSchema,

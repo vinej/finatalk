@@ -387,12 +387,32 @@
   },
   "etf": {
     "title": "Détails du FNB",
+    "performanceDetails": "Performance détaillée — {{type}}",
+    "assetType": {
+      "stock": "Action",
+      "equity": "Action",
+      "etf": "FNB",
+      "mutualfund": "Fonds commun",
+      "index": "Indice",
+      "crypto": "Crypto",
+      "commodity": "Matière première",
+      "currency": "Devise",
+      "future": "Contrat à terme",
+      "option": "Option",
+      "generic": "Symbole"
+    },
     "expenseRatio": "Ratio de frais",
     "aum": "Actifs sous gestion",
     "yield": "Rendement",
     "inception": "Création",
     "topHoldings": "Principales positions",
-    "sectorBreakdown": "Répartition sectorielle"
+    "sectorBreakdown": "Répartition sectorielle",
+    "pastPerformance": "Performance passée",
+    "return6m": "6 mois",
+    "return1y": "1 an",
+    "return2y": "2 ans",
+    "return5y": "5 ans",
+    "return10y": "10 ans"
   },
   "analyst": {
     "title": "Notations d'analystes et cours cibles",

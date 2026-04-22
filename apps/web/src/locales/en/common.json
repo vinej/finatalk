@@ -387,12 +387,32 @@
   },
   "etf": {
     "title": "ETF details",
+    "performanceDetails": "{{type}} performance details",
+    "assetType": {
+      "stock": "Stock",
+      "equity": "Stock",
+      "etf": "ETF",
+      "mutualfund": "Mutual fund",
+      "index": "Index",
+      "crypto": "Crypto",
+      "commodity": "Commodity",
+      "currency": "Currency",
+      "future": "Future",
+      "option": "Option",
+      "generic": "Symbol"
+    },
     "expenseRatio": "Expense ratio",
     "aum": "Assets under management",
     "yield": "Yield",
     "inception": "Inception",
     "topHoldings": "Top holdings",
-    "sectorBreakdown": "Sector breakdown"
+    "sectorBreakdown": "Sector breakdown",
+    "pastPerformance": "Past performance",
+    "return6m": "6 mo",
+    "return1y": "1 y",
+    "return2y": "2 y",
+    "return5y": "5 y",
+    "return10y": "10 y"
   },
   "analyst": {
     "title": "Analyst ratings & price targets",

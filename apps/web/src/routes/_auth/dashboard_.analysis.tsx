@@ -677,6 +677,7 @@ function AnalysisPage() {
       {submittedSymbol && (
         <EtfSection
           symbol={submittedSymbol}
+          assetType={submittedSymbolMeta?.assetType ?? null}
           collapsed={etfCollapsed}
           onToggleCollapsed={() => setEtfCollapsed((c) => !c)}
         />
