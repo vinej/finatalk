@@ -70,6 +70,13 @@ export function PortfolioChatDrawer({
 
   const isPending = mode === "advisor" ? advisorChat.isPending : scenarioChat.isPending;
 
+  function clearConversation() {
+    if (mode === "advisor") setAdvisorMessages([]);
+    else setWhatifMessages([]);
+    setInput("");
+    inputRef.current?.focus();
+  }
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -159,14 +166,26 @@ export function PortfolioChatDrawer({
                 {t("portfolio.holdingsCount", { count: context.holdings.length })}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              aria-label="Close"
-              className="rounded p-1 text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)]"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={clearConversation}
+                disabled={messages.length === 0 || isPending}
+                title={t("portfolio.clearConversation")}
+              >
+                {t("portfolio.clearConversation")}
+              </Button>
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                aria-label="Close"
+                className="rounded p-1 text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)]"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           <div className="flex border-t border-[var(--color-border)]">
             <button

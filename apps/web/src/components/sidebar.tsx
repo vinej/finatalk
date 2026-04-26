@@ -10,7 +10,13 @@ const LEARNING_COLLAPSED_KEY = "finatalk:sidebar-learning-collapsed";
 const SYMBOLS_COLLAPSED_KEY = "finatalk:sidebar-symbols-collapsed";
 const MARKET_COLLAPSED_KEY = "finatalk:sidebar-market-collapsed";
 
-export function Sidebar() {
+export function Sidebar({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const lastPortfolioId = useLastPortfolioId();
   const portfoliosQuery = trpc.portfolio.listPortfolios.useQuery();
@@ -92,69 +98,94 @@ export function Sidebar() {
 
   const settingsItem = { key: "settings", to: "/dashboard/settings", label: t("nav.settings"), icon: Settings } as const;
 
+  // Close the panel only on mobile when a link is clicked. Desktop keeps the
+  // panel open so the user can navigate without re-opening it.
+  function handleNavigate() {
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(min-width: 768px)").matches) onClose();
+  }
+
   return (
-    <aside className="hidden h-full w-56 shrink-0 overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-bg)] p-3 md:block">
-      <nav className="flex flex-col gap-1">
-        {topItems.map((item) => (
-          <SidebarLink key={item.key} item={item} />
-        ))}
+    <>
+      {/* Mobile-only backdrop. Click anywhere outside the panel to close. */}
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 top-14 z-20 bg-black/30 transition-opacity md:hidden",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        aria-hidden
+        onClick={onClose}
+      />
+      <aside
+        aria-label={t("nav.menu")}
+        aria-hidden={!open}
+        className={cn(
+          "fixed bottom-0 left-0 top-14 z-30 w-56 overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-bg)] p-3 transition-transform duration-200",
+          open ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <nav className="flex flex-col gap-1">
+          {topItems.map((item) => (
+            <SidebarLink key={item.key} item={item} onNavigate={handleNavigate} />
+          ))}
 
-        <button
-          type="button"
-          onClick={() => setMarketCollapsed((c) => !c)}
-          className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
-          aria-expanded={!marketCollapsed}
-        >
-          {marketCollapsed ? (
-            <ChevronRight className="h-3 w-3" aria-hidden />
-          ) : (
-            <ChevronDown className="h-3 w-3" aria-hidden />
-          )}
-          <span>{t("nav.market")}</span>
-        </button>
-        {!marketCollapsed && marketItems.map((item) => (
-          <SidebarLink key={item.key} item={item} />
-        ))}
+          <button
+            type="button"
+            onClick={() => setMarketCollapsed((c) => !c)}
+            className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
+            aria-expanded={!marketCollapsed}
+          >
+            {marketCollapsed ? (
+              <ChevronRight className="h-3 w-3" aria-hidden />
+            ) : (
+              <ChevronDown className="h-3 w-3" aria-hidden />
+            )}
+            <span>{t("nav.market")}</span>
+          </button>
+          {!marketCollapsed && marketItems.map((item) => (
+            <SidebarLink key={item.key} item={item} onNavigate={handleNavigate} />
+          ))}
 
-        <button
-          type="button"
-          onClick={() => setSymbolsCollapsed((c) => !c)}
-          className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
-          aria-expanded={!symbolsCollapsed}
-        >
-          {symbolsCollapsed ? (
-            <ChevronRight className="h-3 w-3" aria-hidden />
-          ) : (
-            <ChevronDown className="h-3 w-3" aria-hidden />
-          )}
-          <span>{t("nav.symbols")}</span>
-        </button>
-        {!symbolsCollapsed && symbolsItems.map((item) => (
-          <SidebarLink key={item.key} item={item} />
-        ))}
+          <button
+            type="button"
+            onClick={() => setSymbolsCollapsed((c) => !c)}
+            className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
+            aria-expanded={!symbolsCollapsed}
+          >
+            {symbolsCollapsed ? (
+              <ChevronRight className="h-3 w-3" aria-hidden />
+            ) : (
+              <ChevronDown className="h-3 w-3" aria-hidden />
+            )}
+            <span>{t("nav.symbols")}</span>
+          </button>
+          {!symbolsCollapsed && symbolsItems.map((item) => (
+            <SidebarLink key={item.key} item={item} onNavigate={handleNavigate} />
+          ))}
 
-        <button
-          type="button"
-          onClick={() => setLearningCollapsed((c) => !c)}
-          className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
-          aria-expanded={!learningCollapsed}
-        >
-          {learningCollapsed ? (
-            <ChevronRight className="h-3 w-3" aria-hidden />
-          ) : (
-            <ChevronDown className="h-3 w-3" aria-hidden />
-          )}
-          <span>{t("nav.learning")}</span>
-        </button>
-        {!learningCollapsed && learningItems.map((item) => (
-          <SidebarLink key={item.key} item={item} />
-        ))}
+          <button
+            type="button"
+            onClick={() => setLearningCollapsed((c) => !c)}
+            className="mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)]"
+            aria-expanded={!learningCollapsed}
+          >
+            {learningCollapsed ? (
+              <ChevronRight className="h-3 w-3" aria-hidden />
+            ) : (
+              <ChevronDown className="h-3 w-3" aria-hidden />
+            )}
+            <span>{t("nav.learning")}</span>
+          </button>
+          {!learningCollapsed && learningItems.map((item) => (
+            <SidebarLink key={item.key} item={item} onNavigate={handleNavigate} />
+          ))}
 
-        <div className="mt-2">
-          <SidebarLink item={settingsItem} />
-        </div>
-      </nav>
-    </aside>
+          <div className="mt-2">
+            <SidebarLink item={settingsItem} onNavigate={handleNavigate} />
+          </div>
+        </nav>
+      </aside>
+    </>
   );
 }
 
@@ -162,7 +193,13 @@ type SidebarItem =
   | { key: string; to: string; label: string; icon: typeof Home; matchPrefix?: string }
   | { key: string; label: string; icon: typeof Home; link: { to: string; params?: Record<string, string> }; matchPrefix?: string };
 
-function SidebarLink({ item }: { item: SidebarItem }) {
+function SidebarLink({
+  item,
+  onNavigate,
+}: {
+  item: SidebarItem;
+  onNavigate?: () => void;
+}) {
   const linkProps =
     "link" in item
       ? item.link
@@ -170,6 +207,7 @@ function SidebarLink({ item }: { item: SidebarItem }) {
   return (
     <Link
       {...linkProps}
+      onClick={onNavigate}
       activeOptions={{ exact: !("matchPrefix" in item && item.matchPrefix) && linkProps.to === "/dashboard" }}
       className={cn(
         "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-[var(--color-muted-fg)] hover:bg-[var(--color-accent)] hover:text-[var(--color-fg)]",

@@ -282,8 +282,13 @@ export const analyzeSymbol = createTool({
     "do NOT guess prices, trends, or indicator values.",
   inputSchema: z.object({
     symbol: z.string().describe("Ticker symbol, e.g. AAPL, GIB, MSFT"),
-    range: z.enum(["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"]).default("6mo"),
-    interval: z.enum(["1d", "1wk", "1mo"]).default("1d"),
+    // .optional() (rather than .default()) so these fields are emitted as NOT
+    // required in the JSON Schema shipped to the LLM. Llama-family models via
+    // Groq omit them ~30% of the time; Groq's server-side validator rejects
+    // the tool call if any `required` field is missing. Defaults applied in
+    // execute below.
+    range: z.enum(["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"]).optional(),
+    interval: z.enum(["1d", "1wk", "1mo"]).optional(),
     indicators: z.array(z.discriminatedUnion("kind", [
       z.object({ kind: z.literal("sma"), period: z.number().int().min(2).max(500) }),
       z.object({ kind: z.literal("ema"), period: z.number().int().min(2).max(500) }),
@@ -387,7 +392,7 @@ export const analyzeSymbol = createTool({
         impulsePct: z.number().min(0.5).max(20),
         showMitigated: z.boolean(),
       }),
-    ])).default([]),
+    ])).optional(),
   }),
   execute: async ({ symbol, range, interval, indicators }) => {
     const analysis = await runAnalysis({

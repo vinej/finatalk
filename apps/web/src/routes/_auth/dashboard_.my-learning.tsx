@@ -203,22 +203,23 @@ function NoteEditor({ noteId }: { noteId: string }) {
 
   return (
     <Card className="flex max-h-full flex-col overflow-hidden">
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto py-4">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 py-4">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t("myLearning.titlePlaceholder")}
           maxLength={120}
-          className="text-base font-medium"
+          className="shrink-0 text-base font-medium"
         />
         <Input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={t("myLearning.descriptionPlaceholder")}
           maxLength={500}
+          className="shrink-0"
         />
 
-        <div className="flex gap-1 border-b border-[var(--color-border)]">
+        <div className="flex shrink-0 gap-1 border-b border-[var(--color-border)]">
           <TabButton
             active={tab === "edit"}
             onClick={() => setTab("edit")}
@@ -241,12 +242,11 @@ function NoteEditor({ noteId }: { noteId: string }) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={t("myLearning.contentPlaceholder")}
-            rows={22}
             maxLength={100_000}
-            className="min-h-[360px] w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3 font-mono text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+            className="min-h-0 w-full flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3 font-mono text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
           />
         ) : (
-          <div className="min-h-[360px] rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+          <div className="min-h-0 flex-1 overflow-auto rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
             {content.trim() ? (
               <Markdown>{content}</Markdown>
             ) : (
@@ -257,29 +257,31 @@ function NoteEditor({ noteId }: { noteId: string }) {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={updateMutation.isPending || !dirty || !title.trim()}
-          >
-            {updateMutation.isPending ? (
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-1 h-4 w-4" />
-            )}
-            {updateMutation.isPending ? t("myLearning.saving") : t("myLearning.save")}
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 className="mr-1 h-4 w-4" />
-            {t("myLearning.delete")}
-          </Button>
-        </div>
+        {tab === "edit" && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={updateMutation.isPending || !dirty || !title.trim()}
+            >
+              {updateMutation.isPending ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-1 h-4 w-4" />
+              )}
+              {updateMutation.isPending ? t("myLearning.saving") : t("myLearning.save")}
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 className="mr-1 h-4 w-4" />
+              {t("myLearning.delete")}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

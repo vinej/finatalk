@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { getChartColors } from "@/lib/chart-theme";
 import { trpc } from "@/lib/trpc";
+import { ChartZoomControls } from "@/components/ui/chart-zoom-controls";
 import { OptionsSelect } from "@/components/ui/options-select";
 import { useLightweightChart } from "@/lib/use-lightweight-chart";
 import {
@@ -248,7 +249,10 @@ export function PortfolioVsBenchmarkChart({
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1fr_220px]">
-        <div ref={containerRef} className="h-64 w-full" />
+        <div className="relative h-64 w-full">
+          <div ref={containerRef} className="h-full w-full" />
+          <ChartZoomControls chartRef={chartRef} />
+        </div>
 
         <div className="rounded-md border border-[var(--color-border)] p-3">
           <div className="mb-2 text-xs font-medium text-[var(--color-muted-fg)]">

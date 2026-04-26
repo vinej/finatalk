@@ -9,14 +9,50 @@ import {
   type Time,
   createSeriesMarkers,
 } from "lightweight-charts";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { RouterOutputs } from "@finatalk/trpc";
+import { ChartZoomControls } from "@/components/ui/chart-zoom-controls";
+import { formatLabel, type IndicatorKind } from "@/lib/indicator-defaults";
 import { CANDLE_DOWN, CANDLE_UP, type IndicatorColor } from "@/lib/indicator-legend";
 import { useLightweightChart } from "@/lib/use-lightweight-chart";
 
 type Analyze = RouterOutputs["market"]["analyze"];
 export type Candle = Analyze["candles"][number];
 export type IndicatorResult = Analyze["results"][number];
+
+// Indicators that render in their own pane below the price chart. Used both
+// for pane assignment (mirrors the addSeries(... , paneIndex) calls below) and
+// for placing each pane's legend at the correct vertical offset.
+const PANE_KINDS: ReadonlySet<IndicatorKind> = new Set<IndicatorKind>([
+  "rsi", "mom", "roc", "atr", "stochRsi", "williamsR", "obv", "ad",
+  "cmf", "volOsc", "tii", "zscore", "bbPctB", "hurst", "macd", "macdCross",
+  "stoch", "adx", "chaikinVol", "aroon", "vortex",
+]);
+
+function assignPanes(results: IndicatorResult[]): number[] {
+  let next = 1;
+  return results.map((r) => (PANE_KINDS.has(r.kind) ? next++ : 0));
+}
+
+function legendColor(c: IndicatorColor): string {
+  if (typeof c === "string") return c;
+  switch (c.kind) {
+    case "macd": return c.line;
+    case "stoch": return c.k;
+    case "adx": return c.adx;
+    case "maCross": return c.fast;
+    case "macdCross": return c.bull;
+    case "aroon": return c.up;
+    case "vortex": return c.plus;
+    case "liqSweep": return c.highSweep;
+    case "fvg": return c.bullish;
+    case "srLevels": return c.support;
+    case "pivots": return c.pp;
+    case "volProfile": return c.poc;
+    case "orderBlock": return c.bullish;
+    default: return c.middle;
+  }
+}
 
 export function MarketChart({
   candles,
@@ -30,6 +66,7 @@ export function MarketChart({
   const { containerRef, chartRef } = useLightweightChart({ timeVisible: true });
   const seriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
   const markersRef = useRef<ISeriesMarkersPluginApi<Time>[]>([]);
+  const [paneTops, setPaneTops] = useState<number[]>([]);
 
   useEffect(() => {
     return () => {
@@ -37,6 +74,21 @@ export function MarketChart({
       markersRef.current = [];
     };
   }, []);
+
+  // Pane assignment is deterministic from the indicator kinds — compute once
+  // outside the chart effect so the per-pane legend can use it without waiting
+  // for the chart to re-render.
+  const paneAssignments = useMemo(() => assignPanes(results), [results]);
+  const legendByPane = useMemo(() => {
+    const m = new Map<number, { label: string; color: string }[]>();
+    results.forEach((r, i) => {
+      const paneIdx = paneAssignments[i] ?? 0;
+      const arr = m.get(paneIdx) ?? [];
+      arr.push({ label: formatLabel(r.spec), color: legendColor(colors[i] ?? "#2563eb") });
+      m.set(paneIdx, arr);
+    });
+    return m;
+  }, [results, colors, paneAssignments]);
 
   useEffect(() => {
     const chart = chartRef.current;
@@ -523,7 +575,54 @@ export function MarketChart({
     }
 
     chart.timeScale().fitContent();
-  }, [candles, results, colors]);
 
-  return <div ref={containerRef} className="h-[560px] w-full" />;
+    // Sample each pane's height so we can place its legend at the correct
+    // vertical offset. Re-runs whenever the container resizes.
+    const recomputePaneTops = () => {
+      const ps = chart.panes();
+      const tops: number[] = [];
+      let y = 0;
+      for (const pane of ps) {
+        tops.push(y);
+        y += pane.getHeight();
+      }
+      setPaneTops(tops);
+    };
+    recomputePaneTops();
+    const ro = new ResizeObserver(() => recomputePaneTops());
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [candles, results, colors, chartRef, containerRef]);
+
+  return (
+    <div className="relative h-[560px] w-full">
+      <div ref={containerRef} className="h-full w-full" />
+      <ChartZoomControls chartRef={chartRef} />
+      {paneTops.map((top, paneIdx) => {
+        const items = legendByPane.get(paneIdx);
+        if (!items || items.length === 0) return null;
+        // Pane 0 hosts the zoom toolbar at top-2; push its legend down enough
+        // to clear the buttons (h-7 ≈ 28px + 8px top inset + 4px gap).
+        const offset = paneIdx === 0 ? 40 : 4;
+        return (
+          <div
+            key={paneIdx}
+            className="pointer-events-none absolute left-2 z-10 flex max-w-[calc(100%-1rem)] flex-col items-start gap-0.5 rounded-md bg-[var(--color-bg)]/85 px-2 py-1 text-[11px] shadow-sm backdrop-blur"
+            style={{ top: top + offset }}
+            aria-hidden
+          >
+            {items.map((item, i) => (
+              <span key={i} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="font-mono">{item.label}</span>
+              </span>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
 }

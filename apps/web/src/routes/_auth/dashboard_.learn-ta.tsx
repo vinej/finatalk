@@ -6,24 +6,13 @@ import { LinkChips } from "@/components/learn/link-chips";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CollapsibleCard } from "@/components/ui/collapsible-card";
 import { BUY_SELL_GUIDE } from "@/lib/buy-sell-guide";
-import { KINDS, kindDescription, kindFullName, kindLabel, type IndicatorKind } from "@/lib/indicator-defaults";
+import { CORE_KINDS, KINDS, kindDescription, kindFullName, kindLabel, type IndicatorKind } from "@/lib/indicator-defaults";
 import { pickLang, type Lang } from "@/lib/lang";
 import { TA_GENERAL_LINKS, TA_GUIDE } from "@/lib/ta-guide";
 
 export const Route = createFileRoute("/_auth/dashboard_/learn-ta")({
   component: LearnTAPage,
 });
-
-const CORE_KINDS: ReadonlySet<IndicatorKind> = new Set<IndicatorKind>([
-  "ema",
-  "rsi",
-  "macd",
-  "bbands",
-  "atr",
-  "adx",
-  "obv",
-  "vwap",
-]);
 
 type LearnTaKey = "palette" | IndicatorKind;
 

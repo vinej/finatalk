@@ -51,7 +51,9 @@
     "tax": "Tax Advisor",
     "templates": "Templates",
     "alerts": "Alerts",
-    "settings": "Settings"
+    "settings": "Settings",
+    "menu": "Menu",
+    "toggleMenu": "Toggle navigation menu"
   },
   "learnTa": {
     "title": "Learn technical analysis",
@@ -128,6 +130,12 @@
       "swing": "Swing / position",
       "intraday": "Intraday / day trading"
     }
+  },
+  "chart": {
+    "zoomControls": "Chart zoom controls",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Fit content"
   },
   "backtest": {
     "title": "Strategy backtest",
@@ -668,6 +676,7 @@
     "summarizing": "Summarizing…",
     "summaryTitle": "AI summary",
     "summarizeFailed": "Couldn't generate summary.",
+    "clearSummary": "Clear summary",
     "chatOpen": "Ask AI",
     "chatTitle": "Chart advisor",
     "chatShortcutHint": "Open chart advisor (Ctrl/Cmd+K)",
@@ -731,6 +740,7 @@
     "chatSend": "Send",
     "chatThinking": "Thinking…",
     "chatFailed": "Couldn't reach the advisor.",
+    "clearConversation": "Clear",
     "advisorTab": "Advisor",
     "whatifTab": "What-If",
     "whatifEmpty": "Describe a scenario to see its impact on your portfolio.",

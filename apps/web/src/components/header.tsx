@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -8,7 +8,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
 
-export function Header() {
+export function Header({
+  sidebarOpen,
+  onToggleSidebar,
+}: {
+  sidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -20,9 +26,23 @@ export function Header() {
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)] px-4 md:px-6">
-      <Link to="/dashboard" className="outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded">
-        <Logo />
-      </Link>
+      <div className="flex items-center gap-2">
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleSidebar}
+            aria-label={t("nav.toggleMenu")}
+            aria-expanded={!!sidebarOpen}
+            className="-ml-2 px-2"
+          >
+            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        )}
+        <Link to="/dashboard" className="rounded outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
+          <Logo />
+        </Link>
+      </div>
       <div className="flex items-center gap-1">
         <NotificationBell />
         <LanguageSwitcher />

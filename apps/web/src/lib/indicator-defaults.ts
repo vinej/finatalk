@@ -20,6 +20,17 @@ export const KINDS: IndicatorKind[] = [
   "srLevels", "pivots", "volProfile", "orderBlock",
 ];
 
+// Finatalk's "core" indicator set — surfaced with primary-color treatment in
+// Learn TA and the Analysis indicator picker so users learn which to reach for
+// first. Kept tight: 8 indicators that cover the four families well.
+export const CORE_KINDS: ReadonlySet<IndicatorKind> = new Set<IndicatorKind>([
+  "ema", "rsi", "macd", "bbands", "atr", "adx", "obv", "vwap",
+]);
+
+export function isCoreKind(kind: IndicatorKind): boolean {
+  return CORE_KINDS.has(kind);
+}
+
 export type IndicatorCategory = "trend" | "momentum" | "volatility" | "volume" | "hybrid";
 
 export const CATEGORIES: IndicatorCategory[] = [

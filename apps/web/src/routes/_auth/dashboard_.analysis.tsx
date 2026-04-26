@@ -758,10 +758,21 @@ function AnalysisPage() {
 
         {!indicatorsCollapsed && (loadedAnalysisDescription || loadedAnalysisTitle) && (
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
               <CardTitle className="text-base">
                 {loadedAnalysisTitle ?? t("analysis.analyses")}
               </CardTitle>
+              {loadedAnalysisDescription && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setLoadedAnalysisDescription(null)}
+                  title={t("analysis.clearSummary")}
+                >
+                  {t("analysis.clearSummary")}
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {loadedAnalysisDescription ? (
@@ -987,7 +998,7 @@ function LatestCandleCells({ candle, prev }: { candle: CandleLike | null; prev: 
       {cells.map((c, i) => (
         <div key={`candle-${i}`} className="rounded-md border border-[var(--color-border)] p-3">
           <div className="text-xs text-[var(--color-muted-fg)]">{c.label}</div>
-          <div className="mt-1 font-mono">{c.value}</div>
+          <div className="mt-1 font-mono text-xs">{c.value}</div>
           {c.hint ? (
             <div className={"mt-1 text-xs " + (c.tone ?? TONE_MUTED)}>{c.hint}</div>
           ) : i === 0 ? (
@@ -1008,7 +1019,7 @@ function LatestCell({ result, lastClose }: { result: AnalyzeResult; lastClose: n
   return (
     <div className="rounded-md border border-[var(--color-border)] p-3">
       <div className="text-xs text-[var(--color-muted-fg)]">{label}</div>
-      <div className="mt-1 font-mono">{last ? formatLast(result.kind, last) : "—"}</div>
+      <div className="mt-1 font-mono text-xs">{last ? formatLast(result.kind, last) : "—"}</div>
       {hint && <div className={"mt-1 text-xs " + hint.tone}>{hint.text}</div>}
     </div>
   );

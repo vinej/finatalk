@@ -6,6 +6,7 @@ import {
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartZoomControls } from "@/components/ui/chart-zoom-controls";
 import type { EquityPoint } from "@/lib/backtest-engine";
 import { useLightweightChart } from "@/lib/use-lightweight-chart";
 
@@ -71,7 +72,10 @@ export function EquityCurveCard({
         </div>
       </CardHeader>
       <CardContent>
-        <div ref={containerRef} className="h-72 w-full" />
+        <div className="relative h-72 w-full">
+          <div ref={containerRef} className="h-full w-full" />
+          <ChartZoomControls chartRef={chartRef} />
+        </div>
       </CardContent>
     </Card>
   );

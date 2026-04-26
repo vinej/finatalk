@@ -24,6 +24,16 @@ export function useLightweightChart(options: LightweightChartOptions = {}) {
       },
       timeScale: { timeVisible, secondsVisible },
       rightPriceScale: { borderColor: gridColor },
+      // Disable mouse-wheel zoom on the chart. Wheel zoom inside a scroll
+      // container is hostile UX (the page can't be scrolled past the chart).
+      // Users zoom via the on-chart +/- buttons instead. Pinch-to-zoom on
+      // touch and drag-on-axis still work.
+      handleScale: {
+        mouseWheel: false,
+        pinch: true,
+        axisPressedMouseMove: { time: true, price: true },
+        axisDoubleClickReset: { time: true, price: true },
+      },
     });
     chartRef.current = chart;
     return () => {

@@ -5,6 +5,7 @@ import {
 } from "lightweight-charts";
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { ChartZoomControls } from "@/components/ui/chart-zoom-controls";
 import { OptionsSelect } from "@/components/ui/options-select";
 import { trpc } from "@/lib/trpc";
 import { useLightweightChart } from "@/lib/use-lightweight-chart";
@@ -103,7 +104,10 @@ export function PortfolioPerformanceChart({
           />
         </div>
       </div>
-      <div ref={containerRef} className="h-64 w-full" />
+      <div className="relative h-64 w-full">
+        <div ref={containerRef} className="h-full w-full" />
+        <ChartZoomControls chartRef={chartRef} />
+      </div>
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
         {items.map((it) => (
           <span key={it.symbol} className="inline-flex items-center gap-1.5">

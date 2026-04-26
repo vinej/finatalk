@@ -1,12 +1,14 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 
 export const provider = process.env.AI_PROVIDER ?? "anthropic";
 
 const DEFAULTS: Record<string, { large: string; small: string }> = {
-  anthropic: { large: "claude-sonnet-4-5", small: "claude-haiku-4-5-20251001" },
-  openai:    { large: "gpt-4o",            small: "gpt-4o-mini" },
-  ollama:    { large: "llama3.1",          small: "llama3.1" },
+  anthropic: { large: "claude-sonnet-4-5",         small: "claude-haiku-4-5-20251001" },
+  openai:    { large: "gpt-4o",                    small: "gpt-4o-mini" },
+  ollama:    { large: "llama3.1",                  small: "llama3.1" },
+  groq:      { large: "llama-3.3-70b-versatile",   small: "llama-3.1-8b-instant" },
 };
 
 function defaults(p: string) {
@@ -45,6 +47,10 @@ function createProviderModel(p: string, modelId: string): any {
   if (p === "openai") {
     const openai = createOpenAI();
     return openai(modelId);
+  }
+  if (p === "groq") {
+    const groq = createGroq();
+    return groq(modelId);
   }
   const anthropic = createAnthropic();
   return anthropic(modelId);

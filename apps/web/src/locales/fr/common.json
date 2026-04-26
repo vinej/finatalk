@@ -51,7 +51,9 @@
     "tax": "Conseiller fiscal",
     "templates": "Modèles",
     "alerts": "Alertes",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "menu": "Menu",
+    "toggleMenu": "Afficher/masquer le menu"
   },
   "learnTa": {
     "title": "Apprendre l'analyse technique",
@@ -128,6 +130,12 @@
       "swing": "Swing / position",
       "intraday": "Intraday / day trading"
     }
+  },
+  "chart": {
+    "zoomControls": "Contrôles de zoom du graphique",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "fit": "Ajuster"
   },
   "backtest": {
     "title": "Backtest de stratégie",
@@ -668,6 +676,7 @@
     "summarizing": "Génération…",
     "summaryTitle": "Résumé IA",
     "summarizeFailed": "Échec de la génération du résumé.",
+    "clearSummary": "Effacer le résumé",
     "chatOpen": "Demander à l'IA",
     "chatTitle": "Conseiller de graphique",
     "chatShortcutHint": "Ouvrir le conseiller (Ctrl/Cmd+K)",
@@ -731,6 +740,7 @@
     "chatSend": "Envoyer",
     "chatThinking": "Réflexion…",
     "chatFailed": "Impossible de joindre le conseiller.",
+    "clearConversation": "Effacer",
     "advisorTab": "Conseiller",
     "whatifTab": "Scénario",
     "whatifEmpty": "Décrivez un scénario pour voir son impact sur votre portefeuille.",

@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartZoomControls } from "@/components/ui/chart-zoom-controls";
 import { OptionsSelect } from "@/components/ui/options-select";
 import { SymbolPicker, type AssetTypeFilter } from "@/components/symbol-picker";
 import { paletteColor } from "@/lib/chart-theme";
@@ -312,7 +313,12 @@ function ComparisonChart({ data }: { data: CompareItem[] }) {
     if (seriesRef.current.length > 0) chart.timeScale().fitContent();
   }, [seriesData, chartRef]);
 
-  return <div ref={containerRef} className="h-96 w-full" />;
+  return (
+    <div className="relative h-96 w-full">
+      <div ref={containerRef} className="h-full w-full" />
+      <ChartZoomControls chartRef={chartRef} />
+    </div>
+  );
 }
 
 function MetricsTable({ data }: { data: CompareItem[] }) {
