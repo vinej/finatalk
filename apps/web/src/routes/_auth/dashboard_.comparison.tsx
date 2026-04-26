@@ -17,13 +17,14 @@ import { loadComparisonState, saveComparisonState } from "@/lib/comparison-persi
 import { formatNum, formatPct } from "@/lib/format";
 import { SYMBOL_RE } from "@/lib/symbol";
 import { trpc } from "@/lib/trpc";
+import { stepRange } from "@/lib/ranges";
 import { useLightweightChart } from "@/lib/use-lightweight-chart";
 
 export const Route = createFileRoute("/_auth/dashboard_/comparison")({
   component: ComparisonPage,
 });
 
-const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
+const RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "3y", "4y", "5y", "10y", "max"] as const;
 type Range = (typeof RANGES)[number];
 
 const INTERVALS = ["1d", "1wk", "1mo"] as const;
@@ -38,6 +39,11 @@ function ComparisonPage() {
   );
   const [inputValue, setInputValue] = useState("");
   const [range, setRange] = useState<Range>(persisted?.range ?? "6mo");
+  const [initialRange, setInitialRange] = useState<Range>(persisted?.range ?? "6mo");
+  const selectRange = (r: Range) => {
+    setRange(r);
+    setInitialRange(r);
+  };
   const [interval, setInterval] = useState<Interval>(persisted?.interval ?? "1d");
   const [convertToCad, setConvertToCad] = useState(persisted?.convertToCad ?? false);
   const [assetTypeFilter, setAssetTypeFilter] = useState<AssetTypeFilter>(persisted?.assetTypeFilter ?? "all");
@@ -125,7 +131,7 @@ function ComparisonPage() {
                 id="cmp-range"
                 size="sm"
                 value={range}
-                onChange={setRange}
+                onChange={selectRange}
                 options={RANGES}
               />
             </div>
@@ -218,7 +224,15 @@ function ComparisonPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ComparisonChart data={data} />
+              <ComparisonChart
+                data={data}
+                onZoomOut={() => setRange(stepRange(range, +1, RANGES) as Range)}
+                onZoomIn={() => setRange(stepRange(range, -1, RANGES) as Range)}
+                onResetZoom={() => setRange(initialRange)}
+                zoomOutDisabled={RANGES.indexOf(range) === RANGES.length - 1}
+                zoomInDisabled={RANGES.indexOf(range) <= 0}
+                resetZoomDisabled={range === initialRange}
+              />
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
                 {data.map((d, i) => (
                   <span
@@ -267,7 +281,23 @@ type CompareItem = {
   lastClose: number | null;
 };
 
-function ComparisonChart({ data }: { data: CompareItem[] }) {
+function ComparisonChart({
+  data,
+  onZoomIn,
+  onZoomOut,
+  onResetZoom,
+  zoomInDisabled,
+  zoomOutDisabled,
+  resetZoomDisabled,
+}: {
+  data: CompareItem[];
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onResetZoom?: () => void;
+  zoomInDisabled?: boolean;
+  zoomOutDisabled?: boolean;
+  resetZoomDisabled?: boolean;
+}) {
   const { containerRef, chartRef } = useLightweightChart();
   const seriesRef = useRef<ISeriesApi<"Line">[]>([]);
 
@@ -316,7 +346,15 @@ function ComparisonChart({ data }: { data: CompareItem[] }) {
   return (
     <div className="relative h-96 w-full">
       <div ref={containerRef} className="h-full w-full" />
-      <ChartZoomControls chartRef={chartRef} />
+      <ChartZoomControls
+        chartRef={chartRef}
+        onZoomIn={onZoomIn}
+        onZoomOut={onZoomOut}
+        onReset={onResetZoom}
+        zoomInDisabled={zoomInDisabled}
+        zoomOutDisabled={zoomOutDisabled}
+        resetDisabled={resetZoomDisabled}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import {
   LineSeries,
   type Time,
 } from "lightweight-charts";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getChartColors } from "@/lib/chart-theme";
 import { trpc } from "@/lib/trpc";
@@ -143,6 +143,13 @@ export function PortfolioVsBenchmarkChart({
   const seriesRef = useRef<ISeriesApi<"Line">[]>([]);
   const portfolioColorRef = useRef<string>("#111827");
 
+  const [initialRange, setInitialRange] = useState<PerformanceRange>(range);
+  const selectRange = (r: PerformanceRange) => {
+    setInitialRange(r);
+    onRangeChange(r);
+  };
+  const rangeIdx = PERFORMANCE_RANGES.indexOf(range);
+
   useEffect(() => {
     portfolioColorRef.current = getChartColors().isDark ? "#f9fafb" : "#111827";
     return () => {
@@ -217,7 +224,7 @@ export function PortfolioVsBenchmarkChart({
           id="bench-range"
           size="xs"
           value={range}
-          onChange={onRangeChange}
+          onChange={selectRange}
           options={PERFORMANCE_RANGES}
         />
       </div>
@@ -251,7 +258,15 @@ export function PortfolioVsBenchmarkChart({
       <div className="grid gap-3 md:grid-cols-[1fr_220px]">
         <div className="relative h-64 w-full">
           <div ref={containerRef} className="h-full w-full" />
-          <ChartZoomControls chartRef={chartRef} />
+          <ChartZoomControls
+            chartRef={chartRef}
+            onZoomOut={() => onRangeChange(PERFORMANCE_RANGES[Math.min(PERFORMANCE_RANGES.length - 1, rangeIdx + 1)]!)}
+            onZoomIn={() => onRangeChange(PERFORMANCE_RANGES[Math.max(0, rangeIdx - 1)]!)}
+            onReset={() => onRangeChange(initialRange)}
+            zoomOutDisabled={rangeIdx === PERFORMANCE_RANGES.length - 1}
+            zoomInDisabled={rangeIdx <= 0}
+            resetDisabled={range === initialRange}
+          />
         </div>
 
         <div className="rounded-md border border-[var(--color-border)] p-3">

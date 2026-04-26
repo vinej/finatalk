@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut, Menu, X } from "lucide-react";
+import { ChevronsLeft, LogOut, Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -36,7 +36,7 @@ export function Header({
             aria-expanded={!!sidebarOpen}
             className="-ml-2 px-2"
           >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {sidebarOpen ? <ChevronsLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         )}
         <Link to="/dashboard" className="rounded outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">

@@ -287,7 +287,7 @@ export const analyzeSymbol = createTool({
     // Groq omit them ~30% of the time; Groq's server-side validator rejects
     // the tool call if any `required` field is missing. Defaults applied in
     // execute below.
-    range: z.enum(["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"]).optional(),
+    range: z.enum(["1mo", "3mo", "6mo", "1y", "2y", "3y", "4y", "5y", "10y", "max"]).optional(),
     interval: z.enum(["1d", "1wk", "1mo"]).optional(),
     indicators: z.array(z.discriminatedUnion("kind", [
       z.object({ kind: z.literal("sma"), period: z.number().int().min(2).max(500) }),

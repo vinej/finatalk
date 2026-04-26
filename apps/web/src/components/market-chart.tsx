@@ -58,10 +58,24 @@ export function MarketChart({
   candles,
   results,
   colors,
+  onZoomIn,
+  onZoomOut,
+  onResetZoom,
+  zoomInDisabled,
+  zoomOutDisabled,
+  resetZoomDisabled,
 }: {
   candles: Candle[];
   results: IndicatorResult[];
   colors: IndicatorColor[];
+  // When provided, the chart's zoom buttons step the parent's range selector
+  // (refetching more or less data) instead of stretching the loaded series.
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onResetZoom?: () => void;
+  zoomInDisabled?: boolean;
+  zoomOutDisabled?: boolean;
+  resetZoomDisabled?: boolean;
 }) {
   const { containerRef, chartRef } = useLightweightChart({ timeVisible: true });
   const seriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
@@ -597,7 +611,15 @@ export function MarketChart({
   return (
     <div className="relative h-[560px] w-full">
       <div ref={containerRef} className="h-full w-full" />
-      <ChartZoomControls chartRef={chartRef} />
+      <ChartZoomControls
+        chartRef={chartRef}
+        onZoomIn={onZoomIn}
+        onZoomOut={onZoomOut}
+        onReset={onResetZoom}
+        zoomInDisabled={zoomInDisabled}
+        zoomOutDisabled={zoomOutDisabled}
+        resetDisabled={resetZoomDisabled}
+      />
       {paneTops.map((top, paneIdx) => {
         const items = legendByPane.get(paneIdx);
         if (!items || items.length === 0) return null;

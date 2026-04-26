@@ -17,7 +17,7 @@ export function SaveAnalysisAction({
   defaultDescription,
 }: {
   symbol: string;
-  range: "1d" | "5d" | "1mo" | "3mo" | "6mo" | "1y" | "2y" | "5y" | "max";
+  range: "1d" | "5d" | "1mo" | "3mo" | "6mo" | "1y" | "2y" | "3y" | "4y" | "5y" | "10y" | "max";
   interval: "1m" | "5m" | "15m" | "30m" | "60m" | "90m" | "1d" | "1wk" | "1mo";
   convertTo: "CAD" | null;
   indicators: ActiveIndicator[];

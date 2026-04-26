@@ -3,14 +3,14 @@ import {
   LineSeries,
   type Time,
 } from "lightweight-charts";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChartZoomControls } from "@/components/ui/chart-zoom-controls";
 import { OptionsSelect } from "@/components/ui/options-select";
 import { trpc } from "@/lib/trpc";
 import { useLightweightChart } from "@/lib/use-lightweight-chart";
 
-export const PERFORMANCE_RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"] as const;
+export const PERFORMANCE_RANGES = ["1mo", "3mo", "6mo", "1y", "2y", "3y", "4y", "5y", "10y", "max"] as const;
 export type PerformanceRange = (typeof PERFORMANCE_RANGES)[number];
 
 export type PerformanceItem = { symbol: string; color: string };
@@ -58,6 +58,16 @@ export function PortfolioPerformanceChart({
   const { containerRef, chartRef } = useLightweightChart();
   const seriesRef = useRef<ISeriesApi<"Line">[]>([]);
 
+  // The last range the user explicitly selected via the dropdown — captured
+  // so the chart's Fit-content button can restore it after zoom-out widens
+  // the window. useState initializer locks it to the initial mount value.
+  const [initialRange, setInitialRange] = useState<PerformanceRange>(range);
+  const selectRange = (r: PerformanceRange) => {
+    setInitialRange(r);
+    onRangeChange(r);
+  };
+  const rangeIdx = PERFORMANCE_RANGES.indexOf(range);
+
   useEffect(() => {
     return () => {
       seriesRef.current = [];
@@ -99,14 +109,22 @@ export function PortfolioPerformanceChart({
             id="perf-range"
             size="xs"
             value={range}
-            onChange={onRangeChange}
+            onChange={selectRange}
             options={PERFORMANCE_RANGES}
           />
         </div>
       </div>
       <div className="relative h-64 w-full">
         <div ref={containerRef} className="h-full w-full" />
-        <ChartZoomControls chartRef={chartRef} />
+        <ChartZoomControls
+          chartRef={chartRef}
+          onZoomOut={() => onRangeChange(PERFORMANCE_RANGES[Math.min(PERFORMANCE_RANGES.length - 1, rangeIdx + 1)]!)}
+          onZoomIn={() => onRangeChange(PERFORMANCE_RANGES[Math.max(0, rangeIdx - 1)]!)}
+          onReset={() => onRangeChange(initialRange)}
+          zoomOutDisabled={rangeIdx === PERFORMANCE_RANGES.length - 1}
+          zoomInDisabled={rangeIdx <= 0}
+          resetDisabled={range === initialRange}
+        />
       </div>
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
         {items.map((it) => (

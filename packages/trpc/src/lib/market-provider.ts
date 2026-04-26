@@ -30,7 +30,7 @@ export function rangeToPeriod1(range: Range): Date {
   if (range === "1d") { d.setDate(d.getDate() - 1); return d; }
   if (range === "5d") { d.setDate(d.getDate() - 5); return d; }
   const months: Record<Exclude<Range, "max" | "1d" | "5d">, number> = {
-    "1mo": 1, "3mo": 3, "6mo": 6, "1y": 12, "2y": 24, "5y": 60,
+    "1mo": 1, "3mo": 3, "6mo": 6, "1y": 12, "2y": 24, "3y": 36, "4y": 48, "5y": 60, "10y": 120,
   };
   d.setMonth(d.getMonth() - months[range]);
   return d;

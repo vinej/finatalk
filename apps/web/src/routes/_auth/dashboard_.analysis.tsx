@@ -44,6 +44,7 @@ import {
   INTERVALS,
   isIntradayInterval,
   RANGES,
+  stepRange,
   type IntervalValue,
   type RangeValue,
 } from "@/lib/ranges";
@@ -76,6 +77,15 @@ function AnalysisPage() {
   const [symbolInput, setSymbolInput] = useState(persisted?.symbolInput ?? "AAPL");
   const [submittedSymbol, setSubmittedSymbol] = useState(sanitizeSymbol(persisted?.submittedSymbol) || "AAPL");
   const [range, setRange] = useState<(typeof RANGES)[number]>(persisted?.range ?? "6mo");
+  // The user's "anchor" range — set whenever the user picks one explicitly
+  // (via the range dropdown, by loading a saved analysis, or by resetting the
+  // workspace). The chart's zoom buttons widen/narrow `range` while leaving
+  // `initialRange` alone, so the Fit-content button can always restore it.
+  const [initialRange, setInitialRange] = useState<(typeof RANGES)[number]>(persisted?.range ?? "6mo");
+  function selectRange(r: (typeof RANGES)[number]) {
+    setRange(r);
+    setInitialRange(r);
+  }
   const [interval, setInterval] = useState<(typeof INTERVALS)[number]>(persisted?.interval ?? "1d");
   const [convertToCad, setConvertToCad] = useState(persisted?.convertToCad ?? false);
   const [activeIndicators, setActiveIndicators] = useState<ActiveIndicator[]>(persisted?.activeIndicators ?? DEFAULT_SEED);
@@ -269,7 +279,7 @@ function AnalysisPage() {
         setLoadedAnalysisId(data.id);
         setLoadedAnalysisTitle(data.title);
         setLoadedAnalysisDescription(data.description);
-        if (data.range) setRange(data.range as (typeof RANGES)[number]);
+        if (data.range) selectRange(data.range as (typeof RANGES)[number]);
         if (data.interval) setInterval(data.interval as (typeof INTERVALS)[number]);
         setConvertToCad(data.convertTo === "CAD");
       } catch (err) {
@@ -426,7 +436,7 @@ function AnalysisPage() {
     setLoadedAnalysisId(data.id);
     setLoadedAnalysisTitle(data.title);
     setLoadedAnalysisDescription(data.description);
-    setRange(data.range as (typeof RANGES)[number]);
+    selectRange(data.range as (typeof RANGES)[number]);
     setInterval(data.interval as (typeof INTERVALS)[number]);
     setConvertToCad(data.convertTo === "CAD");
     setConfidence(null);
@@ -441,7 +451,7 @@ function AnalysisPage() {
     setLoadedAnalysisId(null);
     setLoadedAnalysisTitle(null);
     setLoadedAnalysisDescription(null);
-    setRange("6mo");
+    selectRange("6mo");
     setInterval("1d");
     setConvertToCad(false);
     setAssetTypeFilter("all");
@@ -616,7 +626,7 @@ function AnalysisPage() {
               <OptionsSelect
                 id="range"
                 value={range}
-                onChange={setRange}
+                onChange={selectRange}
                 options={compatibleRangesForInterval(interval)}
               />
             </div>
@@ -627,7 +637,7 @@ function AnalysisPage() {
                 value={interval}
                 onChange={(next) => {
                   setInterval(next);
-                  setRange((r) => clampRangeForInterval(r, next));
+                  selectRange(clampRangeForInterval(range, next));
                 }}
                 options={INTERVALS}
               />
@@ -869,6 +879,24 @@ function AnalysisPage() {
                 (_, i) => sortedActiveIndicators[i] && !hiddenIds.has(sortedActiveIndicators[i].localId),
               )}
               colors={visibleColors}
+              onZoomOut={() => {
+                const allowed = compatibleRangesForInterval(interval);
+                setRange(stepRange(range, +1, allowed));
+              }}
+              onZoomIn={() => {
+                const allowed = compatibleRangesForInterval(interval);
+                setRange(stepRange(range, -1, allowed));
+              }}
+              onResetZoom={() => setRange(initialRange)}
+              zoomOutDisabled={(() => {
+                const allowed = compatibleRangesForInterval(interval);
+                return allowed.indexOf(range) === allowed.length - 1;
+              })()}
+              zoomInDisabled={(() => {
+                const allowed = compatibleRangesForInterval(interval);
+                return allowed.indexOf(range) <= 0;
+              })()}
+              resetZoomDisabled={range === initialRange}
             />
           )}
         </CardContent>
