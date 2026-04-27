@@ -4,16 +4,20 @@ import { fileURLToPath } from "url";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 config({ path: resolve(__dirname, "../../../.env") });
 
+import { createRequire } from "node:module";
 import express from "express";
+import type { RequestHandler } from "express";
 import cors from "cors";
-import * as helmetMod from "helmet";
-import * as rateLimitMod from "express-rate-limit";
 
-// Namespace imports + explicit .default access — canonical ESM pattern that
-// works whether the build has esModuleInterop on or off. helmet@8 and
-// express-rate-limit@7 ship their callable as the module's `default` export.
-const helmet = helmetMod.default;
-const rateLimit = rateLimitMod.default;
+// helmet@8 and express-rate-limit@7 publish their callable via CJS
+// `module.exports` (`export = helmet`). Going through createRequire bypasses
+// TypeScript's synthetic-default-import machinery, which needs
+// `esModuleInterop` AND consistent module-resolution semantics across build
+// environments. Vercel's isolated tsc invocation evidently doesn't honor it
+// reliably, so we sidestep the whole issue.
+const cjsRequire = createRequire(import.meta.url);
+const helmet = cjsRequire("helmet") as (options?: Record<string, unknown>) => RequestHandler;
+const rateLimit = cjsRequire("express-rate-limit") as (options?: Record<string, unknown>) => RequestHandler;
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createTRPCContext, type TRPCServices } from "@finatalk/trpc";
 import { startAlertEvaluator } from "@finatalk/trpc/alerts";
@@ -189,20 +193,21 @@ app.use(
     router: appRouter,
     createContext: (opts) =>
       createTRPCContext(opts, {
-        summarizeChart,
-        chatWithAdvisor,
-        chatWithPortfolioAdvisor,
-        // Casts through NonNullable<...> bypass a Vercel-specific zod
-        // inference difference where `description` lands as
-        // `description?: string` even though the schema is required. The
-        // runtime contract is identical to the local build.
+        // Cast every service through NonNullable<TRPCServices[...]> to pin
+        // the type at the boundary. zod's inference has subtle differences
+        // between the local build and Vercel's strict tsc invocation
+        // (`description?: string` instead of `description: string`, etc.).
+        // The runtime contract is identical; only the inferred types drift.
+        summarizeChart: summarizeChart as NonNullable<TRPCServices["summarizeChart"]>,
+        chatWithAdvisor: chatWithAdvisor as NonNullable<TRPCServices["chatWithAdvisor"]>,
+        chatWithPortfolioAdvisor: chatWithPortfolioAdvisor as NonNullable<TRPCServices["chatWithPortfolioAdvisor"]>,
         generateAnalysis: generateAnalysisForSymbol as NonNullable<TRPCServices["generateAnalysis"]>,
         generatePortfolio: generatePortfolioFromPrompt as NonNullable<TRPCServices["generatePortfolio"]>,
-        chatWithResearch: chatWithResearchAdvisor,
-        chatWithScenarioPlanner,
-        chatWithTaxAdvisor,
-        generateBriefing: generateMorningBriefing,
-        chatWithMarketAdvisor,
+        chatWithResearch: chatWithResearchAdvisor as NonNullable<TRPCServices["chatWithResearch"]>,
+        chatWithScenarioPlanner: chatWithScenarioPlanner as NonNullable<TRPCServices["chatWithScenarioPlanner"]>,
+        chatWithTaxAdvisor: chatWithTaxAdvisor as NonNullable<TRPCServices["chatWithTaxAdvisor"]>,
+        generateBriefing: generateMorningBriefing as NonNullable<TRPCServices["generateBriefing"]>,
+        chatWithMarketAdvisor: chatWithMarketAdvisor as NonNullable<TRPCServices["chatWithMarketAdvisor"]>,
       }),
     onError({ path, error }) {
       const expected = new Set(["UNAUTHORIZED", "FORBIDDEN", "BAD_REQUEST", "NOT_FOUND", "TOO_MANY_REQUESTS", "CONFLICT"]);
