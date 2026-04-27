@@ -42,7 +42,8 @@ export const aiRouter = createTRPCRouter({
         symbol: input.symbol,
         range: input.range,
         interval: input.interval,
-        indicators: input.indicators,
+        // Cast bypasses Vercel-only zod inference quirk (all-optional types).
+        indicators: input.indicators as IndicatorSpec[],
         convertTo: input.convertTo ?? null,
         ...(input.language ? { language: input.language } : {}),
       });

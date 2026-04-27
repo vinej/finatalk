@@ -1268,13 +1268,22 @@ function parseOtherListed(text: string): SymbolEntry[] {
   return out;
 }
 
+// Some build hosts (Vercel's strict tsc, e.g.) resolve a stripped-down
+// `Response` interface that's missing the standard Fetch members. Casting
+// through this minimal shape sidesteps it without losing functionality.
+type FetchResponse = {
+  ok: boolean;
+  status: number;
+  text: () => Promise<string>;
+};
+
 async function fetchSymbolUniverse(): Promise<SymbolEntry[]> {
   const [a, b, tsx] = await Promise.all([
-    fetch(NASDAQ_URL).then((r) => {
+    (fetch(NASDAQ_URL) as unknown as Promise<FetchResponse>).then((r) => {
       if (!r.ok) throw new Error(`Nasdaq list HTTP ${r.status}`);
       return r.text();
     }),
-    fetch(OTHER_URL).then((r) => {
+    (fetch(OTHER_URL) as unknown as Promise<FetchResponse>).then((r) => {
       if (!r.ok) throw new Error(`Other list HTTP ${r.status}`);
       return r.text();
     }),
@@ -1378,7 +1387,9 @@ export const marketRouter = createTRPCRouter({
       symbol: input.symbol,
       range: input.range,
       interval: input.interval,
-      indicators: input.indicators,
+      // Cast bypasses zod's all-optional inference quirk on Vercel — values
+      // are validated by IndicatorSpec.parse before reaching the procedure.
+      indicators: input.indicators as IndicatorSpecT[],
       convertTo: input.convertTo ?? null,
     })),
 
