@@ -1,5 +1,14 @@
 import type { IndexConstituent } from "@finatalk/openbb";
 
+// Some build hosts (Vercel's strict tsc) resolve a stripped-down `Response`
+// interface missing the standard Fetch members.
+type FetchResponse = {
+  ok: boolean;
+  status: number;
+  text: () => Promise<string>;
+  json: () => Promise<unknown>;
+};
+
 type IndexKey = "sp500" | "nasdaq" | "dowjones" | "tsx" | "tsx60";
 
 const PAGES: Record<IndexKey, string> = {
@@ -14,7 +23,7 @@ const USER_AGENT = "FinaTalk/1.0 (https://finatalk.app) index-constituents";
 
 async function fetchPageHtml(page: string): Promise<string> {
   const url = `https://en.wikipedia.org/w/api.php?action=parse&page=${page}&format=json&prop=text&formatversion=2&origin=*`;
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+  const res = (await fetch(url, { headers: { "User-Agent": USER_AGENT } })) as unknown as FetchResponse;
   if (!res.ok) throw new Error(`Wikipedia fetch failed: ${res.status}`);
   const data = (await res.json()) as { parse?: { text?: string }; error?: { info?: string } };
   if (data.error) throw new Error(`Wikipedia error: ${data.error.info ?? "unknown"}`);

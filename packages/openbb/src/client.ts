@@ -73,6 +73,15 @@ function parseNewsArticle(r: Record<string, unknown>, fallbackSymbol?: string): 
   };
 }
 
+// Some build hosts (Vercel's strict tsc) resolve a stripped-down `Response`
+// interface missing the standard Fetch members.
+type FetchResponse = {
+  ok: boolean;
+  status: number;
+  text: () => Promise<string>;
+  json: () => Promise<unknown>;
+};
+
 export class OpenBBClient {
   private baseUrl: string;
   private timeout: number;
@@ -94,10 +103,10 @@ export class OpenBBClient {
     const timer = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const res = await fetch(url.toString(), {
+      const res = (await fetch(url.toString(), {
         signal: controller.signal,
         headers: { Accept: "application/json" },
-      });
+      })) as unknown as FetchResponse;
 
       if (!res.ok) {
         const body = await res.text().catch(() => "");
@@ -812,7 +821,7 @@ export class OpenBBClient {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5_000);
       try {
-        const res = await fetch(url.toString(), { signal: controller.signal });
+        const res = (await fetch(url.toString(), { signal: controller.signal })) as unknown as FetchResponse;
         return res.ok;
       } finally {
         clearTimeout(timer);
