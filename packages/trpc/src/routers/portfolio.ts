@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
+import { createRequire } from "node:module";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
-import YahooFinance from "yahoo-finance2";
 import { z } from "zod";
 import { analysis, holding, portfolio, transaction, type Holding, type Transaction } from "@finatalk/db";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
@@ -18,7 +18,14 @@ import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
 import { resolveAssetType } from "../lib/market-provider";
 import { paletteColor } from "../constants/chart";
 
-const yf = new YahooFinance();
+// yahoo-finance2 v3 default export is a class. createRequire bypasses TS's
+// synthetic-default-import machinery, which Vercel's strict tsc doesn't
+// always honor. Same pattern as in routers/market.ts.
+const cjsRequire = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const YahooFinance: any = cjsRequire("yahoo-finance2");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const yf: any = new YahooFinance();
 
 const TransactionTypeSchema = z.enum(["buy", "sell", "dividend"]);
 
