@@ -1,5 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { indicatorTail, runAnalysis } from "@finatalk/trpc/routers/market";
+import type { IndicatorSpec } from "@finatalk/trpc/schemas/indicator";
 import { z } from "zod";
 
 const MAX_BARS = 60;
@@ -399,7 +400,10 @@ export const analyzeSymbol = createTool({
       symbol,
       range: range ?? "6mo",
       interval: interval ?? "1d",
-      indicators: indicators ?? [],
+      // Cast to bypass zod's optional-property inference quirk on Vercel —
+      // the runtime values do conform to IndicatorSpec since the discriminator
+      // makes any partial entry invalid at parse time anyway.
+      indicators: (indicators ?? []) as IndicatorSpec[],
     });
     const recent = analysis.candles.slice(-MAX_BARS).map((c) => ({
       t: new Date(c.time * 1000).toISOString().slice(0, 10),
