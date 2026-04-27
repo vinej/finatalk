@@ -30,6 +30,8 @@ export const researchRouter = createTRPCRouter({
           message: "AI research is not configured on this server.",
         });
       }
+      // Cast through Parameters<typeof fn>[0] sidesteps Vercel's all-optional
+      // zod inference for messages and context types.
       return fn({
         messages: input.messages,
         context: {
@@ -37,7 +39,7 @@ export const researchRouter = createTRPCRouter({
           comparisonSymbols: input.context.comparisonSymbols,
         },
         ...(input.language ? { language: input.language } : {}),
-      });
+      } as Parameters<typeof fn>[0]);
     }),
 
   getConfidence: protectedProcedure

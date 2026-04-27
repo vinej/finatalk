@@ -72,6 +72,9 @@ export const aiRouter = createTRPCRouter({
           message: "AI chat is not configured on this server.",
         });
       }
+      // Cast through Parameters<typeof fn>[0] sidesteps Vercel's all-optional
+      // zod inference for messages, indicators, and nested contexts. Same
+      // pattern applied to every chat procedure below.
       return fn({
         messages: input.messages,
         context: {
@@ -82,7 +85,7 @@ export const aiRouter = createTRPCRouter({
           activeIndicators: input.context.activeIndicators,
         },
         ...(input.language ? { language: input.language } : {}),
-      });
+      } as Parameters<typeof fn>[0]);
     }),
 
   chatPortfolio: protectedProcedure
@@ -111,7 +114,7 @@ export const aiRouter = createTRPCRouter({
           holdings: input.context.holdings,
         },
         ...(input.language ? { language: input.language } : {}),
-      });
+      } as Parameters<typeof fn>[0]);
     }),
 
   chatScenario: protectedProcedure
@@ -140,7 +143,7 @@ export const aiRouter = createTRPCRouter({
           holdings: input.context.holdings,
         },
         ...(input.language ? { language: input.language } : {}),
-      });
+      } as Parameters<typeof fn>[0]);
     }),
 
   chatTax: protectedProcedure
@@ -163,7 +166,7 @@ export const aiRouter = createTRPCRouter({
         messages: input.messages,
         context: { portfolios: input.context.portfolios },
         ...(input.language ? { language: input.language } : {}),
-      });
+      } as Parameters<typeof fn>[0]);
     }),
 
   chatMarket: protectedProcedure
@@ -182,7 +185,7 @@ export const aiRouter = createTRPCRouter({
       return fn({
         messages: input.messages,
         ...(input.language ? { language: input.language } : {}),
-      });
+      } as Parameters<typeof fn>[0]);
     }),
 
   generateBriefing: protectedProcedure
@@ -205,6 +208,6 @@ export const aiRouter = createTRPCRouter({
         portfolios: input.portfolios,
         watchlistSymbols: input.watchlistSymbols,
         ...(input.language ? { language: input.language } : {}),
-      });
+      } as Parameters<typeof fn>[0]);
     }),
 });
