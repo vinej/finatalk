@@ -1,5 +1,5 @@
+import { createRequire } from "node:module";
 import { getOpenBBClient, isOpenBBEnabled, type OHLCVBar } from "@finatalk/openbb";
-import YahooFinance from "yahoo-finance2";
 import type { z } from "zod";
 import type { IntervalSchema, RangeSchema } from "../schemas/indicator";
 
@@ -21,7 +21,14 @@ export type Candle = {
 
 type ProviderResult<T> = { data: T; provider: "openbb" | "yahoo" };
 
-const yf = new YahooFinance();
+// yahoo-finance2 v3 default export is a class. createRequire bypasses TS's
+// synthetic-default-import machinery, which Vercel's strict tsc doesn't
+// always honor. Same pattern as in routers/market.ts and routers/portfolio.ts.
+const cjsRequire = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const YahooFinance: any = cjsRequire("yahoo-finance2");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const yf: any = new YahooFinance();
 
 export function rangeToPeriod1(range: Range): Date {
   const now = new Date();
