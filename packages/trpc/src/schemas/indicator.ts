@@ -124,7 +124,51 @@ export const IndicatorSpec = z.discriminatedUnion("kind", [
     showMitigated: z.boolean(),
   }),
 ]);
-export type IndicatorSpec = z.infer<typeof IndicatorSpec>;
+// Explicit TypeScript union instead of z.infer<>. zod's inference can render
+// every property as optional under exactOptionalPropertyTypes on some build
+// hosts (Vercel's strict tsc, e.g.), which collapses discriminated-union
+// narrowing into `never`. The manual definition is identical to the schema's
+// runtime contract — keep them in sync when adding indicators.
+export type IndicatorSpec =
+  | { kind: "sma"; period: number }
+  | { kind: "ema"; period: number }
+  | { kind: "rma"; period: number }
+  | { kind: "wma"; period: number }
+  | { kind: "dema"; period: number }
+  | { kind: "rsi"; period: number }
+  | { kind: "mom"; period: number }
+  | { kind: "roc"; period: number }
+  | { kind: "macd"; fast: number; slow: number; signal: number }
+  | { kind: "bbands"; period: number; stdDev: number }
+  | { kind: "atr"; period: number }
+  | { kind: "adx"; period: number }
+  | { kind: "stoch"; period: number; signal: number; smooth: number }
+  | { kind: "stochRsi"; period: number }
+  | { kind: "williamsR"; period: number }
+  | { kind: "obv" }
+  | { kind: "vwap" }
+  | { kind: "fib"; lookback?: number | undefined }
+  | { kind: "psar"; step: number; max: number }
+  | { kind: "maCross"; fastPeriod: number; slowPeriod: number; maType: "sma" | "ema" }
+  | { kind: "macdCross"; fast: number; slow: number; signal: number }
+  | { kind: "keltner"; period: number; atrPeriod: number; multiplier: number }
+  | { kind: "donchian"; period: number }
+  | { kind: "chaikinVol"; emaPeriod: number; rocPeriod: number }
+  | { kind: "ad" }
+  | { kind: "cmf"; period: number }
+  | { kind: "volOsc"; fast: number; slow: number }
+  | { kind: "aroon"; period: number }
+  | { kind: "vortex"; period: number }
+  | { kind: "tii"; majorPeriod: number; minorPeriod: number }
+  | { kind: "zscore"; period: number }
+  | { kind: "bbPctB"; period: number; stdDev: number }
+  | { kind: "hurst"; period: number }
+  | { kind: "liqSweep"; lookback: number }
+  | { kind: "fvg"; lookback: number; showFilled: boolean }
+  | { kind: "srLevels"; lookback: number; strength: number; tolerancePct: number; maxLevels: number }
+  | { kind: "pivots"; method: "classic" | "fib" | "camarilla"; timeframe: "weekly" | "monthly" }
+  | { kind: "volProfile"; lookback: number; bins: number; valueAreaPct: number; showHistogram: boolean }
+  | { kind: "orderBlock"; lookback: number; impulsePct: number; showMitigated: boolean };
 
 const HexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 

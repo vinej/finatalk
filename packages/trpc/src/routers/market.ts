@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { TRPCError } from "@trpc/server";
 import {
   ADX,
@@ -18,7 +19,6 @@ import {
   WMA,
   WilliamsR,
 } from "trading-signals";
-import YahooFinance from "yahoo-finance2";
 import { z } from "zod";
 import { getOpenBBClient, isOpenBBEnabled, type OHLCVBar } from "@finatalk/openbb";
 import { requireOpenBBClient, tryOrNull, tryProviders } from "../lib/openbb-helpers";
@@ -29,6 +29,8 @@ import {
   RangeSchema,
   SymbolSchema,
 } from "../schemas/indicator";
+
+type IndicatorSpecT = IndicatorSpec;
 import {
   fetchChartWithFallback,
   fetchFxRatesWithFallback,
@@ -41,9 +43,15 @@ import {
 } from "../lib/wikipedia-constituents";
 import { normalizeExchange, type YFQuote } from "../market/exchanges";
 
-const yf = new YahooFinance();
-
-type IndicatorSpecT = z.infer<typeof IndicatorSpec>;
+// yahoo-finance2 v3 default export is a constructor. Going through
+// createRequire bypasses TS's synthetic-default-import machinery, which is
+// inconsistent across build hosts (Vercel's strict tsc, e.g.). The runtime
+// contract is unchanged — `yf` exposes chart/quote/search/quoteSummary etc.
+const cjsRequire = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const YahooFinance: any = cjsRequire("yahoo-finance2");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const yf: any = new YahooFinance();
 
 function applyFx(candles: Candle[], rates: Map<number, number>): Candle[] {
   const sortedTimes = [...rates.keys()].sort((a, b) => a - b);
