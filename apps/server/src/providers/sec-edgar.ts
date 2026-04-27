@@ -2,6 +2,16 @@ import { db } from "@finatalk/db";
 import { edgarCache } from "@finatalk/db/schema";
 import { eq, lte } from "drizzle-orm";
 
+// Some build hosts (Vercel's strict tsc) resolve a stripped-down `Response`
+// interface missing the standard Fetch members. Casting through this minimal
+// shape sidesteps the lib mismatch without losing functionality.
+type FetchResponse = {
+  ok: boolean;
+  status: number;
+  text: () => Promise<string>;
+  json: () => Promise<unknown>;
+};
+
 const SEC_UA =
   process.env.SEC_USER_AGENT ?? "FinaTalk research@finatalk.com";
 
@@ -33,15 +43,15 @@ function release(): void {
   }
 }
 
-async function secFetch(url: string): Promise<Response> {
+async function secFetch(url: string): Promise<FetchResponse> {
   await acquire();
   try {
-    const res = await fetch(url, {
+    const res = (await fetch(url, {
       headers: {
         "User-Agent": SEC_UA,
         Accept: "application/json, text/html, */*",
       },
-    });
+    })) as unknown as FetchResponse;
     if (!res.ok) throw new Error(`SEC ${res.status}: ${url}`);
     return res;
   } finally {
