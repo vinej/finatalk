@@ -22,11 +22,16 @@ function defaults(p: string) {
 // Injects `think: false` into every Ollama request so reasoning/thinking
 // models (medgemma, qwen3, deepseek-r1, magistral…) return only the final
 // answer. Ollama's OpenAI-compat endpoint accepts this extension field.
+//
+// `init.body` is read via a typed cast because the lib/@types/node version
+// resolved on some build hosts (e.g. Vercel) doesn't expose `body` on
+// RequestInit even though Node's native fetch supports it.
 const injectThinkFalse: typeof fetch = async (input, init) => {
   let nextInit = init;
-  if (init && typeof init.body === "string") {
+  const initBody = (init as { body?: unknown } | undefined)?.body;
+  if (typeof initBody === "string") {
     try {
-      const body: unknown = JSON.parse(init.body);
+      const body: unknown = JSON.parse(initBody);
       if (body && typeof body === "object") {
         (body as Record<string, unknown>).think = false;
         nextInit = { ...init, body: JSON.stringify(body) };
