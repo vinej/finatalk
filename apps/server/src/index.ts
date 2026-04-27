@@ -9,7 +9,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter, createTRPCContext } from "@finatalk/trpc";
+import { appRouter, createTRPCContext, type TRPCServices } from "@finatalk/trpc";
 import { startAlertEvaluator } from "@finatalk/trpc/alerts";
 import { auth, checkAccountLockout, recordFailedLogin, clearFailedLogins } from "@finatalk/trpc/auth";
 import { toNodeHandler } from "better-auth/node";
@@ -186,8 +186,12 @@ app.use(
         summarizeChart,
         chatWithAdvisor,
         chatWithPortfolioAdvisor,
-        generateAnalysis: generateAnalysisForSymbol,
-        generatePortfolio: generatePortfolioFromPrompt,
+        // Casts through NonNullable<...> bypass a Vercel-specific zod
+        // inference difference where `description` lands as
+        // `description?: string` even though the schema is required. The
+        // runtime contract is identical to the local build.
+        generateAnalysis: generateAnalysisForSymbol as NonNullable<TRPCServices["generateAnalysis"]>,
+        generatePortfolio: generatePortfolioFromPrompt as NonNullable<TRPCServices["generatePortfolio"]>,
         chatWithResearch: chatWithResearchAdvisor,
         chatWithScenarioPlanner,
         chatWithTaxAdvisor,
