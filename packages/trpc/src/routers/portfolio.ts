@@ -18,14 +18,17 @@ import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
 import { resolveAssetType } from "../lib/market-provider";
 import { paletteColor } from "../constants/chart";
 
-// yahoo-finance2 v3 default export is a class. createRequire bypasses TS's
-// synthetic-default-import machinery, which Vercel's strict tsc doesn't
-// always honor. Same pattern as in routers/market.ts.
+// createRequire bypasses TS's synthetic-default-import machinery. yahoo-finance2
+// may expose its handle as either the module root (v3 singleton) or a `.default`
+// (v2 class) — handle both: unwrap .default if present, then call `new` only
+// if it's a class.
 const cjsRequire = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const YahooFinance: any = cjsRequire("yahoo-finance2");
+const yfMod: any = cjsRequire("yahoo-finance2");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const yf: any = new YahooFinance();
+const yfHandle: any = yfMod?.default ?? yfMod;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const yf: any = typeof yfHandle === "function" ? new yfHandle() : yfHandle;
 
 const TransactionTypeSchema = z.enum(["buy", "sell", "dividend"]);
 

@@ -43,15 +43,17 @@ import {
 } from "../lib/wikipedia-constituents";
 import { normalizeExchange, type YFQuote } from "../market/exchanges";
 
-// yahoo-finance2 v3 default export is a constructor. Going through
-// createRequire bypasses TS's synthetic-default-import machinery, which is
-// inconsistent across build hosts (Vercel's strict tsc, e.g.). The runtime
-// contract is unchanged — `yf` exposes chart/quote/search/quoteSummary etc.
+// createRequire bypasses TS's synthetic-default-import machinery. yahoo-finance2
+// may expose its handle as either the module root (v3 singleton) or a `.default`
+// (v2 class) — handle both: unwrap .default if present, then call `new` only
+// if it's a class.
 const cjsRequire = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const YahooFinance: any = cjsRequire("yahoo-finance2");
+const yfMod: any = cjsRequire("yahoo-finance2");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const yf: any = new YahooFinance();
+const yfHandle: any = yfMod?.default ?? yfMod;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const yf: any = typeof yfHandle === "function" ? new yfHandle() : yfHandle;
 
 function applyFx(candles: Candle[], rates: Map<number, number>): Candle[] {
   const sortedTimes = [...rates.keys()].sort((a, b) => a - b);
