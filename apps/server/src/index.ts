@@ -6,8 +6,14 @@ config({ path: resolve(__dirname, "../../../.env") });
 
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import * as helmetMod from "helmet";
+import * as rateLimitMod from "express-rate-limit";
+
+// Namespace imports + explicit .default access — canonical ESM pattern that
+// works whether the build has esModuleInterop on or off. helmet@8 and
+// express-rate-limit@7 ship their callable as the module's `default` export.
+const helmet = helmetMod.default;
+const rateLimit = rateLimitMod.default;
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createTRPCContext, type TRPCServices } from "@finatalk/trpc";
 import { startAlertEvaluator } from "@finatalk/trpc/alerts";
