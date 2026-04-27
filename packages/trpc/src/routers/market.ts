@@ -1293,7 +1293,7 @@ async function fetchSymbolUniverse(): Promise<SymbolEntry[]> {
     symbol: `${t.symbol.replace(/\./g, "-")}.TO`,
     name: t.name,
     exchange: "TSX",
-    assetType: "stock",
+    assetType: "stock" as const,
   }));
   const merged = [...parseNasdaqListed(a), ...parseOtherListed(b), ...tsxEntries];
   merged.sort((x, y) => x.symbol.localeCompare(y.symbol));
