@@ -1031,6 +1031,8 @@
       "system2Short": "Système 2 — rupture 55 jours, short.",
       "regimeUp": "Basculement de régime vers haussier.",
       "regimeDown": "Basculement de régime vers baissier.",
+      "faberRegimeUp": "Filtre Faber actif — le prix a repassé au-dessus de la SMA 200.",
+      "faberRegimeDown": "Filtre Faber inactif — le prix est repassé sous la SMA 200.",
       "trendActivation": "Activation de tendance — ADX > 25.",
       "exitLong": "Sortir long sur surachat.",
       "exitShort": "Sortir short sur survente."

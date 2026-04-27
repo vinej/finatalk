@@ -521,6 +521,60 @@ export const STRATEGY_GUIDE_FR: Record<StrategyKind, StrategyEntry> = {
     ],
   },
 
+  faberTrendFilter: {
+    label: "Filtre de tendance de Faber",
+    summary:
+      "Conserver l'actif lorsqu'il est au-dessus de sa moyenne mobile longue ; passer en liquidités lorsqu'il chute en dessous. Un filtre de tendance défensif qui réduit historiquement la perte maximale de moitié.",
+    description:
+      "L'article de Mebane Faber publié en 2007, « A Quantitative Approach to Tactical Asset Allocation », a introduit l'un des filtres de tendance les plus simples et les mieux documentés en finance : à la fin de chaque mois, si le prix de l'actif est au-dessus de sa moyenne mobile simple sur 10 mois, on reste investi ; sinon, on passe en liquidités (ou en bons du Trésor de courte durée). Faber a testé cette règle sur les actions américaines depuis 1900, ainsi que sur les actions internationales, les FPI, les matières premières et les obligations — sur toutes les classes d'actifs, le filtre a livré des rendements proches du buy-and-hold avec environ la moitié de la volatilité et de la perte maximale. Finatalk applique la règle sur des chandeliers quotidiens en utilisant la SMA(200) comme proxy de la SMA 10 mois, et rééquilibre sur les croisements à la clôture.",
+    whenToUse:
+      "Utilisez-le comme « interrupteur risk-off » superposé à toute position à long terme en actions ou FNB que vous ne voulez pas voir traverser une perte de 50 %. Il est particulièrement utile sur les FNB d'indices larges (SPY, VTI, XIC) et sur les positions volatiles à un seul actif où la préservation du capital prime sur les derniers points de hausse. Il se marie bien avec le buy-and-hold pour le gros du portefeuille, plus une portion filtrée Faber sur les positions plus volatiles.",
+    prosAndCons:
+      "Pour : réduit fortement les pertes maximales et la volatilité, mécanique (zéro discrétion), évite les marchés baissiers majeurs comme 2000-02 et 2008-09, facile à automatiser. Contre : faux signaux dans les marchés latéraux choppy (vous vendez bas, rachetez plus haut) et sous-performe le buy-and-hold pendant les longs marchés haussiers parce que vous passez quelques semaines par an en dehors du marché. L'efficience fiscale en souffre dans les comptes non enregistrés, car chaque croisement vers le bas est une disposition imposable.",
+    indicatorsUsed: ["SMA 200 (proxy 10 mois sur barres quotidiennes)", "Croisement prix/SMA"],
+    coreIdea:
+      "Rester long tant que le prix est au-dessus de la SMA 200 ; rester en liquidités tant qu'il est en dessous. Deux états, une règle, aucune opinion.",
+    steps: [
+      {
+        title: "Étape 1 : choisir l'actif",
+        body:
+          "Le filtre de Faber fonctionne mieux sur les FNB d'indices larges (SPY, VTI, XIC, XEQT) et les classes d'actifs en tendance. Évitez de l'appliquer à une seule action sauf si vous acceptez le risque idiosyncrasique élevé ; l'article original utilisait des composites de classes d'actifs, pas des titres individuels.",
+      },
+      {
+        title: "Étape 2 : définir la longueur de la moyenne mobile",
+        body:
+          "L'original de Faber est la SMA 10 mois sur clôtures mensuelles. L'équivalent en barres quotidiennes est la SMA(200), que le préréglage de graphique Finatalk ajoute pour vous. Les deux produisent des signaux similaires ; la version 200 jours déclenche un peu plus souvent.",
+      },
+      {
+        title: "Étape 3 : décider de la cadence de rééquilibrage",
+        body:
+          "Faber classique : ne vérifier qu'à la fin du mois. Finatalk affiche le croisement en direct, mais agir uniquement le dernier jour ouvrable de chaque mois réduit les faux signaux. Une vérification quotidienne produit plus de signaux et plus de bruit.",
+      },
+      {
+        title: "Étape 4 : poser la règle",
+        body:
+          "Si la clôture > SMA(200) → conserver l'actif. Si la clôture ≤ SMA(200) → déplacer 100 % de cette portion en liquidités, fonds monétaire ou bons du Trésor courts (BIL, CASH.TO). Pas de positions partielles, pas d'exceptions.",
+      },
+      {
+        title: "Étape 5 : configurer les alertes",
+        body:
+          "Utilisez les alertes intégrées de la stratégie (« régime haussier / régime baissier ») sur le croisement prix/SMA-200 pour ne pas avoir à surveiller le graphique. Chaque alerte vous dit s'il faut être dans l'actif ou en liquidités pour la période suivante.",
+      },
+      {
+        title: "Étape 6 : accepter sereinement les faux signaux",
+        body:
+          "Environ un tiers des signaux seront faux (vous sortez, puis rachetez plus haut). C'est le coût de l'assurance. L'avantage de la stratégie vient de l'évitement des chutes de 50 % qui surviennent une fois par décennie, pas d'avoir raison à chaque fois.",
+      },
+    ],
+    whyItWorks:
+      "Les pertes boursières supérieures à 30 % commencent presque toujours par un indice qui passe sous sa moyenne mobile longue. En sortant à chaque croisement vers le bas, vous acceptez de nombreuses petites pertes par faux signaux (1-3 %) en échange du fait d'éviter les marchés baissiers rares mais dévastateurs. Le calcul : un portefeuille qui chute de 50 % a besoin de +100 % pour récupérer ; un portefeuille plafonné à -25 % n'a besoin que de +33 %.",
+    links: [
+      { title: "Mebane Faber — A Quantitative Approach to Tactical Asset Allocation (article SSRN, anglais)", url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461" },
+      { title: "Cambria Investments — Blogue de recherche de Faber (anglais)", url: "https://mebfaber.com/" },
+      { title: "Investopedia — 200-Day Moving Average (anglais)", url: "https://www.investopedia.com/terms/1/200-day-moving-average.asp" },
+    ],
+  },
+
   momentumInvesting: {
     label: "Momentum Investing (Investissement momentum)",
     summary: "Acheter les actifs en hausse et vendre ceux en baisse, en pariant que les tendances récentes se poursuivront.",

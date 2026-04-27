@@ -521,6 +521,60 @@ export const STRATEGY_GUIDE_EN: Record<StrategyKind, StrategyEntry> = {
     ],
   },
 
+  faberTrendFilter: {
+    label: "Faber Trend Filter",
+    summary:
+      "Hold the asset while it trades above its long-term moving average; rotate to cash when it falls below. A defensive trend filter that historically cuts max drawdown in half.",
+    description:
+      "Mebane Faber's 2007 paper 'A Quantitative Approach to Tactical Asset Allocation' introduced one of the simplest and best-documented trend filters in finance: at the end of each month, if the asset's price is above its 10-month simple moving average, stay invested; otherwise, move to cash (or short-term Treasuries). Faber tested this on US equities back to 1900, plus international stocks, REITs, commodities, and bonds — across all asset classes the filter delivered roughly buy-and-hold returns with about half the volatility and half the maximum drawdown. Finatalk applies the rule on daily candles using SMA(200) as a near-equivalent to the 10-month SMA, and rebalances on closing crosses.",
+    whenToUse:
+      "Use it as a 'risk-off switch' overlay on any long-term equity or ETF holding you don't want to ride through a 50% drawdown. It is most valuable on broad-index ETFs (SPY, VTI, XIC) and on volatile single-asset positions where preserving capital matters more than squeezing the last few percent of upside. It pairs well with Buy and Hold for the bulk of a portfolio plus a Faber-filtered sleeve on the more volatile holdings.",
+    prosAndCons:
+      "Pros: dramatically reduces drawdowns and volatility, mechanical (zero discretion), keeps you out of major bear markets like 2000-02 and 2008-09, easy to automate. Cons: whipsaws in choppy sideways markets (you sell low, buy back higher) and underperforms buy-and-hold during sustained bull markets because you spend a few weeks each year out of the market on false signals. Tax efficiency suffers in non-registered accounts because each cross-down is a taxable disposition.",
+    indicatorsUsed: ["SMA 200 (10-month proxy on daily bars)", "Price vs SMA cross"],
+    coreIdea:
+      "Stay long while price is above the 200-day SMA; sit in cash while it is below. Two states, one rule, no opinions.",
+    steps: [
+      {
+        title: "Step 1: Pick the asset",
+        body:
+          "Faber's filter works best on broad-market ETFs (SPY, VTI, XIC, XEQT) and trending asset classes. Avoid running it on a single stock unless you accept high single-name risk; the original paper used asset-class composites, not individual equities.",
+      },
+      {
+        title: "Step 2: Define your moving-average length",
+        body:
+          "Faber's original is 10-month SMA on monthly closes. The daily-bar equivalent is SMA(200), which Finatalk's chart preset adds for you. Both produce similar signals; the 200-day daily version trades slightly more often.",
+      },
+      {
+        title: "Step 3: Decide on your rebalance cadence",
+        body:
+          "Classic Faber: only check at month-end. Finatalk surfaces the cross live, but acting only on the last trading day of each month reduces whipsaws. A daily check produces more signals and more whipsaws.",
+      },
+      {
+        title: "Step 4: Set the rule",
+        body:
+          "If close > SMA(200) → hold the asset. If close ≤ SMA(200) → move 100% of that sleeve to cash, money-market fund, or short-term Treasuries (BIL, CASH.TO). No partial positions, no overrides.",
+      },
+      {
+        title: "Step 5: Wire alerts",
+        body:
+          "Use the strategy's built-in 'regime up / regime down' alerts (price crossing the SMA-200 line) so you don't have to watch the chart. Each alert tells you whether to be in the asset or in cash for the next period.",
+      },
+      {
+        title: "Step 6: Accept whipsaw losses gracefully",
+        body:
+          "About a third of the signals will be false (you exit, then buy back higher). That's the cost of insurance. The strategy's edge comes from avoiding the once-a-decade 50% drawdowns, not from being right every time.",
+      },
+    ],
+    whyItWorks:
+      "Equity drawdowns over 30% almost always start with the index breaking below its long-term moving average. By exiting on every cross-down, you accept many small whipsaw losses (1-3%) in exchange for skipping the rare but devastating bear markets. The math: a portfolio that drops 50% needs +100% to recover; one capped at -25% only needs +33%.",
+    links: [
+      { title: "Mebane Faber — A Quantitative Approach to Tactical Asset Allocation (SSRN paper)", url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461" },
+      { title: "Cambria Investments — Faber's research blog", url: "https://mebfaber.com/" },
+      { title: "Investopedia — 200-Day Moving Average", url: "https://www.investopedia.com/terms/1/200-day-moving-average.asp" },
+    ],
+  },
+
   momentumInvesting: {
     label: "Momentum Investing",
     summary: "Buy assets that have been rising in price and sell those that have been falling, betting that recent trends will continue.",

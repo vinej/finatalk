@@ -48,7 +48,49 @@ function findEmaByPeriod(results: AnalyzeResult[], target: number): number | und
   return lastLine(best);
 }
 
+function findSmaByPeriod(results: AnalyzeResult[], target: number): number | undefined {
+  const list = findAll(results, "sma");
+  if (list.length === 0) return undefined;
+  let best = list[0];
+  let bestDelta = Math.abs(best.spec.period - target);
+  for (const r of list) {
+    const d = Math.abs(r.spec.period - target);
+    if (d < bestDelta) {
+      best = r;
+      bestDelta = d;
+    }
+  }
+  return lastLine(best);
+}
+
 // ────────────── evaluators ──────────────
+
+function evalFaberTrendFilter(results: AnalyzeResult[], price: number, t: Tr): StrategySignal {
+  // Faber's rule: stay invested while price > 10-month SMA, otherwise hold
+  // cash. We use SMA(200) on daily bars as the standard proxy.
+  const sma = findSmaByPeriod(results, 200);
+  const reasons: string[] = [];
+
+  if (sma == null) {
+    reasons.push(t("Add SMA 200 to evaluate the trend filter.", "Ajoutez la SMA 200 pour évaluer le filtre de tendance."));
+    return { action: "wait", reasons };
+  }
+
+  const margin = ((price - sma) / sma) * 100;
+  reasons.push(
+    t(
+      `Price ${margin >= 0 ? "+" : ""}${margin.toFixed(2)}% vs SMA 200`,
+      `Prix ${margin >= 0 ? "+" : ""}${margin.toFixed(2)} % vs SMA 200`,
+    ),
+  );
+
+  if (price > sma) {
+    reasons.push(t("Above the trend filter — stay invested.", "Au-dessus du filtre de tendance — rester investi."));
+    return { action: "buy", reasons };
+  }
+  reasons.push(t("Below the trend filter — rotate to cash.", "Sous le filtre de tendance — passer en liquidités."));
+  return { action: "exitLong", reasons };
+}
 
 function evalTrendPullback(results: AnalyzeResult[], price: number, t: Tr): StrategySignal {
   const ema = findEmaByPeriod(results, 50) ?? lastLine(findOne(results, "ema"));
@@ -411,6 +453,7 @@ export function evaluateStrategy(
   const t: Tr = (en, fr) => (lang === "fr" ? fr : en);
 
   switch (kind) {
+    case "faberTrendFilter": return evalFaberTrendFilter(results, price, t);
     case "trendPullback": return evalTrendPullback(results, price, t);
     case "breakoutMomentum": return evalBreakoutMomentum(results, price, t);
     case "meanReversion": return evalMeanReversion(results, price, t);

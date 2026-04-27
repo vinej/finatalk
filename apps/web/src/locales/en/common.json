@@ -1031,6 +1031,8 @@
       "system2Short": "System 2 — 55-day breakdown short.",
       "regimeUp": "Regime flip to bullish.",
       "regimeDown": "Regime flip to bearish.",
+      "faberRegimeUp": "Faber filter on — price reclaimed the 200-day SMA.",
+      "faberRegimeDown": "Faber filter off — price lost the 200-day SMA.",
       "trendActivation": "Trend activation — ADX > 25.",
       "exitLong": "Exit long on overbought.",
       "exitShort": "Exit short on oversold."

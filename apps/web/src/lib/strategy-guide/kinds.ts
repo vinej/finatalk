@@ -31,6 +31,7 @@ export const STRATEGY_KINDS = [
   "barbellStrategy",
   "assetAllocation",
   "coreSatellite",
+  "faberTrendFilter",
   "momentumInvesting",
   "contrarianInvesting",
   "trendPullback",
@@ -64,6 +65,7 @@ export const STRATEGY_GROUPS: Record<StrategyGroup, readonly StrategyKind[]> = {
     "barbellStrategy",
     "assetAllocation",
     "coreSatellite",
+    "faberTrendFilter",
   ],
   swing: [
     "momentumInvesting",

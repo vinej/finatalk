@@ -2,6 +2,7 @@ import type { IndicatorKind } from "@/lib/indicator-defaults";
 import type { StrategyKind } from "@/lib/strategy-guide";
 
 export const STRATEGY_CHART_INDICATORS: Partial<Record<StrategyKind, IndicatorKind[]>> = {
+  faberTrendFilter: ["sma", "maCross"],
   trendPullback: ["ema", "rsi", "vwap", "keltner", "aroon", "vortex", "tii"],
   breakoutMomentum: ["donchian", "volOsc", "ad", "cmf", "chaikinVol", "atr", "rsi", "macd", "srLevels"],
   meanReversion: ["rsi", "bbands", "bbPctB", "zscore", "keltner", "adx", "hurst", "sma"],

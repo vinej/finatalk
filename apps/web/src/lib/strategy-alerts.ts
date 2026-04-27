@@ -37,6 +37,13 @@ export const STRATEGY_ALERT_TEMPLATES: Record<StrategyKind, AlertTemplate[]> = {
   coreSatellite: [
     { conditionType: "drawdown_from_high", threshold: 10, indicatorParams: { lookback: 252 }, rationaleKey: "satelliteRotation" },
   ],
+  faberTrendFilter: [
+    // SMA(200) ≈ 10-month SMA on daily candles. fast=10 acts as a smoothed
+    // proxy for "price" so the cross fires on a confirmed move rather than
+    // a single noisy print.
+    { conditionType: "ma_cross_up", threshold: 0, indicatorParams: { fast: 10, slow: 200 }, rationaleKey: "faberRegimeUp" },
+    { conditionType: "ma_cross_down", threshold: 0, indicatorParams: { fast: 10, slow: 200 }, rationaleKey: "faberRegimeDown" },
+  ],
   momentumInvesting: [
     { conditionType: "rsi_above", threshold: 70, indicatorParams: { period: 14 }, rationaleKey: "overheatWarning" },
     { conditionType: "breakout_high", threshold: 0, indicatorParams: { lookback: 60 }, rationaleKey: "momentumContinuation" },
