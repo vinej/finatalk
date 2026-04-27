@@ -1,14 +1,18 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 
 export const provider = process.env.AI_PROVIDER ?? "anthropic";
 
 const DEFAULTS: Record<string, { large: string; small: string }> = {
-  anthropic: { large: "claude-sonnet-4-5",         small: "claude-haiku-4-5-20251001" },
-  openai:    { large: "gpt-4o",                    small: "gpt-4o-mini" },
-  ollama:    { large: "llama3.1",                  small: "llama3.1" },
-  groq:      { large: "llama-3.3-70b-versatile",   small: "llama-3.1-8b-instant" },
+  anthropic:  { large: "claude-sonnet-4-5",                small: "claude-haiku-4-5-20251001" },
+  openai:     { large: "gpt-4o",                           small: "gpt-4o-mini" },
+  ollama:     { large: "llama3.1",                         small: "llama3.1" },
+  groq:       { large: "llama-3.3-70b-versatile",          small: "llama-3.1-8b-instant" },
+  openrouter: { large: "anthropic/claude-3.5-sonnet",      small: "meta-llama/llama-3.1-8b-instruct" },
+  gemini:     { large: "gemini-2.5-pro",                   small: "gemini-2.5-flash" },
+  github:     { large: "openai/gpt-4o",                    small: "openai/gpt-4o-mini" },
 };
 
 function defaults(p: string) {
@@ -42,7 +46,10 @@ function createProviderModel(p: string, modelId: string): any {
       apiKey: "ollama",
       fetch: injectThinkFalse,
     });
-    return ollama(modelId);
+    // .chat() forces the Chat Completions endpoint; Ollama's OpenAI-compat
+    // layer doesn't expose the new /responses endpoint that the SDK now
+    // defaults to.
+    return ollama.chat(modelId);
   }
   if (p === "openai") {
     const openai = createOpenAI();
@@ -51,6 +58,41 @@ function createProviderModel(p: string, modelId: string): any {
   if (p === "groq") {
     const groq = createGroq();
     return groq(modelId);
+  }
+  if (p === "gemini") {
+    // @ai-sdk/google reads GOOGLE_GENERATIVE_AI_API_KEY from env automatically.
+    const gemini = createGoogleGenerativeAI();
+    return gemini(modelId);
+  }
+  if (p === "github") {
+    // GitHub Models is OpenAI-compatible at /inference/chat/completions
+    // and authenticates with a fine-grained PAT (scope: models:read).
+    // .chat() pins us to Chat Completions; the SDK's default Responses API
+    // path doesn't exist on this host.
+    const apiKey = process.env.GITHUB_TOKEN ?? process.env.GITHUB_MODELS_TOKEN;
+    const ghm = createOpenAI({
+      baseURL: process.env.GITHUB_MODELS_BASE_URL ?? "https://models.github.ai/inference",
+      ...(apiKey ? { apiKey } : {}),
+    });
+    return ghm.chat(modelId);
+  }
+  if (p === "openrouter") {
+    // OpenRouter is OpenAI-compatible at /api/v1 but only speaks Chat
+    // Completions, not the new Responses API. .chat(modelId) pins us to
+    // /chat/completions; without it the SDK posts to /responses and
+    // OpenRouter rejects with "Invalid Responses API request".
+    // The two custom headers are optional but help the app show up in
+    // OpenRouter's analytics (their attribution best-practice).
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    const openrouter = createOpenAI({
+      baseURL: process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1",
+      ...(apiKey ? { apiKey } : {}),
+      headers: {
+        "HTTP-Referer": process.env.APP_URL ?? "https://finatalk.local",
+        "X-Title": "Finatalk",
+      },
+    });
+    return openrouter.chat(modelId);
   }
   const anthropic = createAnthropic();
   return anthropic(modelId);
