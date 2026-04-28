@@ -1,0 +1,32 @@
+# Build artifacts and metadata that shouldn't enter the image.
+node_modules
+**/node_modules
+**/dist
+**/.turbo
+**/.next
+**/coverage
+.git
+.github
+.vscode
+.idea
+*.log
+.env
+.env.local
+.env.*.local
+**/*.tsbuildinfo
+
+# Web app source isn't needed by the server, but its package.json is read by
+# pnpm during workspace install. Keep the directory; the Dockerfile only
+# COPYs the package.json from it.
+apps/web/src
+apps/web/public
+apps/web/index.html
+apps/web/vite.config.ts
+apps/web/tsconfig.json
+
+# Sidecar service is unrelated to the Express server.
+services/openbb
+
+# Drizzle SQL migrations are run separately from the host (db:migrate);
+# the server doesn't need them at runtime.
+packages/db/drizzle

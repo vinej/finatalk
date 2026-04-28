@@ -3,5 +3,8 @@
   "installCommand": "pnpm install --frozen-lockfile --prod=false",
   "buildCommand": "pnpm --filter @finatalk/web build",
   "outputDirectory": "dist",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://finatalk-server.fly.dev/api/:path*" }
+  ]
 }
