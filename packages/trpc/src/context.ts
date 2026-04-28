@@ -1,3 +1,16 @@
+/**
+ * @fileoverview tRPC request context + AI service injection contract.
+ *
+ * `TRPCServices` is a record of optional callbacks the host process supplies
+ * (the server wires them to Mastra agents in apps/server/src/index.ts). The
+ * trpc package itself never imports Mastra or any AI SDK — that keeps
+ * @finatalk/trpc buildable on Vercel where server-only deps aren't installed.
+ *
+ * `createTRPCContext` resolves the better-auth session from the inbound
+ * cookies and attaches it alongside the DB client and the injected services.
+ *
+ * Tests can pass partial `TRPCServices` to stub specific procedures.
+ */
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { db } from "@finatalk/db";
 import { auth } from "./auth";

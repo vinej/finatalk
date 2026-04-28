@@ -1,3 +1,23 @@
+/**
+ * @fileoverview Mastra agent orchestration.
+ *
+ * Registers the ten Finatalk agents (chart summary/advisor, portfolio advisor,
+ * analysis/portfolio generators, research/scenario/tax advisors, morning
+ * briefing, market advisor) and exports the high-level functions that the
+ * tRPC `ai` router calls via `ctx.services.*`.
+ *
+ * Each exported function:
+ *   - builds a compact JSON snapshot of the user's current context (chart,
+ *     portfolio, watchlist, …),
+ *   - trims chat history to MAX_HISTORY_MESSAGES / MAX_HISTORY_CHARS,
+ *   - delegates to the relevant agent's `.generate(...)`,
+ *   - parses out structured JSON when the agent is expected to return one
+ *     (analysis/portfolio generators) or extracts citations when present
+ *     (research advisor).
+ *
+ * See ARCHITECTURE.md §11 for agent inventory, snapshot strategy, and the
+ * recipe for adding a new agent.
+ */
 import { Mastra } from "@mastra/core/mastra";
 import { z } from "zod";
 import { indicatorTail, runAnalysis, type RunAnalysisInput } from "@finatalk/trpc/routers/market";

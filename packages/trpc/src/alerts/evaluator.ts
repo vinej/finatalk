@@ -1,3 +1,25 @@
+/**
+ * @fileoverview Price/indicator alert evaluator (server-resident loop).
+ *
+ * Runs every TICK_INTERVAL_MS (5 min). Each tick:
+ *   1. Loads enabled alerts whose cooldown (COOLDOWN_MS = 6h) has elapsed.
+ *   2. Groups them by symbol — one chart fetch per symbol per tick, not one
+ *      per alert.
+ *   3. Evaluates each row's condition against the freshly fetched candles.
+ *   4. On a hit: inserts a row into `notification` and stamps `triggeredAt`.
+ *
+ * Re-entrancy: a `running` flag drops a tick if the previous one is still in
+ * flight, so a slow market provider can't pile up overlapping evaluations.
+ *
+ * Because this is `setInterval`-based and stateful, the host must stay
+ * running — Fly's `min_machines_running = 1` guarantees that.
+ *
+ * Adding a condition: extend `AlertConditionType` (../constants/alerts.ts),
+ * then add branches to `evaluateCondition`, `currentThresholdValue`, and
+ * `conditionLabel` below.
+ *
+ * See ARCHITECTURE.md §12 for full details.
+ */
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 import { db, alert, notification } from "@finatalk/db";

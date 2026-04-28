@@ -1,3 +1,28 @@
+/**
+ * @fileoverview Authentication wiring.
+ *
+ * Configures better-auth with:
+ *   - Drizzle adapter wrapped in `withCustomAdapter` to transparently
+ *     encrypt/decrypt sensitive fields (twoFactor.secret/backupCodes,
+ *     account.accessToken/refreshToken/idToken). Encryption is versioned
+ *     ("enc:v1:…") so keys can be rotated.
+ *   - Email + password (12–128 chars, must mix case + digit + symbol),
+ *     email verification (opt-in via EMAIL_VERIFICATION=on), TOTP/email-OTP
+ *     two-factor.
+ *   - Resend for transactional email; lazy-imported and silently no-ops when
+ *     RESEND_API_KEY is unset (logs only, useful in dev).
+ *   - Per-account login lockout backed by the `loginAttempt` table — survives
+ *     restarts and is shared across server instances. 5 failures in 15 min ⇒
+ *     15-minute lockout. Stale rows are swept every 10 minutes.
+ *
+ * Exports:
+ *   - `auth`              — the better-auth instance (mounted at /api/auth/*)
+ *   - `isAccountLocked`   — non-throwing query (fail-open on DB errors)
+ *   - `checkAccountLockout` — throws when locked (used by the sign-in shim)
+ *   - `recordFailedLogin` / `clearFailedLogins`
+ *
+ * See ARCHITECTURE.md §8 for the security model.
+ */
 import { betterAuth } from "better-auth";
 import { twoFactor } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";

@@ -1,3 +1,21 @@
+/**
+ * @fileoverview Market data provider with OpenBB → Yahoo fallback.
+ *
+ * Every chart, FX series, and quote in the app eventually goes through one of
+ * the helpers here. The fallback chain is silent: if OpenBB is enabled and
+ * either throws or returns an empty result, we transparently retry on
+ * yahoo-finance2 so the UI degrades gracefully when the sidecar is down.
+ *
+ * Exports:
+ *   - `Candle`                       — normalised OHLCV row used downstream.
+ *   - `rangeToPeriod1(range)`        — Range → start Date.
+ *   - `fetchChartWithFallback(...)`  — historical bars (+ inferred currency).
+ *   - `fetchFxRatesWithFallback(...)`— time → close map for currency pairs.
+ *   - `fetchQuoteWithFallback(sym)`  — last trade + day-over-day change.
+ *   - `resolveAssetType(sym)`        — "equity" | "etf" | "crypto" | …
+ *
+ * See ARCHITECTURE.md §10 for the pipeline diagram.
+ */
 import { createRequire } from "node:module";
 import { getOpenBBClient, isOpenBBEnabled, type OHLCVBar } from "@finatalk/openbb";
 import type { z } from "zod";

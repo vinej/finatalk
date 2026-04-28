@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Versioned AES-256-GCM at-rest encryption.
+ *
+ * Format: `enc:v<n>:<iv-hex>:<tag-hex>:<ciphertext-hex>` — the version prefix
+ * makes key rotation tractable. Set ENCRYPTION_KEY (=V1) plus optional
+ * ENCRYPTION_KEY_V2, _V3, … and bump CURRENT_KEY_VERSION when rotating: old
+ * rows still decrypt with their original key, new writes use the current one.
+ *
+ * `decrypt` returns the input unchanged when there's no `enc:v…:` prefix, so
+ * pre-encryption legacy rows pass through. Throws on malformed payloads.
+ *
+ * Used by the better-auth adapter wrapper in ./auth.ts.
+ */
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
 const ALGORITHM = "aes-256-gcm";

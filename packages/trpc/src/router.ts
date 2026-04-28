@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Root tRPC router.
+ *
+ * Stitches the 14 sub-routers into `appRouter`. The `AppRouter` type is what
+ * the web client imports (type-only) to get end-to-end type safety on every
+ * procedure call.
+ *
+ * To add a router: create it under ./routers/, import it here, register it
+ * on the createTRPCRouter call below — the frontend picks it up automatically.
+ */
 import { createTRPCRouter } from "./trcp";
 import { userRouter } from "./routers/user";
 import { marketRouter } from "./routers/market";

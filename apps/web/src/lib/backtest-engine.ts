@@ -1,3 +1,26 @@
+/**
+ * @fileoverview Client-side backtest engine.
+ *
+ * Runs entirely in the browser against `RouterOutputs["market"]["analyze"]`,
+ * so the indicator series fed to strategies is exactly the one the chart is
+ * displaying — no double-fetching, no drift between visual and signal.
+ *
+ * Exports:
+ *   - `runBacktest(candles, results, strategyKind, config, lang)`
+ *       Single-symbol simulation. ATR-sized positions, configurable risk %,
+ *       stop = entry ± stopAtrMult × ATR, take-profit = stop × takeProfitR.
+ *       Slippage and fees apply on entry and exit. Conservative intra-bar
+ *       fill: when stop and TP are both touched, the stop wins.
+ *   - `runSweep(...)`         — 2-D parameter grid (e.g. stop × TP).
+ *   - `runPortfolio(...)`     — equal-weight or custom-weight multi-symbol,
+ *                               aggregated into a single equity curve.
+ *
+ * Adding a strategy:
+ *   1. Implement it in `strategy-signals.ts` and register the kind in
+ *      `strategy-guide.ts`.
+ *   2. Add it to `BACKTEST_SUPPORTED_STRATEGIES` here, plus its required
+ *      indicator preset in `BACKTEST_STRATEGY_INDICATORS`.
+ */
 import type { RouterOutputs } from "@finatalk/trpc";
 import type { Lang } from "@/lib/lang";
 import type { IndicatorSpec } from "@/lib/indicator-defaults";
