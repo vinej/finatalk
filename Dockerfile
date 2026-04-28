@@ -27,6 +27,9 @@ COPY packages packages/
 
 ENV NODE_ENV=production
 ENV PORT=8080
+# Cap V8 old-space at 384 MB to leave headroom for tsx + native deps
+# inside the 512 MB Fly machine. Prevents Linux OOM-killing the process.
+ENV NODE_OPTIONS="--max-old-space-size=384"
 EXPOSE 8080
 
 # tsx watches no files in production — it just transpiles on import.
