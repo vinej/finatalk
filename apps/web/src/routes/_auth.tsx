@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/header";
+import { RouteLoadingBar } from "@/components/route-loading-bar";
 import { Sidebar } from "@/components/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ function AuthLayout() {
 
   return (
     <div className="flex h-screen flex-col">
+      <RouteLoadingBar />
       <Header
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((o) => !o)}
