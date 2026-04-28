@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install --frozen-lockfile --prod=false",
   "buildCommand": "pnpm --filter @finatalk/web build",
-  "outputDirectory": "apps/web/dist",
+  "outputDirectory": "dist",
   "framework": "vite"
 }
