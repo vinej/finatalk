@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, RefreshCw, Sparkles, Trash2, X } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AllocationDonut, colorFor, type DonutSegment } from "@/components/portfolio/allocation-donut";
 import { Button } from "@/components/ui/button";
@@ -166,6 +166,12 @@ export function GeneratePortfolioDialog({ open, onClose, onCreated }: Props) {
               {t("portfolio.generatePortfolioHint")}
             </p>
           </div>
+          {generate.isError && !generate.isPending ? (
+            <div className="flex items-start gap-2 rounded border border-[#ef4444]/40 bg-[#ef4444]/10 px-3 py-2 text-xs text-[#ef4444]">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{generate.error.message || t("portfolio.generatePortfolioFailed")}</span>
+            </div>
+          ) : null}
           {generate.isPending ? (
             <div className="flex items-center gap-2 py-6 text-sm text-[var(--color-muted-fg)]">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -179,7 +185,7 @@ export function GeneratePortfolioDialog({ open, onClose, onCreated }: Props) {
               </Button>
               <Button type="submit" size="sm" disabled={prompt.trim().length < 3}>
                 <Sparkles className="mr-1 h-4 w-4" />
-                {t("portfolio.generatePortfolio")}
+                {generate.isError ? t("portfolio.regenerate") : t("portfolio.generatePortfolio")}
               </Button>
             </div>
           )}

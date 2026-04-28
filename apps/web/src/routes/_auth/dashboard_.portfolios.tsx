@@ -92,7 +92,13 @@ function PortfoliosPage() {
             <p className="mb-4 text-sm text-[var(--color-muted-fg)]">
               {t("portfolio.empty")}
             </p>
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/dashboard/templates">
+                  <Copy className="mr-1 h-4 w-4" />
+                  {t("nav.templates")}
+                </Link>
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setGenerateOpen(true)}>
                 <Sparkles className="mr-1 h-4 w-4" />
                 {t("portfolio.generatePortfolio")}

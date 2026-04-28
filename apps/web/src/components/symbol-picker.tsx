@@ -152,7 +152,10 @@ export function SymbolPicker({
         </Label>
         <select
           value={assetTypeFilter}
-          onChange={(e) => onAssetTypeChange(e.target.value as AssetTypeFilter)}
+          onChange={(e) => {
+            onAssetTypeChange(e.target.value as AssetTypeFilter);
+            onChange("");
+          }}
           className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
         >
           <option value="all">{t("analysis.assetAll")}</option>
@@ -170,7 +173,10 @@ export function SymbolPicker({
         </Label>
         <select
           value={exchangeFilter}
-          onChange={(e) => onExchangeChange(e.target.value)}
+          onChange={(e) => {
+            onExchangeChange(e.target.value);
+            onChange("");
+          }}
           className="h-8 rounded-md border border-[var(--color-border)] bg-transparent px-2 text-sm"
         >
           <option value="all">{t("analysis.exchangeAll")}</option>

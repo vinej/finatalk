@@ -288,8 +288,10 @@ export const analyzeSymbol = createTool({
     // Groq omit them ~30% of the time; Groq's server-side validator rejects
     // the tool call if any `required` field is missing. Defaults applied in
     // execute below.
-    range: z.enum(["1mo", "3mo", "6mo", "1y", "2y", "3y", "4y", "5y", "10y", "max"]).optional(),
-    interval: z.enum(["1d", "1wk", "1mo"]).optional(),
+    range: z.enum(["1mo", "3mo", "6mo", "1y", "2y", "3y", "4y", "5y", "10y", "max"]).optional()
+      .describe("Lookback period. MUST be one of the listed enum values exactly. Do NOT use day counts like '90d' or '60d' — use '3mo' or '6mo' instead. Defaults to '6mo' if omitted."),
+    interval: z.enum(["1d", "1wk", "1mo"]).optional()
+      .describe("Bar interval. '1d' = daily (default), '1wk' = weekly, '1mo' = monthly."),
     indicators: z.array(z.discriminatedUnion("kind", [
       z.object({ kind: z.literal("sma"), period: z.number().int().min(2).max(500) }),
       z.object({ kind: z.literal("ema"), period: z.number().int().min(2).max(500) }),
@@ -393,7 +395,12 @@ export const analyzeSymbol = createTool({
         impulsePct: z.number().min(0.5).max(20),
         showMitigated: z.boolean(),
       }),
-    ])).optional(),
+    ])).optional().describe(
+      "Array of indicator specs. Each entry MUST be an object with a 'kind' literal plus required numeric params, e.g. " +
+      "{kind:'sma', period:50}, {kind:'ema', period:200}, {kind:'rsi', period:14}, " +
+      "{kind:'macd', fast:12, slow:26, signal:9}, {kind:'bbands', period:20, stdDev:2}, {kind:'atr', period:14}. " +
+      "Do NOT pass strings like 'trend' or 'momentum' — use the structured objects above. Omit this field to get just OHLC.",
+    ),
   }),
   execute: async ({ symbol, range, interval, indicators }) => {
     const analysis = await runAnalysis({

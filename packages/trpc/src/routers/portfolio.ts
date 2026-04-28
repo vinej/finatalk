@@ -14,6 +14,7 @@ import {
 import { RangeSchema, SymbolSchema } from "../schemas/indicator";
 import { IdInput } from "../schemas/common";
 import { generatePortfolioReport } from "../lib/pdf-report";
+import { runLlm } from "../lib/llm-errors";
 import { fetchCandlesWithCurrency, fetchDividendInfo } from "./market";
 import { resolveAssetType } from "../lib/market-provider";
 import { paletteColor } from "../constants/chart";
@@ -748,10 +749,12 @@ export const portfolioRouter = createTRPCRouter({
           message: "AI analysis generation is not configured on this server.",
         });
       }
-      return fn({
-        symbol: input.symbol,
-        ...(input.language ? { language: input.language } : {}),
-      });
+      return runLlm(() =>
+        fn({
+          symbol: input.symbol,
+          ...(input.language ? { language: input.language } : {}),
+        }),
+      );
     }),
 
   generatePortfolioFromPrompt: protectedProcedure
@@ -767,10 +770,12 @@ export const portfolioRouter = createTRPCRouter({
           message: "AI portfolio generation is not configured on this server.",
         });
       }
-      return fn({
-        prompt: input.prompt,
-        ...(input.language ? { language: input.language } : {}),
-      });
+      return runLlm(() =>
+        fn({
+          prompt: input.prompt,
+          ...(input.language ? { language: input.language } : {}),
+        }),
+      );
     }),
 
   generateReport: protectedProcedure

@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trcp";
 import { SymbolSchema } from "../schemas/indicator";
+import { runLlm } from "../lib/llm-errors";
 
 const ChatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -32,14 +33,16 @@ export const researchRouter = createTRPCRouter({
       }
       // Cast through Parameters<typeof fn>[0] sidesteps Vercel's all-optional
       // zod inference for messages and context types.
-      return fn({
-        messages: input.messages,
-        context: {
-          symbol: input.context.symbol,
-          comparisonSymbols: input.context.comparisonSymbols,
-        },
-        ...(input.language ? { language: input.language } : {}),
-      } as Parameters<typeof fn>[0]);
+      return runLlm(() =>
+        fn({
+          messages: input.messages,
+          context: {
+            symbol: input.context.symbol,
+            comparisonSymbols: input.context.comparisonSymbols,
+          },
+          ...(input.language ? { language: input.language } : {}),
+        } as Parameters<typeof fn>[0]),
+      );
     }),
 
   getConfidence: protectedProcedure
@@ -57,16 +60,18 @@ export const researchRouter = createTRPCRouter({
           message: "AI research is not configured on this server.",
         });
       }
-      const result = await fn({
-        messages: [
-          {
-            role: "user",
-            content: `Give a brief overall investment confidence assessment for ${input.symbol}. Consider recent SEC filings, financial health, and market position. Keep your answer to 2-3 sentences.`,
-          },
-        ],
-        context: { symbol: input.symbol },
-        ...(input.language ? { language: input.language } : {}),
-      });
+      const result = await runLlm(() =>
+        fn({
+          messages: [
+            {
+              role: "user",
+              content: `Give a brief overall investment confidence assessment for ${input.symbol}. Consider recent SEC filings, financial health, and market position. Keep your answer to 2-3 sentences.`,
+            },
+          ],
+          context: { symbol: input.symbol },
+          ...(input.language ? { language: input.language } : {}),
+        }),
+      );
       return { symbol: input.symbol, confidence: result.confidence };
     }),
 });

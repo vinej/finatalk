@@ -8,6 +8,7 @@ import {
   SymbolSchema,
 } from "../schemas/indicator";
 import { AccountTypeSchema, CurrencySchema, HoldingInputSchema } from "../schemas/portfolio";
+import { runLlm } from "../lib/llm-errors";
 
 const ChatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -38,15 +39,17 @@ export const aiRouter = createTRPCRouter({
           message: "AI summary is not configured on this server.",
         });
       }
-      return fn({
-        symbol: input.symbol,
-        range: input.range,
-        interval: input.interval,
-        // Cast bypasses Vercel-only zod inference quirk (all-optional types).
-        indicators: input.indicators as IndicatorSpec[],
-        convertTo: input.convertTo ?? null,
-        ...(input.language ? { language: input.language } : {}),
-      });
+      return runLlm(() =>
+        fn({
+          symbol: input.symbol,
+          range: input.range,
+          interval: input.interval,
+          // Cast bypasses Vercel-only zod inference quirk (all-optional types).
+          indicators: input.indicators as IndicatorSpec[],
+          convertTo: input.convertTo ?? null,
+          ...(input.language ? { language: input.language } : {}),
+        }),
+      );
     }),
 
   chat: protectedProcedure
@@ -75,17 +78,19 @@ export const aiRouter = createTRPCRouter({
       // Cast through Parameters<typeof fn>[0] sidesteps Vercel's all-optional
       // zod inference for messages, indicators, and nested contexts. Same
       // pattern applied to every chat procedure below.
-      return fn({
-        messages: input.messages,
-        context: {
-          symbol: input.context.symbol,
-          range: input.context.range,
-          interval: input.context.interval,
-          convertTo: input.context.convertTo ?? null,
-          activeIndicators: input.context.activeIndicators,
-        },
-        ...(input.language ? { language: input.language } : {}),
-      } as Parameters<typeof fn>[0]);
+      return runLlm(() =>
+        fn({
+          messages: input.messages,
+          context: {
+            symbol: input.context.symbol,
+            range: input.context.range,
+            interval: input.context.interval,
+            convertTo: input.context.convertTo ?? null,
+            activeIndicators: input.context.activeIndicators,
+          },
+          ...(input.language ? { language: input.language } : {}),
+        } as Parameters<typeof fn>[0]),
+      );
     }),
 
   chatPortfolio: protectedProcedure
@@ -106,15 +111,17 @@ export const aiRouter = createTRPCRouter({
           message: "AI portfolio chat is not configured on this server.",
         });
       }
-      return fn({
-        messages: input.messages,
-        context: {
-          portfolioTitle: input.context.portfolioTitle,
-          currency: input.context.currency,
-          holdings: input.context.holdings,
-        },
-        ...(input.language ? { language: input.language } : {}),
-      } as Parameters<typeof fn>[0]);
+      return runLlm(() =>
+        fn({
+          messages: input.messages,
+          context: {
+            portfolioTitle: input.context.portfolioTitle,
+            currency: input.context.currency,
+            holdings: input.context.holdings,
+          },
+          ...(input.language ? { language: input.language } : {}),
+        } as Parameters<typeof fn>[0]),
+      );
     }),
 
   chatScenario: protectedProcedure
@@ -135,15 +142,17 @@ export const aiRouter = createTRPCRouter({
           message: "AI scenario planner is not configured on this server.",
         });
       }
-      return fn({
-        messages: input.messages,
-        context: {
-          portfolioTitle: input.context.portfolioTitle,
-          currency: input.context.currency,
-          holdings: input.context.holdings,
-        },
-        ...(input.language ? { language: input.language } : {}),
-      } as Parameters<typeof fn>[0]);
+      return runLlm(() =>
+        fn({
+          messages: input.messages,
+          context: {
+            portfolioTitle: input.context.portfolioTitle,
+            currency: input.context.currency,
+            holdings: input.context.holdings,
+          },
+          ...(input.language ? { language: input.language } : {}),
+        } as Parameters<typeof fn>[0]),
+      );
     }),
 
   chatTax: protectedProcedure
@@ -162,11 +171,13 @@ export const aiRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const fn = ctx.services.chatWithTaxAdvisor;
       if (!fn) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "AI tax advisor is not configured on this server." });
-      return fn({
-        messages: input.messages,
-        context: { portfolios: input.context.portfolios },
-        ...(input.language ? { language: input.language } : {}),
-      } as Parameters<typeof fn>[0]);
+      return runLlm(() =>
+        fn({
+          messages: input.messages,
+          context: { portfolios: input.context.portfolios },
+          ...(input.language ? { language: input.language } : {}),
+        } as Parameters<typeof fn>[0]),
+      );
     }),
 
   chatMarket: protectedProcedure
@@ -182,10 +193,12 @@ export const aiRouter = createTRPCRouter({
           message: "AI market advisor is not configured on this server.",
         });
       }
-      return fn({
-        messages: input.messages,
-        ...(input.language ? { language: input.language } : {}),
-      } as Parameters<typeof fn>[0]);
+      return runLlm(() =>
+        fn({
+          messages: input.messages,
+          ...(input.language ? { language: input.language } : {}),
+        } as Parameters<typeof fn>[0]),
+      );
     }),
 
   generateBriefing: protectedProcedure
@@ -204,10 +217,12 @@ export const aiRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const fn = ctx.services.generateBriefing;
       if (!fn) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "AI briefing is not configured on this server." });
-      return fn({
-        portfolios: input.portfolios,
-        watchlistSymbols: input.watchlistSymbols,
-        ...(input.language ? { language: input.language } : {}),
-      } as Parameters<typeof fn>[0]);
+      return runLlm(() =>
+        fn({
+          portfolios: input.portfolios,
+          watchlistSymbols: input.watchlistSymbols,
+          ...(input.language ? { language: input.language } : {}),
+        } as Parameters<typeof fn>[0]),
+      );
     }),
 });

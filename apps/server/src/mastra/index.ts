@@ -221,13 +221,24 @@ export async function generateAnalysisForSymbol(
 }
 
 function extractJson(text: string): unknown {
-  const trimmed = text.trim();
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
+  // Strip ```json ... ``` or ``` ... ``` fences if the model wrapped its
+  // JSON in markdown despite being told not to.
+  const stripped = text
+    .replace(/```(?:json)?\s*/gi, "")
+    .replace(/```/g, "")
+    .trim();
+  const start = stripped.indexOf("{");
+  const end = stripped.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) {
-    throw new Error("Agent did not return JSON.");
+    const preview = text.length > 500 ? `${text.slice(0, 500)}…` : text;
+    throw new Error(`Agent did not return JSON. Raw response: ${preview}`);
   }
-  return JSON.parse(trimmed.slice(start, end + 1));
+  try {
+    return JSON.parse(stripped.slice(start, end + 1));
+  } catch (err) {
+    const preview = text.length > 500 ? `${text.slice(0, 500)}…` : text;
+    throw new Error(`Agent returned invalid JSON: ${(err as Error).message}. Raw response: ${preview}`);
+  }
 }
 
 const GeneratedPortfolioSchema = z.object({
