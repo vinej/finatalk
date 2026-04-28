@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Authentication schema (better-auth contract).
+ *
+ * These five tables are required by better-auth: `user`, `session`, `account`
+ * (one per OAuth/email-password identity), `verification` (one-time tokens),
+ * `twoFactor` (TOTP secret + backup codes). The shapes track the better-auth
+ * Drizzle adapter — don't add or rename columns here without checking the
+ * adapter contract.
+ *
+ * Sensitive fields (twoFactor.secret/backupCodes, account.access/refresh/idToken)
+ * are encrypted at rest by the adapter wrapper in
+ * packages/trpc/src/auth.ts → see ARCHITECTURE.md §8.
+ *
+ * Every table is namespaced `finatalk_*` via the `createTable` factory so
+ * multiple apps can share a Postgres database safely.
+ */
 import { pgTableCreator, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 

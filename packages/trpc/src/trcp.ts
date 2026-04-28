@@ -1,3 +1,19 @@
+/**
+ * @fileoverview tRPC root setup.
+ *
+ * Creates the tRPC instance with superjson (so Date/BigInt/Map round-trip)
+ * and exports the procedure builders used everywhere:
+ *   - `publicProcedure` — no auth required (rare; most routes need a session).
+ *   - `protectedProcedure` — enforces an authenticated session and, when
+ *     EMAIL_VERIFICATION=on, also that the user's email is verified.
+ *
+ * The error formatter exposes Zod issues and stack traces only outside of
+ * production so the browser console gets useful detail in dev without leaking
+ * internals in prod.
+ *
+ * Filename note: kept as `trcp.ts` (typo) because changing it would break
+ * a lot of imports across the workspace; not worth the churn.
+ */
 import { initTRPC, TRPCError } from "@trpc/server";
 import { ZodError } from "zod";
 import type { TRPCContext } from "./context";

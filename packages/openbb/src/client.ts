@@ -1,3 +1,25 @@
+/**
+ * @fileoverview Typed REST client for the OpenBB Platform sidecar.
+ *
+ * `OpenBBClient` issues HTTP requests against `${OPENBB_BASE_URL}/api/v1/...`
+ * and maps each provider's snake_case payload to the camelCase TypeScript
+ * shapes declared in ./types. The sidecar itself (services/openbb/) wraps
+ * OpenBB Core and is configured with provider credentials (FMP, FRED, Benzinga,
+ * Yahoo, …) at startup.
+ *
+ * Conventions:
+ *   - Every endpoint goes through `request<T>` which:
+ *       • appends query params (omitting `undefined`s),
+ *       • aborts after `timeoutMs` (default 30 s),
+ *       • throws OpenBBError on non-2xx with status + body excerpt,
+ *       • unwraps `{ results: [...] }` when present.
+ *   - Each method picks a sensible default `provider`. Override via the
+ *     `provider` option when you specifically need another upstream.
+ *   - Numeric coercion is defensive (Number(... ?? 0)) because providers
+ *     occasionally return strings or omit fields entirely.
+ *   - Yields/rates that come back as fractions (0.04) are normalised to
+ *     percentages (4) where the UI expects them.
+ */
 import { OpenBBError } from "./errors";
 import type {
   BalanceSheet,

@@ -1,3 +1,17 @@
+/**
+ * @fileoverview OpenBB client package entry.
+ *
+ * Re-exports `OpenBBClient`, `OpenBBError`, and every result/options type so
+ * consumers (packages/trpc/src/lib/market-provider.ts, the alert evaluator,
+ * Mastra tools) don't reach into ./client or ./types directly.
+ *
+ * `getOpenBBClient()` is a lazy singleton — instantiated on first use so
+ * apps that never enable OpenBB don't pay any cost.
+ *
+ * `isOpenBBEnabled()` is the gate the rest of the codebase uses before
+ * touching the sidecar; returns false when OPENBB_BASE_URL is unset or
+ * OPENBB_ENABLED=false.
+ */
 import { OpenBBClient } from "./client";
 
 export { OpenBBClient } from "./client";

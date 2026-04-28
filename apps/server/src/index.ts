@@ -1,7 +1,30 @@
+/**
+ * @fileoverview Server entry point.
+ *
+ * Boots the Express host that serves better-auth at `/api/auth/*` and tRPC at
+ * `/api/trpc/*`, injects Mastra-backed AI services into the tRPC context, runs
+ * the in-process alert evaluator, and exposes liveness/readiness probes.
+ *
+ * Boot order (top-to-bottom in this file):
+ *   1. dotenv (must run before any module that reads env at import time)
+ *   2. REQUIRED_ENV validation — throws on missing keys
+ *   3. helmet + HTTPS redirect + CORS
+ *   4. Rate limiters (auth / api / otp) and per-account login lockout shim
+ *   5. better-auth handler
+ *   6. tRPC handler with TRPCServices injection
+ *   7. /health (public) and /health/ready (internal-IP gated)
+ *   8. startAlertEvaluator
+ *   9. SIGTERM/SIGINT graceful shutdown
+ *
+ * See ARCHITECTURE.md §6 for the full request lifecycle and §8 for the auth
+ * model.
+ */
 import { config } from "dotenv";
 import { resolve } from "path";
 import { fileURLToPath } from "url";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
+// dotenv must load before any subsequent import that reads process.env at
+// module-evaluation time (e.g. ./mastra → ./mastra/model).
 config({ path: resolve(__dirname, "../../../.env") });
 
 import { createRequire } from "node:module";

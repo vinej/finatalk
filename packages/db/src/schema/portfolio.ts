@@ -1,3 +1,24 @@
+/**
+ * @fileoverview Portfolio domain schema.
+ *
+ * Hierarchy:
+ *   portfolio  (one per user-created portfolio)
+ *     └── holding  (one row per symbol held)
+ *           └── transaction  (buy/sell with qty, price, fee)
+ *
+ * Auxiliary:
+ *   - eventCache    — cached earnings/dividend/split events per symbol+date,
+ *                     populated by the calendar UI to avoid re-hitting providers.
+ *   - template      — public/private portfolio templates that other users can
+ *                     clone (cloneCount tracks usage).
+ *   - templateTag   — many-to-one tags on templates for filtering.
+ *
+ * `accountType` on portfolio (TFSA/RRSP/non-registered/…) feeds the tax advisor.
+ * `strategyKind` keys into apps/web/src/lib/strategy-guide.ts when set.
+ *
+ * Numeric columns use `numeric(24, 8)` so we never lose precision on small
+ * crypto fractions or large dollar values.
+ */
 import { boolean, date, index, jsonb, numeric, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { analysis } from "./analysis";
 import { createTable, user } from "./auth";

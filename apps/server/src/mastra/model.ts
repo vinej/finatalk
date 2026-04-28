@@ -1,3 +1,25 @@
+/**
+ * @fileoverview Pluggable AI model selection.
+ *
+ * Exposes `getLargeModel()` and `getSmallModel()` which lazily resolve the
+ * configured provider (`AI_PROVIDER` env: anthropic | openai | groq | gemini |
+ * openrouter | github | ollama). Resolution is lazy because dotenv is loaded
+ * inside index.ts and ESM import hoisting would otherwise read env vars before
+ * .env is parsed.
+ *
+ * Override the model IDs with `AI_MODEL_LARGE` / `AI_MODEL_SMALL`; defaults
+ * are in DEFAULTS below.
+ *
+ * Provider quirks (each baked into createProviderModel):
+ *   - Ollama: forces .chat() endpoint and injects `think: false` so reasoning
+ *     models return only their final answer.
+ *   - GitHub Models: OpenAI-compatible at /inference, fine-grained PAT
+ *     (scope: models:read), .chat() required.
+ *   - OpenRouter: OpenAI-compatible at /api/v1; only Chat Completions (no
+ *     /responses). Adds analytics headers.
+ *
+ * See ARCHITECTURE.md §11 for provider switching.
+ */
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";

@@ -1,3 +1,21 @@
+/**
+ * @fileoverview Web app entry point.
+ *
+ * Composes the React tree:
+ *   I18nextProvider → trpc.Provider → QueryClientProvider → RouterProvider
+ *
+ * Cross-cutting behaviour wired here:
+ *   - Session-expiry handling: the QueryClient's queryCache/mutationCache
+ *     watch every error; on the first UNAUTHORIZED tRPC error the user is
+ *     signed out and redirected to /login. The `redirectingToLogin` flag
+ *     prevents re-entry / loops if multiple queries fail at once.
+ *   - QueryClient defaults: 30 s staleTime, single retry per query/mutation,
+ *     but never retry on UNAUTHORIZED (would just trigger the redirect again).
+ *   - Router preload: "intent" — start fetching when the user hovers a link.
+ *
+ * The `Register` interface augmentation gives TanStack Router type-safety on
+ * `<Link to="...">` paths across the app.
+ */
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
