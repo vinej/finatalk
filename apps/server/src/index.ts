@@ -91,10 +91,11 @@ app.use((_req, res, next) => {
   next();
 });
 
-const allowedOrigins = [
-  process.env.APP_URL,
-  ...(process.env.APP_URL ? [process.env.APP_URL.replace("://", "://www.")] : []),
-].filter((o): o is string => typeof o === "string" && o.startsWith("http"));
+const allowedOrigins = (process.env.APP_URL ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter((o) => o.startsWith("http"))
+  .flatMap((o) => [o, o.replace("://", "://www.")]);
 
 app.use(cors({
   origin: allowedOrigins,

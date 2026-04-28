@@ -71,12 +71,20 @@ export function Sidebar({
       : []),
   ] as const;
 
+  // Rates and News require the OpenBB Platform Python sidecar. Only show
+  // them when VITE_OPENBB_ENABLED=true is set at build time. In the cloud
+  // deploy the sidecar isn't running, so these tabs would 412 on click.
+  const openbbEnabled = import.meta.env.VITE_OPENBB_ENABLED === "true";
   const marketItems = [
     { key: "indices", to: "/dashboard/indices", label: t("nav.indices"), icon: Landmark },
     { key: "commodities", to: "/dashboard/commodities", label: t("nav.commodities"), icon: Wheat },
     { key: "crypto", to: "/dashboard/crypto", label: t("nav.crypto"), icon: Bitcoin },
-    { key: "rates", to: "/dashboard/rates", label: t("nav.rates"), icon: Percent },
-    { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
+    ...(openbbEnabled
+      ? ([
+          { key: "rates", to: "/dashboard/rates", label: t("nav.rates"), icon: Percent },
+          { key: "news", to: "/dashboard/news", label: t("nav.news"), icon: Newspaper },
+        ] as const)
+      : []),
   ] as const;
 
   const symbolsItems = [

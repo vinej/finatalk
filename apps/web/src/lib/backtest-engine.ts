@@ -10,6 +10,7 @@ type Candle = RouterOutputs["market"]["analyze"]["candles"][number];
 export type { AnalyzeResult as BacktestAnalyzeResult, Candle as BacktestCandle };
 
 export const BACKTEST_SUPPORTED_STRATEGIES = [
+  "faberTrendFilter",
   "trendPullback",
   "breakoutMomentum",
   "meanReversion",
@@ -27,6 +28,10 @@ export const BACKTEST_SUPPORTED_STRATEGIES = [
 export type BacktestStrategy = (typeof BACKTEST_SUPPORTED_STRATEGIES)[number];
 
 export const BACKTEST_STRATEGY_INDICATORS: Record<BacktestStrategy, IndicatorSpec[]> = {
+  faberTrendFilter: [
+    { kind: "sma", period: 200 },
+    { kind: "atr", period: 14 },
+  ],
   trendPullback: [
     { kind: "ema", period: 50 },
     { kind: "rsi", period: 14 },

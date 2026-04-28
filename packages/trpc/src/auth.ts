@@ -267,8 +267,11 @@ export const auth = betterAuth({
   ],
   socialProviders: {},
   trustedOrigins: [
-    process.env.APP_URL,
+    ...(process.env.APP_URL ?? "")
+      .split(",")
+      .map((o) => o.trim())
+      .filter((o) => o.startsWith("http"))
+      .flatMap((o) => [o, o.replace("://", "://www.")]),
     process.env.BETTER_AUTH_URL,
-    ...(process.env.APP_URL ? [process.env.APP_URL.replace("://", "://www.")] : []),
   ].filter((v): v is string => Boolean(v)),
 });
