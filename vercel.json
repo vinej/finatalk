@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install --frozen-lockfile --prod=false",
   "buildCommand": "pnpm --filter @finatalk/web build",
-  "outputDirectory": "dist",
+  "outputDirectory": "apps/web/dist",
   "framework": "vite",
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://finatalk-server.fly.dev/api/:path*" }
