@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { AuthLeftPanel } from "@/components/auth-left-panel";
-import { signIn } from "@/lib/auth-client";
+import { clearSessionCache, signIn } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -31,6 +31,7 @@ function LoginPage() {
       toast.error(error.message ?? "Sign in failed");
       return;
     }
+    clearSessionCache();
     if ((data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
       void navigate({ to: "/two-factor" });
       return;

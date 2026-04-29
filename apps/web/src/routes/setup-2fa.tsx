@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { authClient } from "@/lib/auth-client";
+import { authClient, getCachedSession } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/setup-2fa")({
   beforeLoad: async () => {
-    const session = await authClient.getSession();
+    const session = await getCachedSession();
     if (!session.data?.user) throw redirect({ to: "/login" });
   },
   component: SetupTwoFactorPage,

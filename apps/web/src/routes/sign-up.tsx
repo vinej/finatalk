@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { AuthLeftPanel } from "@/components/auth-left-panel";
-import { authClient, signUp } from "@/lib/auth-client";
+import { clearSessionCache, getCachedSession, signUp } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/sign-up")({
   component: SignUpPage,
@@ -35,7 +35,8 @@ function SignUpPage() {
     // When EMAIL_VERIFICATION is off, better-auth auto-creates a session on
     // signup → drop the user straight on the dashboard. When it's on, no
     // session is established and they need to verify first.
-    const session = await authClient.getSession();
+    clearSessionCache();
+    const session = await getCachedSession();
     if (session.data?.user) {
       void navigate({ to: "/dashboard" });
     } else {

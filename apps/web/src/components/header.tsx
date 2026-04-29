@@ -6,7 +6,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { signOut } from "@/lib/auth-client";
+import { clearSessionCache, signOut } from "@/lib/auth-client";
 
 export function Header({
   sidebarOpen,
@@ -21,6 +21,7 @@ export function Header({
   async function handleSignOut() {
     if (!window.confirm(t("auth.signOutConfirm"))) return;
     await signOut();
+    clearSessionCache();
     void navigate({ to: "/login" });
   }
 

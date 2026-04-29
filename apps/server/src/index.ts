@@ -29,7 +29,7 @@ config({ path: resolve(__dirname, "../../../.env") });
 
 import { createRequire } from "node:module";
 import express from "express";
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
 import cors from "cors";
 
 // helmet@8 and express-rate-limit@7 publish their callable via CJS
@@ -126,12 +126,26 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 }));
 
+// Tight bucket for credential mutations (sign-in, sign-up, password reset).
+// 100 / 15 min is enough for legit users but stops brute-force.
+// Skips /get-session — it has its own (generous) limiter mounted earlier.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: isProduction ? 100 : 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
+  skip: (req: Request) => req.path === "/get-session",
+});
+
+// Generous bucket for read-only session checks. TanStack Router's
+// `defaultPreload: "intent"` calls `authClient.getSession()` on every hover,
+// so a normal browsing session fires this dozens of times per minute.
+const sessionLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 240,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 const apiLimiter = rateLimit({
@@ -150,6 +164,11 @@ const otpLimiter = rateLimit({
 });
 
 // ── Better Auth ───────────────────────────────────────────────────────────
+// Read-only session check gets its own (generous) limiter and is mounted
+// BEFORE the strict authLimiter — express runs middleware in registration
+// order, so this prefix wins for /api/auth/get-session.
+app.use("/api/auth/get-session", sessionLimiter);
+
 app.use("/api/auth/two-factor/send-otp", otpLimiter);
 app.use("/api/auth/two-factor/verify-otp", otpLimiter);
 app.use("/api/auth/two-factor/verify-totp", otpLimiter);

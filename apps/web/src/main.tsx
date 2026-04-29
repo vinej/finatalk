@@ -33,7 +33,7 @@ import "./styles/globals.css";
 import "./lib/i18n";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./lib/i18n";
-import { authClient } from "./lib/auth-client";
+import { authClient, clearSessionCache } from "./lib/auth-client";
 
 function isUnauthorized(err: unknown): boolean {
   return (
@@ -48,6 +48,7 @@ function handleSessionExpired() {
   if (typeof window === "undefined") return;
   if (window.location.pathname === "/login") return;
   redirectingToLogin = true;
+  clearSessionCache();
   void authClient.signOut().catch(() => {});
   window.location.href = "/login";
 }

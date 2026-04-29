@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/header";
 import { RouteLoadingBar } from "@/components/route-loading-bar";
 import { Sidebar } from "@/components/sidebar";
-import { authClient } from "@/lib/auth-client";
+import { getCachedSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_auth")({
   beforeLoad: async () => {
-    const session = await authClient.getSession();
+    const session = await getCachedSession();
     if (!session.data?.user) throw redirect({ to: "/login" });
     return { user: session.data.user };
   },
