@@ -204,7 +204,11 @@ app.use("/api/auth", authLimiter, toNodeHandler(auth));
 // ── tRPC ──────────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "1mb" }));
 
-const MAX_TRPC_BATCH = 20;
+// tRPC's batch link groups all queries fired in the same tick into one HTTP
+// request. Pages like the dashboard home (one query per portfolio via
+// `useQueries`) easily reach 20+, so this floor is set well above realistic
+// usage but still bounds an abusive client to one big request.
+const MAX_TRPC_BATCH = 50;
 app.use("/api/trpc", (req, res, next) => {
   const procedures = (req.path.split("/").pop() ?? "").split(",");
   if (procedures.length > MAX_TRPC_BATCH) {
