@@ -203,6 +203,18 @@ const EN: BuySellGuide = {
         "- **Overtrading the news** — every hour of CNBC feels like a signal. It isn't. Stick to your timeframe.\n" +
         "- **Journal every trade** — setup, thesis, risk, outcome, lesson. The journal is where edge actually compounds.",
     },
+    {
+      id: "action-glossary",
+      title: "11. Action vocabulary (Analysis › Proposed action)",
+      body:
+        "The Analysis page shows a *Proposed action* in the top-right of *Latest values*. Each label maps to one of these meanings:\n\n" +
+        "- **Buy** — open or add to a **long** position. Indicators agree the bullish edge is intact. You profit if price goes up.\n" +
+        "- **Sell** — open or add to a **short** position (a bet that price will fall). Requires a margin account and is not allowed in most retirement accounts. If you can only go long, read this as a warning *not to buy here* rather than an entry.\n" +
+        "- **Exit long** — close an existing **long** position. The bullish edge has weakened — take profit or cut the loss. If you don't currently hold the asset, no action is needed.\n" +
+        "- **Exit short** — close an existing **short** position by buying back the borrowed shares (\"cover\"). The bearish edge has weakened. If you weren't short, no action.\n" +
+        "- **Wait** — no clear edge in either direction. Stand aside. Often the correct answer when signals conflict, the regime is transitioning, or volume is too thin to trust.\n\n" +
+        "These are *signal labels*, not orders — confirm the regime, the broader context, and your own position size before acting.",
+    },
   ],
   links: [
     { title: "Investopedia — How to Use Technical Analysis", url: "https://www.investopedia.com/articles/trading/04/110304.asp" },
@@ -409,6 +421,18 @@ const FR: BuySellGuide = {
         "- **Ancrage au prix d'entrée** — une fois servi, « je vendrai quand ça reviendra au break-even » est la pire raison de tenir. Votre prix de revient n'est pas un signal.\n" +
         "- **Sur-trading sur les nouvelles** — chaque heure de CNBC ressemble à un signal. Ça n'en est pas un. Tenez votre horizon.\n" +
         "- **Journal de trades** — setup, thèse, risque, résultat, leçon. C'est là que l'edge se construit vraiment.",
+    },
+    {
+      id: "action-glossary",
+      title: "11. Vocabulaire des actions (Analyse › Action proposée)",
+      body:
+        "La page Analyse affiche une *Action proposée* en haut à droite des *Dernières valeurs*. Chaque libellé correspond à l'une de ces significations :\n\n" +
+        "- **Acheter** — ouvrir ou renforcer une position **longue**. Les indicateurs s'accordent sur un biais haussier intact. Vous gagnez si le prix monte.\n" +
+        "- **Vendre** — ouvrir ou renforcer une position **courte** (pari sur une baisse du prix). Nécessite un compte sur marge et n'est généralement pas autorisé dans les comptes enregistrés (REER, CELI, 401(k), IRA). Si vous ne pouvez prendre que des positions longues, lisez ce signal comme un avertissement *à ne pas acheter ici* plutôt qu'une entrée.\n" +
+        "- **Sortir long** — clôturer une position **longue** existante. Le biais haussier s'est affaibli — encaissez le profit ou coupez la perte. Si vous ne détenez pas l'actif, aucune action requise.\n" +
+        "- **Sortir court** — clôturer une position **courte** existante en rachetant les actions empruntées (« couvrir »). Le biais baissier s'est affaibli. Si vous n'étiez pas vendeur à découvert, aucune action.\n" +
+        "- **Attendre** — aucun edge clair dans aucune direction. Restez en retrait. Souvent la bonne réponse quand les signaux se contredisent, que le régime de marché est en transition, ou que le volume est trop faible pour être fiable.\n\n" +
+        "Ce sont des *libellés de signaux*, pas des ordres — confirmez le régime, le contexte global, et la taille de votre position avant d'agir.",
     },
   ],
   links: [
