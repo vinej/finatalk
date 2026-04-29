@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
 # Single-stage image — small enough not to need multi-stage. tsx runs the TS
 # source directly, so there's no build step inside the container.
-FROM node:20-alpine
+# yahoo-finance2 v3 requires Node >= 22.
+FROM node:22-alpine
 
-# pnpm via Corepack (bundled with Node 20)
+# pnpm via Corepack (bundled with Node 22)
 RUN corepack enable
 WORKDIR /app
 
