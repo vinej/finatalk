@@ -195,6 +195,12 @@ export async function checkAccountLockout(email: string): Promise<void> {
 
 export async function recordFailedLogin(email: string): Promise<void> {
   const now = new Date();
+  // Pre-compute the lock-until ISO string so it binds as text + ::timestamptz
+  // cast. Embedding `new Date()` directly inside drizzle's sql tag goes
+  // through `String(date)` on some driver/version combos, producing the
+  // JavaScript `Date.toString()` form that Postgres rejects in non-default
+  // datestyle settings.
+  const lockUntilIso = new Date(Date.now() + LOGIN_LOCKOUT_MS).toISOString();
   try {
     // Upsert: increment count, re-arm lockout when threshold reached.
     await db
@@ -204,12 +210,14 @@ export async function recordFailedLogin(email: string): Promise<void> {
         target: loginAttempt.email,
         set: {
           count: sql`${loginAttempt.count} + 1`,
-          lockedUntil: sql`CASE WHEN ${loginAttempt.count} + 1 >= ${LOGIN_MAX_ATTEMPTS} THEN ${new Date(Date.now() + LOGIN_LOCKOUT_MS)} ELSE ${loginAttempt.lockedUntil} END`,
+          lockedUntil: sql`CASE WHEN ${loginAttempt.count} + 1 >= ${LOGIN_MAX_ATTEMPTS} THEN ${lockUntilIso}::timestamptz ELSE ${loginAttempt.lockedUntil} END`,
           updatedAt: now,
         },
       });
   } catch (err) {
-    authLog.error(`recordFailedLogin failed: ${String(err)}`);
+    const e = err as Error & { cause?: unknown };
+    const cause = e.cause ? ` | cause: ${String(e.cause)}` : "";
+    authLog.error(`recordFailedLogin failed: ${e.message}${cause}`);
   }
 }
 

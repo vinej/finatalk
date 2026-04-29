@@ -254,11 +254,10 @@ app.use(
         "PAYLOAD_TOO_LARGE",
       ]);
       if (expected.has(error.code)) {
-        // Dedupe: client-side errors that repeat verbatim (e.g. every page hit
-        // calls market.getInstitutionalHolders → "OpenBB is not enabled")
-        // would otherwise flood the log. Log once per (path,code,message)
-        // tuple per hour.
-        const key = `${path}|${error.code}|${error.message}`;
+        // Dedupe by (code,message) only — not path — so a single message like
+        // "OpenBB is not enabled" logs once per hour even though it's thrown
+        // from a dozen different procedures.
+        const key = `${error.code}|${error.message}`;
         if (!loggedClientErrors.has(key)) {
           loggedClientErrors.add(key);
           logger.info({ path, code: error.code, message: error.message }, "tRPC client error");
