@@ -234,7 +234,19 @@ app.use(
         chatWithMarketAdvisor: chatWithMarketAdvisor as NonNullable<TRPCServices["chatWithMarketAdvisor"]>,
       }),
     onError({ path, error }) {
-      const expected = new Set(["UNAUTHORIZED", "FORBIDDEN", "BAD_REQUEST", "NOT_FOUND", "TOO_MANY_REQUESTS", "CONFLICT"]);
+      // PRECONDITION_FAILED = feature disabled by config (e.g. OpenBB sidecar
+      // not deployed), TOO_MANY_REQUESTS = rate-limited LLM, etc. None of
+      // these are bugs, so log them at info instead of error.
+      const expected = new Set([
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "BAD_REQUEST",
+        "NOT_FOUND",
+        "TOO_MANY_REQUESTS",
+        "CONFLICT",
+        "PRECONDITION_FAILED",
+        "PAYLOAD_TOO_LARGE",
+      ]);
       if (expected.has(error.code)) {
         logger.info({ path, code: error.code, message: error.message }, "tRPC client error");
       } else {
