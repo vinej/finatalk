@@ -126,7 +126,10 @@ export function Sidebar({
       />
       <aside
         aria-label={t("nav.menu")}
-        aria-hidden={!open}
+        // `inert` (React 19+) removes the element from focus + a11y tree
+        // when the sidebar is closed. Using `aria-hidden` here is invalid
+        // when a descendant link still holds focus from a previous nav.
+        inert={!open}
         className={cn(
           "fixed bottom-0 left-0 top-14 z-30 w-56 overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-bg)] p-3 transition-transform duration-200",
           open ? "translate-x-0" : "-translate-x-full",
