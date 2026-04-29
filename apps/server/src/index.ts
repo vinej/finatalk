@@ -211,6 +211,12 @@ app.use("/api/trpc", (_req, res, next) => {
   next();
 });
 
+// Dedupe set for expected/client-side tRPC errors. Cleared every hour so a
+// configuration change (e.g. enabling OpenBB) is reflected within an hour
+// without restarting the server.
+const loggedClientErrors = new Set<string>();
+setInterval(() => loggedClientErrors.clear(), 60 * 60 * 1000).unref();
+
 app.use(
   "/api/trpc",
   createExpressMiddleware({
@@ -248,7 +254,15 @@ app.use(
         "PAYLOAD_TOO_LARGE",
       ]);
       if (expected.has(error.code)) {
-        logger.info({ path, code: error.code, message: error.message }, "tRPC client error");
+        // Dedupe: client-side errors that repeat verbatim (e.g. every page hit
+        // calls market.getInstitutionalHolders → "OpenBB is not enabled")
+        // would otherwise flood the log. Log once per (path,code,message)
+        // tuple per hour.
+        const key = `${path}|${error.code}|${error.message}`;
+        if (!loggedClientErrors.has(key)) {
+          loggedClientErrors.add(key);
+          logger.info({ path, code: error.code, message: error.message }, "tRPC client error");
+        }
       } else {
         logger.error({ path, code: error.code, message: error.message, stack: error.stack }, "tRPC error");
       }
